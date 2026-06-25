@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brener Group - İnşaat Yönetim Sistemi</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="app.css">
+</head>
+<body class="dark-mode"> <!-- Default to Dark Mode for premium aesthetics -->
+    
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <span class="logo-icon">B</span>
+                    <div class="logo-text">
+                        <span class="logo-brand">BRENER</span>
+                        <span class="logo-sub">GROUP</span>
+                    </div>
+                </div>
+                <button class="mobile-close-btn" id="mobileCloseBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Menu Search Filter -->
+            <div class="menu-search">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="menuSearchInput" placeholder="Menüde ara...">
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <!-- Group: Genel -->
+                <div class="nav-group active" data-group="genel">
+                    <div class="nav-group-title">
+                        <span>Genel</span>
+                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="#panel" class="nav-item active" data-view="panel">
+                            <span class="nav-icon" data-icon="dashboard"></span>
+                            <span class="nav-label">Panel</span>
+                        </a>
+                        <a href="#projelerim" class="nav-item" data-view="projelerim">
+                            <span class="nav-icon" data-icon="projects"></span>
+                            <span class="nav-label">Projelerim</span>
+                        </a>
+                        <a href="#hatirlaticilar" class="nav-item" data-view="hatirlaticilar">
+                            <span class="nav-icon" data-icon="reminders"></span>
+                            <span class="nav-label">Hatırlatıcılar</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Group: Şantiye Yönetimi -->
+                <div class="nav-group" data-group="santiye">
+                    <div class="nav-group-title">
+                        <span>Şantiye Yönetimi</span>
+                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="#santiye-gunlugu" class="nav-item" data-view="santiye-gunlugu">
+                            <span class="nav-icon" data-icon="diary"></span>
+                            <span class="nav-label">Şantiye Günlüğü</span>
+                        </a>
+                        <a href="#is-programi" class="nav-item" data-view="is-programi">
+                            <span class="nav-icon" data-icon="schedule"></span>
+                            <span class="nav-label">İş Programı</span>
+                        </a>
+                        <a href="#personel-puantaj" class="nav-item" data-view="personel-puantaj">
+                            <span class="nav-icon" data-icon="users"></span>
+                            <span class="nav-label">Personel & Puantaj</span>
+                        </a>
+                        <a href="#malzeme-stok" class="nav-item" data-view="malzeme-stok">
+                            <span class="nav-icon" data-icon="materials"></span>
+                            <span class="nav-label">Malzeme & Stok</span>
+                        </a>
+                        <a href="#isg-kaza" class="nav-item" data-view="isg-kaza">
+                            <span class="nav-icon" data-icon="hse"></span>
+                            <span class="nav-label">İSG / Kaza</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Group: Şantiye Şefliği -->
+                <div class="nav-group" data-group="seflik">
+                    <div class="nav-group-title">
+                        <span>Şantiye Şefliği</span>
+                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="#hava-beton" class="nav-item" data-view="hava-beton">
+                            <span class="nav-icon" data-icon="weather"></span>
+                            <span class="nav-label">Hava & Beton Döküm</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Group: Finans & Muhasebe -->
+                <div class="nav-group" data-group="finans">
+                    <div class="nav-group-title">
+                        <span>Finans & Muhasebe</span>
+                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="#hakedis" class="nav-item" data-view="hakedis">
+                            <span class="nav-icon" data-icon="claim"></span>
+                            <span class="nav-label">Hakediş</span>
+                        </a>
+                        <a href="#tahsilat-takibi" class="nav-item" data-view="tahsilat-takibi">
+                            <span class="nav-icon" data-icon="payments"></span>
+                            <span class="nav-label">Tahsilat Takibi</span>
+                        </a>
+                        <a href="#teklif-sozlesme" class="nav-item" data-view="teklif-sozlesme">
+                            <span class="nav-icon" data-icon="contracts"></span>
+                            <span class="nav-label">Teklif & Sözleşme</span>
+                        </a>
+                        <a href="#kat-karsiligi" class="nav-item" data-view="kat-karsiligi">
+                            <span class="nav-icon" data-icon="land-contract"></span>
+                            <span class="nav-label">Kat Karşılığı Sözleşme</span>
+                        </a>
+                        <a href="#muhasebe-disa-aktar" class="nav-item" data-view="muhasebe-disa-aktar">
+                            <span class="nav-icon" data-icon="accounting"></span>
+                            <span class="nav-label">Muhasebe & Dışa Aktarım</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Group: Hesaplama Araçları -->
+                <div class="nav-group" data-group="hesaplama">
+                    <div class="nav-group-title">
+                        <span>Hesaplama Araçları</span>
+                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="#maliyet-hesapla" class="nav-item" data-view="maliyet-hesapla">
+                            <span class="nav-icon" data-icon="calc"></span>
+                            <span class="nav-label">Maliyet Hesapla</span>
+                        </a>
+                        <a href="#tadilat-hesabi" class="nav-item" data-view="tadilat-hesabi">
+                            <span class="nav-icon" data-icon="renovation"></span>
+                            <span class="nav-label">Tadilat Hesabı</span>
+                        </a>
+                        <a href="#arsa-payi" class="nav-item" data-view="arsa-payi">
+                            <span class="nav-icon" data-icon="share"></span>
+                            <span class="nav-label">Arsa Payı Hesabı</span>
+                        </a>
+                        <a href="#mimari-yonetmelik" class="nav-item" data-view="mimari-yonetmelik">
+                            <span class="nav-icon" data-icon="rules"></span>
+                            <span class="nav-label">Mimari Yönetmelik</span>
+                        </a>
+                        <a href="#harita-imar" class="nav-item" data-view="harita-imar">
+                            <span class="nav-icon" data-icon="map"></span>
+                            <span class="nav-label">Harita / İmar Hesapları</span>
+                        </a>
+                        <a href="#metraj-malzeme" class="nav-item" data-view="metraj-malzeme">
+                            <span class="nav-icon" data-icon="metraj"></span>
+                            <span class="nav-label">Metraj & Malzeme Listesi</span>
+                        </a>
+                        <a href="#anlik-fiyatlar" class="nav-item" data-view="anlik-fiyatlar">
+                            <span class="nav-icon" data-icon="prices"></span>
+                            <span class="nav-label">Anlık Malzeme Fiyatları</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Group: Değerleme -->
+                <div class="nav-group" data-group="degerleme">
+                    <div class="nav-group-title">
+                        <span>Değerleme</span>
+                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="#emlak-deger-tahmini" class="nav-item" data-view="emlak-deger-tahmini">
+                            <span class="nav-icon" data-icon="valuation"></span>
+                            <span class="nav-label">Emlak Değer Tahmini</span>
+                        </a>
+                        <a href="#arsa-degerleme" class="nav-item" data-view="arsa-degerleme">
+                            <span class="nav-icon" data-icon="land-valuation"></span>
+                            <span class="nav-label">Arsa Değerleme</span>
+                        </a>
+                        <a href="#emlak-takip" class="nav-item" data-view="emlak-takip">
+                            <span class="nav-icon" data-icon="estate-track"></span>
+                            <span class="nav-label">Emlak Takip (Satış/Kira)</span>
+                        </a>
+                        <a href="#emsal-karsilastirma" class="nav-item" data-view="emsal-karsilastirma">
+                            <span class="nav-icon" data-icon="comparison"></span>
+                            <span class="nav-label">Emsal Karşılaştırma</span>
+                        </a>
+                        <a href="#bolge-analizi" class="nav-item" data-view="bolge-analizi">
+                            <span class="nav-icon" data-icon="region"></span>
+                            <span class="nav-label">Bölge Analizi</span>
+                        </a>
+                        <a href="#komisyon-vergi" class="nav-item" data-view="komisyon-vergi">
+                            <span class="nav-icon" data-icon="tax"></span>
+                            <span class="nav-label">Komisyon & Vergi</span>
+                        </a>
+                        <a href="#kira-dilekce-asistani" class="nav-item" data-view="kira-dilekce-asistani">
+                            <span class="nav-icon" data-icon="assistant"></span>
+                            <span class="nav-label">Kira & Dilekçe Asistanı</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Group: AI Modülleri -->
+                <div class="nav-group" data-group="ai">
+                    <div class="nav-group-title">
+                        <span>AI Modülleri</span>
+                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="#ai-asistan" class="nav-item" data-view="ai-asistan">
+                            <span class="nav-icon" data-icon="ai-chat"></span>
+                            <span class="nav-label">AI Asistan</span>
+                        </a>
+                        <a href="#emlak-ai-danisman" class="nav-item" data-view="emlak-ai-danisman">
+                            <span class="nav-icon" data-icon="ai-estate"></span>
+                            <span class="nav-label">Emlak AI Danışmanı</span>
+                        </a>
+                        <a href="#ai-fotograf-analizi" class="nav-item" data-view="ai-fotograf-analizi">
+                            <span class="nav-icon" data-icon="ai-photo"></span>
+                            <span class="nav-label">AI Fotoğraf Analizi</span>
+                        </a>
+                        <a href="#ai-plan-okuma" class="nav-item" data-view="ai-plan-okuma">
+                            <span class="nav-icon" data-icon="ai-blueprint"></span>
+                            <span class="nav-label">AI Mimari Plan Okuma</span>
+                        </a>
+                        <a href="#sesli-ai-sefi" class="nav-item" data-view="sesli-ai-sefi">
+                            <span class="nav-icon" data-icon="ai-voice"></span>
+                            <span class="nav-label">Sesli AI Şantiye Şefi</span>
+                        </a>
+                        <a href="#ai-taslak-plan" class="nav-item" data-view="ai-taslak-plan">
+                            <span class="nav-icon" data-icon="ai-draw"></span>
+                            <span class="nav-label">AI Taslak Plan Çizimi</span>
+                        </a>
+                        <a href="#ai-tadilat-tasarim" class="nav-item" data-view="ai-tadilat-tasarim">
+                            <span class="nav-icon" data-icon="ai-design"></span>
+                            <span class="nav-label">AI Tadilat Tasarımı</span>
+                        </a>
+                        <a href="#ai-mekan-yerlesim" class="nav-item" data-view="ai-mekan-yerlesim">
+                            <span class="nav-icon" data-icon="ai-layout"></span>
+                            <span class="nav-label">AI Mekan Yerleşim</span>
+                        </a>
+                        <a href="#ai-3d-cephe" class="nav-item" data-view="ai-3d-cephe">
+                            <span class="nav-icon" data-icon="ai-3d"></span>
+                            <span class="nav-label">3D Cephe Tasarımı</span>
+                        </a>
+                        <a href="#ai-2d-vaziyet" class="nav-item" data-view="ai-2d-vaziyet">
+                            <span class="nav-icon" data-icon="ai-2d"></span>
+                            <span class="nav-label">2D Vaziyet Planı</span>
+                        </a>
+                        <a href="#yonetmelik-imar-asistani" class="nav-item" data-view="yonetmelik-imar-asistani">
+                            <span class="nav-icon" data-icon="ai-rules"></span>
+                            <span class="nav-label">Yönetmelik & İmar Asistanı</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Group: Saha & Servis -->
+                <div class="nav-group" data-group="saha">
+                    <div class="nav-group-title">
+                        <span>Saha & Servis</span>
+                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="#musteri-cari" class="nav-item" data-view="musteri-cari">
+                            <span class="nav-icon" data-icon="clients"></span>
+                            <span class="nav-label">Müşteriler & Cari</span>
+                        </a>
+                        <a href="#is-emirleri" class="nav-item" data-view="is-emirleri">
+                            <span class="nav-icon" data-icon="orders"></span>
+                            <span class="nav-label">İş Emirleri</span>
+                        </a>
+                        <a href="#tadilat-formu" class="nav-item" data-view="tadilat-formu">
+                            <span class="nav-icon" data-icon="repair-form"></span>
+                            <span class="nav-label">Tadilat/Tamirat Formu</span>
+                        </a>
+                        <a href="#siparis-fisi" class="nav-item" data-view="siparis-fisi">
+                            <span class="nav-icon" data-icon="order-slip"></span>
+                            <span class="nav-label">Sipariş Fişi</span>
+                        </a>
+                        <a href="#servis-teklifi" class="nav-item" data-view="servis-teklifi">
+                            <span class="nav-icon" data-icon="service-offer"></span>
+                            <span class="nav-label">Servis Teklifi</span>
+                        </a>
+                        <a href="#randevu-takvimi" class="nav-item" data-view="randevu-takvimi">
+                            <span class="nav-icon" data-icon="calendar"></span>
+                            <span class="nav-label">Randevu Takvimi</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Group: Firma & Ekip -->
+                <div class="nav-group" data-group="ekip">
+                    <div class="nav-group-title">
+                        <span>Firma & Ekip</span>
+                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="#firma-yonetimi" class="nav-item" data-view="firma-yonetimi">
+                            <span class="nav-icon" data-icon="company"></span>
+                            <span class="nav-label">Firma Yönetimi</span>
+                        </a>
+                        <a href="#gorevlerim" class="nav-item" data-view="gorevlerim">
+                            <span class="nav-icon" data-icon="tasks"></span>
+                            <span class="nav-label">Görevlerim</span>
+                        </a>
+                        <a href="#firmaya-katil" class="nav-item" data-view="firmaya-katil">
+                            <span class="nav-icon" data-icon="join"></span>
+                            <span class="nav-label">Firmaya Katıl</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Group: Belgeler & Hesap -->
+                <div class="nav-group" data-group="belgeler">
+                    <div class="nav-group-title">
+                        <span>Belgeler & Hesap</span>
+                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="#belgeler-projeler" class="nav-item" data-view="belgeler-projeler">
+                            <span class="nav-icon" data-icon="doc-projects"></span>
+                            <span class="nav-label">Projeler</span>
+                        </a>
+                        <a href="#belgeler-finans" class="nav-item" data-view="belgeler-finans">
+                            <span class="nav-icon" data-icon="doc-finance"></span>
+                            <span class="nav-label">Finans</span>
+                        </a>
+                        <a href="#fon-yonetimi" class="nav-item" data-view="fon-yonetimi">
+                            <span class="nav-icon" data-icon="fund"></span>
+                            <span class="nav-label">Fon Yönetimi</span>
+                        </a>
+                        <a href="#belgeler-satis" class="nav-item" data-view="belgeler-satis">
+                            <span class="nav-icon" data-icon="doc-sales"></span>
+                            <span class="nav-label">Satış</span>
+                        </a>
+                        <a href="#evrak-uretici" class="nav-item" data-view="evrak-uretici">
+                            <span class="nav-icon" data-icon="doc-gen"></span>
+                            <span class="nav-label">Evrak Üretici</span>
+                        </a>
+                        <a href="#akilli-arsiv" class="nav-item" data-view="akilli-arsiv">
+                            <span class="nav-icon" data-icon="archive"></span>
+                            <span class="nav-label">Akıllı Arşiv</span>
+                        </a>
+                        <a href="#fizibilite" class="nav-item" data-view="fizibilite">
+                            <span class="nav-icon" data-icon="feasibility"></span>
+                            <span class="nav-label">Fizibilite</span>
+                        </a>
+                        <a href="#belgeler-araclar" class="nav-item" data-view="belgeler-araclar">
+                            <span class="nav-icon" data-icon="tools"></span>
+                            <span class="nav-label">Araçlar</span>
+                        </a>
+                        <a href="#ayarlar" class="nav-item" data-view="ayarlar">
+                            <span class="nav-icon" data-icon="settings"></span>
+                            <span class="nav-label">Ayarlar</span>
+                        </a>
+                        <a href="#proje-belgeleri" class="nav-item" data-view="proje-belgeleri">
+                            <span class="nav-icon" data-icon="project-docs"></span>
+                            <span class="nav-label">Proje Belgeleri</span>
+                        </a>
+                        <a href="#ai-evrak-merkezi" class="nav-item" data-view="ai-evrak-merkezi">
+                            <span class="nav-icon" data-icon="ai-docs"></span>
+                            <span class="nav-label">AI Evrak Merkezi</span>
+                        </a>
+                        <a href="#profil" class="nav-item" data-view="profil">
+                            <span class="nav-icon" data-icon="profile"></span>
+                            <span class="nav-label">Profil</span>
+                        </a>
+                        <a href="#kullanici-yonetimi" class="nav-item" data-view="kullanici-yonetimi" id="menuItemKullaniciYonetimi">
+                            <span class="nav-icon" data-icon="users"></span>
+                            <span class="nav-label">Kullanıcı & Yetki Yönetimi</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Sidebar Footer Controls -->
+            <div class="sidebar-footer">
+                <button class="footer-control-btn" id="darkModeToggle" title="Temayı Değiştir">
+                    <span class="control-icon" id="themeIcon">
+                        <!-- Dark mode icon initially -->
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </span>
+                    <span class="control-label" id="themeLabel">Gece Modu</span>
+                </button>
+                <button class="footer-control-btn logout" id="logoutBtn" title="Çıkış Yap">
+                    <span class="control-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                    </span>
+                    <span class="control-label">Çıkış Yap</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-wrapper">
+            <!-- Header Topbar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle-btn" id="mobileToggleBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    </button>
+                    <div class="topbar-title-wrapper">
+                        <h1 class="topbar-title" id="pageTitle">Panel</h1>
+                        <span class="topbar-subtitle" id="pageSubtitle">Genel Durum Analizleri</span>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <!-- Project Selector -->
+                    <div class="project-selector-wrapper">
+                        <select id="globalProjectSelector" class="custom-select">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Global Notifications -->
+                    <div class="notification-badge-container">
+                        <button class="topbar-action-btn" id="notificationBtn" title="Bildirimler">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            <span class="badge-dot" id="notiBadge"></span>
+                        </button>
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <div class="dropdown-header">
+                                <h3>Bildirimler</h3>
+                                <button class="mark-all-read" id="markAllReadBtn">Hepsini Oku</button>
+                            </div>
+                            <div class="dropdown-body" id="notiList">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Profile Quick View -->
+                    <div class="profile-quick-view" id="profileQuickViewBtn">
+                        <div class="profile-avatar">ET</div>
+                        <div class="profile-info">
+                            <span class="profile-name">Emre Türedi</span>
+                            <span class="profile-role">Yönetici</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dynamic Content Window -->
+            <section class="content-container" id="contentWindow">
+                <!-- Injected dynamically by router -->
+                <div class="loading-spinner-wrapper">
+                    <div class="spinner"></div>
+                    <p>Yükleniyor...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Floating AI Assistant Widget -->
+    <div class="floating-ai-widget" id="floatingAiWidget">
+        <button class="ai-trigger-btn" id="aiTriggerBtn" title="AI Asistan ile Konuş">
+            <span class="ai-sparkle">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                    <circle cx="12" cy="12" r="4"/>
+                </svg>
+            </span>
+            <span class="btn-text">AI Asistan</span>
+        </button>
+
+        <div class="ai-chat-panel" id="aiChatPanel">
+            <div class="ai-chat-header">
+                <div class="ai-chat-title">
+                    <div class="ai-logo-dot"></div>
+                    <div>
+                        <h4>Brener AI Asistan</h4>
+                        <span>Çevrimiçi | Şantiye & Finans Uzmanı</span>
+                    </div>
+                </div>
+                <button class="ai-chat-close" id="aiChatCloseBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="ai-chat-messages" id="aiChatMessages">
+                <div class="message ai">
+                    Merhaba! Ben Brener AI. Şantiye yönetimi, beton dökümü, imar kuralları, hakediş hesabı veya emlak değerlemeleri konusunda size yardımcı olabilirim. Nasıl yardımcı olabilirim?
+                </div>
+            </div>
+            <div class="ai-chat-input-area">
+                <input type="text" id="aiChatInput" placeholder="Bir soru sorun (ör: kaba inşaat maliyeti)...">
+                <button id="aiChatSendBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Generic Modal System -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="appModal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Modal Başlığı</h3>
+                <button class="modal-close" id="modalCloseBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content injected dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Page Container Overlay -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <div class="login-logo">
+                <span class="login-logo-icon">B</span>
+                <div>
+                    <h2>BRENER GROUP</h2>
+                    <p>İnşaat Yönetim Portalı</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 24px;">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="color: var(--text-main); font-weight: 600;">E-Posta Adresi</label>
+                    <input type="email" id="loginEmail" placeholder="isim@brener.com.tr" value="admin@brener.com.tr" style="width: 100%; padding: 12px; margin-top: 6px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="color: var(--text-main); font-weight: 600;">Şifre</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" value="admin123" style="width: 100%; padding: 12px; margin-top: 6px;">
+                </div>
+                <button class="btn btn-primary" id="loginSubmitBtn" style="width: 100%; padding: 12px; font-weight: 700;">Giriş Yap</button>
+            </div>
+            
+            <div class="login-helper">
+                <h4>Hızlı Test Girişleri (Tıklayın):</h4>
+                <div class="helper-accounts-grid">
+                    <button onclick="window.BrenerApp.fillLogin('admin@brener.com.tr', 'admin123')">🔑 Admin</button>
+                    <button onclick="window.BrenerApp.fillLogin('sefi@brener.com.tr', 'sefi123')">👷 Şantiye Şefi</button>
+                    <button onclick="window.BrenerApp.fillLogin('muhasebe@brener.com.tr', 'muh123')">💰 Muhasebe</button>
+                    <button onclick="window.BrenerApp.fillLogin('saha@brener.com.tr', 'saha123')">🔧 Saha Ekibi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js" defer></script>
+    <script src="modules/dashboard.js" defer></script>
+    <script src="modules/santiye.js" defer></script>
+    <script src="modules/finans.js" defer></script>
+    <script src="modules/hesaplama.js" defer></script>
+    <script src="modules/degerleme.js" defer></script>
+    <script src="modules/ai.js" defer></script>
+    <script src="modules/saha.js" defer></script>
+    <script src="modules/belgeler.js" defer></script>
+</body>
+</html>
