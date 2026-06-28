@@ -59,6 +59,24 @@
                     </div>
                 </div>
 
+                <!-- Group: Proje Yönetimi -->
+                <div class="nav-group" data-group="proje-yonetimi">
+                    <div class="nav-group-title">
+                        <span>Proje Yönetimi</span>
+                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="#proje-sozlesme-ozeti" class="nav-item" data-view="proje-sozlesme-ozeti">
+                            <span class="nav-icon" data-icon="contracts"></span>
+                            <span class="nav-label">Proje Sözleşme Özeti</span>
+                        </a>
+                        <a href="#teknik-sartname" class="nav-item" data-view="teknik-sartname">
+                            <span class="nav-icon" data-icon="diary"></span>
+                            <span class="nav-label">Teknik Şartname</span>
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Group: Şantiye Yönetimi -->
                 <div class="nav-group" data-group="santiye">
                     <div class="nav-group-title">
@@ -86,16 +104,6 @@
                             <span class="nav-icon" data-icon="hse"></span>
                             <span class="nav-label">İSG / Kaza</span>
                         </a>
-                    </div>
-                </div>
-
-                <!-- Group: Şantiye Şefliği -->
-                <div class="nav-group" data-group="seflik">
-                    <div class="nav-group-title">
-                        <span>Şantiye Şefliği</span>
-                        <svg class="group-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <div class="nav-group-items">
                         <a href="#hava-beton" class="nav-item" data-view="hava-beton">
                             <span class="nav-icon" data-icon="weather"></span>
                             <span class="nav-label">Hava & Beton Döküm</span>
@@ -362,6 +370,10 @@
                             <span class="nav-icon" data-icon="settings"></span>
                             <span class="nav-label">Ayarlar</span>
                         </a>
+                        <a href="#sistem-loglari" class="nav-item" data-view="sistem-loglari">
+                            <span class="nav-icon" data-icon="orders"></span>
+                            <span class="nav-label">Sistem Logları</span>
+                        </a>
                         <a href="#proje-belgeleri" class="nav-item" data-view="proje-belgeleri">
                             <span class="nav-icon" data-icon="project-docs"></span>
                             <span class="nav-label">Proje Belgeleri</span>
@@ -562,5 +574,6 @@
     <script src="modules/ai.js" defer></script>
     <script src="modules/saha.js" defer></script>
     <script src="modules/belgeler.js" defer></script>
+    <script src="modules/projeYonetimi.js" defer></script>
 </body>
 </html>

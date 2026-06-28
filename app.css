@@ -1003,6 +1003,8 @@ body.light-mode .progress-bar-bg {
 .badge-danger { background: var(--danger-bg); color: var(--danger); }
 .badge-warning { background: var(--warning-bg); color: var(--warning); }
 .badge-info { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.badge-primary { background: rgba(var(--primary-rgb), 0.15); color: var(--primary); }
+.badge-secondary { background: rgba(255, 255, 255, 0.08); color: var(--text-muted); }
 
 /* ==========================================================================
    AI ASSISTANT FLOATING CHAT WIDGET
@@ -1526,3 +1528,67 @@ body.auth-mode .floating-ai-widget {
     cursor: pointer;
     accent-color: var(--primary);
 }
+
+/* ==========================================================================
+   ADVANCED TEKNİK ŞARTNAME EDIT & DRAG STYLING
+   ========================================================================== */
+.clause-row {
+    transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.clause-row:hover {
+    border-color: rgba(204, 163, 82, 0.5) !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+body.light-mode .clause-row:hover {
+    background: rgba(0, 0, 0, 0.02) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.clause-row input.clause-title {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+body.light-mode .clause-row input.clause-title {
+    background: rgba(0, 0, 0, 0.01);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+.clause-row textarea.clause-content {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    border-radius: 6px;
+    font-family: inherit;
+    resize: vertical;
+    width: 100%;
+}
+body.light-mode .clause-row textarea.clause-content {
+    background: rgba(0, 0, 0, 0.01);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+.clause-row textarea.clause-content:focus,
+.clause-row input.clause-title:focus {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.05);
+    outline: none;
+}
+body.light-mode .clause-row textarea.clause-content:focus,
+body.light-mode .clause-row input.clause-title:focus {
+    background: #ffffff;
+}
+#specUploadZone:hover {
+    background: rgba(204, 163, 82, 0.05) !important;
+    border-color: var(--primary) !important;
+    transform: scale(1.01);
+}
+#specUploadZone:active {
+    transform: scale(0.99);
+}
+#specsA4Preview {
+    font-family: 'Outfit', 'Inter', sans-serif !important;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+body.light-mode #specsA4Preview {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+

@@ -115,6 +115,7 @@ window.BrenerApp.Saha = {
                 });
 
                 window.BrenerApp.saveStateToStorage();
+                window.BrenerApp.logActivity('saha', `Yeni cari hesap oluşturuldu: ${name}`, 'success', `Telefon: ${phone}, E-posta: ${email}, Bakiye: ${balance} TL`);
                 window.BrenerApp.showToast('success', `${name} cari hesabı açıldı.`);
                 document.getElementById('modalCloseBtn').click();
                 this.renderCustomers(container);
@@ -303,6 +304,7 @@ window.BrenerApp.Saha = {
                 });
 
                 window.BrenerApp.saveStateToStorage();
+                window.BrenerApp.logActivity('saha', `Yeni iş emri atandı: ${title}`, 'info', `Atanan: ${assignedTo}, Öncelik: ${priority}`);
                 window.BrenerApp.showToast('success', `Yeni iş emri oluşturuldu: ${title}`);
                 document.getElementById('modalCloseBtn').click();
                 this.renderKanban(container);
@@ -313,16 +315,21 @@ window.BrenerApp.Saha = {
     moveTask(id, newStatus) {
         const t = window.BrenerApp.state.workOrders.find(task => task.id === id);
         if (t) {
+            const oldStatus = t.status;
             t.status = newStatus;
             window.BrenerApp.saveStateToStorage();
+            window.BrenerApp.logActivity('saha', `İş emri durumu güncellendi: ${t.title}`, 'info', `Durum: ${oldStatus.toUpperCase()} ➡️ ${newStatus.toUpperCase()}`);
             window.BrenerApp.showToast('success', `Görev taşındı: ${newStatus.toUpperCase()}`);
             this.renderKanban(document.getElementById('contentWindow'));
         }
     },
 
     deleteTask(id) {
+        const t = window.BrenerApp.state.workOrders.find(task => task.id === id);
+        const title = t ? t.title : id;
         window.BrenerApp.state.workOrders = window.BrenerApp.state.workOrders.filter(task => task.id !== id);
         window.BrenerApp.saveStateToStorage();
+        window.BrenerApp.logActivity('saha', `İş emri silindi: ${title}`, 'warning');
         window.BrenerApp.showToast('danger', 'İş emri silindi.');
         this.renderKanban(document.getElementById('contentWindow'));
     },

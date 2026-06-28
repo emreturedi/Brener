@@ -162,6 +162,7 @@ window.BrenerApp.Santiye = {
             };
             logs.unshift(newLog);
             localStorage.setItem(`brener_diary_${project.id}`, JSON.stringify(logs));
+            window.BrenerApp.logActivity('santiye', 'Şantiye Günlüğü raporu kaydedildi.', 'success', `Hava: ${newLog.weather}, İlerleme: %${newLog.progress}`);
             window.BrenerApp.showToast('success', 'Günlük şantiye raporu başarıyla kaydedildi.');
             this.renderDiary(project, container);
         };
@@ -404,6 +405,7 @@ window.BrenerApp.Santiye = {
             if (!name || !role) { alert('Lütfen ad ve görevi doldurun!'); return; }
             window.BrenerApp.state.employees.push({ id: Date.now(), name, role, salary, status:'active' });
             window.BrenerApp.saveStateToStorage();
+            window.BrenerApp.logActivity('santiye', `Yeni personel şantiyeye kaydedildi: ${name}`, 'success', `Görev: ${role}, Yevmiye: ${salary} TL`);
             window.BrenerApp.showToast('success', `${name} personel listesine eklendi.`);
             this.renderAttendance(project, container);
         };
@@ -412,6 +414,7 @@ window.BrenerApp.Santiye = {
             employees.forEach(emp => {
                 localStorage.setItem(`p_${project.id}_${emp.id}_${today}`, 'geldi');
             });
+            window.BrenerApp.logActivity('santiye', `Tüm şantiye personeli GELDİ olarak işaretlendi.`, 'info', `Tarih: ${today}, Proje: ${project.name}`);
             window.BrenerApp.showToast('success', 'Tüm personel GELDİ olarak işaretlendi.');
             this.renderAttendance(project, container);
         };
@@ -420,6 +423,11 @@ window.BrenerApp.Santiye = {
     savePuantaj(projectId, empId, date, status) {
         localStorage.setItem(`p_${projectId}_${empId}_${date}`, status);
         const labels = { geldi:'GELDİ ✅', gelmedi:'GELMEDİ ❌', izinli:'İZİNLİ 🏖️' };
+        
+        const emp = window.BrenerApp.state.employees.find(e => e.id == empId);
+        const empName = emp ? emp.name : `Personel #${empId}`;
+        window.BrenerApp.logActivity('santiye', `Personel puantajı güncellendi: ${empName} (${labels[status]})`, 'info', `Tarih: ${date}`);
+        
         window.BrenerApp.showToast('success', `Puantaj güncellendi: ${labels[status]}`);
         this.render('personel-puantaj', document.getElementById('contentWindow'));
     },
@@ -584,13 +592,16 @@ window.BrenerApp.Santiye = {
         );
         document.getElementById('confirmStockBtn').onclick = () => {
             const amt = parseFloat(document.getElementById('stockAmtInput').value) || 0;
+            const note = document.getElementById('stockNoteInput').value.trim();
             if (amt <= 0) { alert('Geçerli bir miktar girin!'); return; }
             if (type === 'add') {
                 mat.stock += amt;
+                window.BrenerApp.logActivity('santiye', `${mat.name} stoğuna +${amt} ${mat.unit} eklendi.`, 'success', `Açıklama: ${note}`);
                 window.BrenerApp.showToast('success', `${mat.name} stoğuna +${amt} ${mat.unit} eklendi.`);
             } else {
                 if (mat.stock < amt) { window.BrenerApp.showToast('danger','Yetersiz stok miktarı!'); return; }
                 mat.stock -= amt;
+                window.BrenerApp.logActivity('santiye', `${mat.name} stoğundan -${amt} ${mat.unit} kullanıldı.`, 'warning', `Açıklama: ${note}`);
                 window.BrenerApp.showToast('warning', `${mat.name} stoğundan -${amt} ${mat.unit} kullanıldı.`);
             }
             window.BrenerApp.saveStateToStorage();
@@ -621,6 +632,7 @@ window.BrenerApp.Santiye = {
             if (!name) { alert('Malzeme adı gerekli!'); return; }
             window.BrenerApp.state.materials.push({ id:Date.now(), name, unit, stock, minStock:min, price });
             window.BrenerApp.saveStateToStorage();
+            window.BrenerApp.logActivity('santiye', `Yeni stok kalemi tanımlandı: ${name}`, 'success', `Birim: ${unit}, Başlangıç: ${stock}, Kritik Seviye: ${min}`);
             window.BrenerApp.showToast('success', `${name} stok listesine eklendi.`);
             document.getElementById('modalCloseBtn').click();
             this.render('malzeme-stok', document.getElementById('contentWindow'));
@@ -780,6 +792,7 @@ window.BrenerApp.Santiye = {
             };
             incidents.unshift(newInc);
             localStorage.setItem(`brener_hse_${project.id}`, JSON.stringify(incidents));
+            window.BrenerApp.logActivity('santiye', `İSG / Kaza Olay Raporu eklendi: ${type} (${severity})`, 'danger', `Konum: ${location}, Rapor Eden: ${newInc.reporter}, Detay: ${detail}`);
             window.BrenerApp.showToast('danger', 'İSG Olay Raporu şantiye müdürlüğüne iletildi.');
             this.renderHse(project, container);
         };
@@ -960,8 +973,9 @@ window.BrenerApp.Santiye = {
             const temp    = document.getElementById('pourTemp').value;
             const notes   = document.getElementById('pourNotes').value.trim();
             if (!element || !volume) { alert('Lütfen yapı elemanı ve hacmini girin!'); return; }
-            pours.unshift({ id: Date.now(), project:project.name, date:new Date().toISOString().split('T')[0], grade, volume, temp, slump, notes, status:'Döküldü (Kürleniyor)' });
+            pours.unshift({ id: Date.now(), project:project.name, date:new Date().toISOString().split('T')[0], grade, volume, temp, slump, notes: element + (notes ? ' - ' + notes : ''), status:'Döküldü (Kürleniyor)' });
             window.BrenerApp.saveStateToStorage();
+            window.BrenerApp.logActivity('santiye', `Hazır Beton dökümü raporlandı: ${grade} sınıfı, ${volume} m³`, 'success', `Yapı Elemanı: ${element}, Sıcaklık: ${temp}, Kıvam/Slump: ${slump}`);
             window.BrenerApp.showToast('success', 'Beton dökümü raporlandı. Laboratuvar numune kaydı açıldı.');
             this.renderConcrete(project, container);
         };

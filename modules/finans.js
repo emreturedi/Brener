@@ -140,6 +140,7 @@ window.BrenerApp.Finans = {
             const net       = total + kdv - retention;
             window.BrenerApp.state.claims.unshift({ id: Date.now(), subcontractor: sub, description: desc, totalAmount: total, retention, netPaid: net, date: new Date().toISOString().split('T')[0], status: 'pending' });
             window.BrenerApp.saveStateToStorage();
+            window.BrenerApp.logActivity('finans', `Yeni hakediş kaydı oluşturuldu: ${sub}`, 'success', `Açıklama: ${desc}, Net Ödenecek: ${net.toLocaleString('tr-TR')} TL`);
             window.BrenerApp.showToast('success', `${sub} hakediş onay aşamasına gönderildi.`);
             this.renderClaim(project, container);
         };
@@ -162,7 +163,13 @@ window.BrenerApp.Finans = {
 
     approveClaim(id) {
         const c = window.BrenerApp.state.claims.find(x => x.id === id);
-        if (c) { c.status = 'paid'; window.BrenerApp.saveStateToStorage(); window.BrenerApp.showToast('success', `${c.subcontractor} hakediş ödemesi onaylandı.`); this.render('hakedis', document.getElementById('contentWindow')); }
+        if (c) { 
+            c.status = 'paid'; 
+            window.BrenerApp.saveStateToStorage(); 
+            window.BrenerApp.logActivity('finans', `Hakediş ödemesi onaylandı ve ödendi: ${c.subcontractor}`, 'success', `Açıklama: ${c.description}, Ödenen Net Tutar: ${c.netPaid.toLocaleString('tr-TR')} TL`);
+            window.BrenerApp.showToast('success', `${c.subcontractor} hakediş ödemesi onaylandı.`); 
+            this.render('hakedis', document.getElementById('contentWindow')); 
+        }
     },
 
     /* ====================================================================

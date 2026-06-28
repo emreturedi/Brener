@@ -34,6 +34,8 @@ window.BrenerApp.Belgeler = {
             this.renderProfile(container);
         } else if (view === 'kullanici-yonetimi') {
             this.renderUserManagement(container);
+        } else if (view === 'sistem-loglari') {
+            this.renderSystemLogs(container);
         }
     },
 
@@ -848,8 +850,8 @@ Gereğini arz ederiz.</textarea>
 
         const groups = [
             { code: 'genel', label: 'Genel (Panel, Projeler, Hatırlatıcılar)' },
-            { code: 'santiye', label: 'Şantiye Yönetimi (Günlük, Gantt, Puantaj, Stok, İSG)' },
-            { code: 'seflik', label: 'Şantiye Şefliği (Beton Döküm & Laboratuvar)' },
+            { code: 'proje-yonetimi', label: 'Proje Yönetimi (Proje Sözleşme Özeti)' },
+            { code: 'santiye', label: 'Şantiye Yönetimi (Günlük, Gantt, Puantaj, Stok, İSG, Beton)' },
             { code: 'finans', label: 'Finans & Muhasebe (Hakediş, Tahsilat, Teklif/Sözleşme)' },
             { code: 'hesaplama', label: 'Hesaplama Araçları (Maliyet, Metraj, Fiyatlar)' },
             { code: 'degerleme', label: 'Değerleme (Appraisal, Emlak Takip, CMA)' },
@@ -1039,5 +1041,200 @@ Gereğini arz ederiz.</textarea>
             window.BrenerApp.showToast('danger', `${userToDelete.name} kullanıcısı silindi.`);
             this.renderUserManagement(document.getElementById('contentWindow'));
         }
+    },
+
+    // 14. Sistem Logları ve Aktivite Geçmişi
+    renderSystemLogs(container) {
+        window.BrenerApp.updateTopbarTitle('Sistem Logları & Aktivite Geçmişi', 'Sistem Olayları, İşlem Geçmişi ve Güvenlik Denetimleri');
+
+        let html = `
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header" style="flex-wrap: wrap; gap: 15px; margin-bottom: 16px;">
+                    <h2>📋 Aktivite ve Olay Günlüğü</h2>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto;">
+                        <button class="btn btn-secondary btn-sm" id="exportLogsBtn">📥 Logları İndir (JSON)</button>
+                        <button class="btn btn-danger btn-sm" id="clearLogsBtn">🗑️ Geçmişi Temizle</button>
+                    </div>
+                </div>
+
+                <!-- Filtreleme Alanı -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <input type="text" id="logSearch" placeholder="Loglarda ara (Kullanıcı, açıklama)..." style="width: 100%; padding: 10px 14px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <select id="logCategoryFilter" style="width: 100%; padding: 10px;">
+                            <option value="all">Tüm Kategoriler</option>
+                            <option value="sistem">Sistem</option>
+                            <option value="proje">Proje</option>
+                            <option value="santiye">Şantiye</option>
+                            <option value="finans">Finans</option>
+                            <option value="saha">Saha</option>
+                            <option value="ai">Yapay Zeka (AI)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <select id="logTypeFilter" style="width: 100%; padding: 10px;">
+                            <option value="all">Tüm Seviyeler</option>
+                            <option value="info">Bilgi (Info)</option>
+                            <option value="success">Başarılı (Success)</option>
+                            <option value="warning">Uyarı (Warning)</option>
+                            <option value="danger">Hata / Risk (Danger)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Log Tablosu -->
+                <div class="table-responsive" style="max-height: 550px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" id="logsTable">
+                        <thead>
+                            <tr style="background: rgba(255, 255, 255, 0.02); text-align: left; border-bottom: 1px solid var(--border-color);">
+                                <th style="padding: 12px 16px; width: 170px;">Zaman Damgası</th>
+                                <th style="padding: 12px 16px; width: 150px;">Kullanıcı</th>
+                                <th style="padding: 12px 16px; width: 100px;">Kategori</th>
+                                <th style="padding: 12px 16px;">Olay / Açıklama</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <!-- Dinamik olarak doldurulacak -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+        const logs = window.BrenerApp.state.logs || [];
+        const tableBody = document.getElementById('logsTableBody');
+        const searchInput = document.getElementById('logSearch');
+        const categoryFilter = document.getElementById('logCategoryFilter');
+        const typeFilter = document.getElementById('logTypeFilter');
+        const exportBtn = document.getElementById('exportLogsBtn');
+        const clearBtn = document.getElementById('clearLogsBtn');
+
+        const roleLabels = { admin: 'Yönetici', sefi: 'Şantiye Şefi', muhasebe: 'Muhasebeci', saha: 'Saha Ekibi', system: 'Sistem', guest: 'Misafir' };
+        const categoryLabels = { sistem: 'Sistem', proje: 'Proje', santiye: 'Şantiye', finans: 'Finans', saha: 'Saha', ai: 'Yapay Zeka' };
+
+        const filterAndRenderLogs = () => {
+            const query = searchInput.value.toLowerCase().trim();
+            const selectedCat = categoryFilter.value;
+            const selectedType = typeFilter.value;
+
+            tableBody.innerHTML = '';
+
+            const filtered = logs.filter(log => {
+                const matchesSearch = log.action.toLowerCase().includes(query) || 
+                                      log.user.toLowerCase().includes(query) || 
+                                      (log.details && log.details.toLowerCase().includes(query));
+                
+                const matchesCat = selectedCat === 'all' || log.category === selectedCat;
+                const matchesType = selectedType === 'all' || log.type === selectedType;
+
+                return matchesSearch && matchesCat && matchesType;
+            });
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            Aradığınız kriterlere uygun sistem logu bulunamadı.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            filtered.forEach(log => {
+                const tr = document.createElement('tr');
+                
+                // Color left-border based on log level/type
+                let borderStyle = 'border-left: 4px solid var(--border-color);';
+                if (log.type === 'success') borderStyle = 'border-left: 4px solid var(--success);';
+                else if (log.type === 'warning') borderStyle = 'border-left: 4px solid var(--warning);';
+                else if (log.type === 'danger') borderStyle = 'border-left: 4px solid var(--danger);';
+                else if (log.type === 'info') borderStyle = 'border-left: 4px solid var(--primary);';
+
+                tr.style = `border-bottom: 1px solid var(--border-color); background: rgba(255,255,255,0.01);`;
+                
+                const timeStr = new Date(log.timestamp).toLocaleString('tr-TR');
+                
+                // Class for role badge
+                let roleClass = 'badge-info';
+                if (log.role === 'admin') roleClass = 'badge-danger';
+                else if (log.role === 'sefi') roleClass = 'badge-primary';
+                else if (log.role === 'muhasebe') roleClass = 'badge-warning';
+                else if (log.role === 'system') roleClass = 'badge-success';
+
+                // Class for category badge
+                let catClass = 'badge-secondary';
+                if (log.category === 'finans') catClass = 'badge-success';
+                else if (log.category === 'proje') catClass = 'badge-info';
+                else if (log.category === 'santiye') catClass = 'badge-warning';
+                else if (log.category === 'saha') catClass = 'badge-primary';
+                else if (log.category === 'ai') catClass = 'badge-danger';
+
+                tr.innerHTML = `
+                    <td style="padding: 12px 16px; font-weight: 500; font-family: monospace; ${borderStyle}">${timeStr}</td>
+                    <td style="padding: 12px 16px;">
+                        <span style="font-weight: 600; display: block; color: var(--text-main);">${log.user}</span>
+                        <span class="badge ${roleClass}" style="font-size: 0.65rem; margin-top: 3px; display: inline-block;">${roleLabels[log.role] || log.role}</span>
+                    </td>
+                    <td style="padding: 12px 16px;">
+                        <span class="badge ${catClass}" style="font-size: 0.7rem; font-weight: 600;">${categoryLabels[log.category] || log.category}</span>
+                    </td>
+                    <td style="padding: 12px 16px; line-height: 1.4;">
+                        <div style="font-weight: 500; color: var(--text-main);">${log.action}</div>
+                        ${log.details ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; font-family: monospace; background: rgba(0,0,0,0.15); padding: 4px 8px; border-radius: 4px;">${log.details}</div>` : ''}
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        };
+
+        // Event hooks
+        searchInput.oninput = filterAndRenderLogs;
+        categoryFilter.onchange = filterAndRenderLogs;
+        typeFilter.onchange = filterAndRenderLogs;
+
+        // Clear Logs
+        clearBtn.onclick = () => {
+            if (confirm("Tüm log geçmişini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) {
+                window.BrenerApp.state.logs = [];
+                window.BrenerApp.logActivity('sistem', 'Sistem log geçmişi yönetici tarafından temizlendi.', 'warning');
+                window.BrenerApp.showToast('danger', 'Log geçmişi temizlendi.');
+                
+                this.renderSystemLogs(container);
+            }
+        };
+
+        // Export Logs as JSON file
+        exportBtn.onclick = () => {
+            const query = searchInput.value.toLowerCase().trim();
+            const selectedCat = categoryFilter.value;
+            const selectedType = typeFilter.value;
+
+            const filteredLogs = logs.filter(log => {
+                const matchesSearch = log.action.toLowerCase().includes(query) || 
+                                      log.user.toLowerCase().includes(query) || 
+                                      (log.details && log.details.toLowerCase().includes(query));
+                const matchesCat = selectedCat === 'all' || log.category === selectedCat;
+                const matchesType = selectedType === 'all' || log.type === selectedType;
+                return matchesSearch && matchesCat && matchesType;
+            });
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(filteredLogs, null, 4));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `brener_sistem_loglari_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            
+            window.BrenerApp.showToast('success', 'Log kayıtları JSON olarak indirildi.');
+        };
+
+        // Initial render
+        filterAndRenderLogs();
     }
 };
