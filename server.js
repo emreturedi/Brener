@@ -392,6 +392,33 @@ app.put('/api/users/:id/password', authenticateToken, async (req, res) => {
     }
 });
 
+
+// Diagnostic Endpoint
+app.get('/api/health', async (req, res) => {
+    const status = {
+        time: new Date().toISOString(),
+        database: 'Checking...',
+        userCount: 0,
+        companyCount: 0,
+        envKeys: Object.keys(process.env).filter(k => k.startsWith('DB_') || k === 'JWT_SECRET' || k === 'PORT')
+    };
+    
+    try {
+        const [rows] = await pool.query('SELECT COUNT(*) as count FROM users');
+        status.database = 'Connected successfully!';
+        status.userCount = rows[0].count;
+        
+        const [compRows] = await pool.query('SELECT COUNT(*) as count FROM companies');
+        status.companyCount = compRows[0].count;
+        
+        res.json(status);
+    } catch (err) {
+        status.database = 'Error: ' + err.message;
+        status.errorDetails = err;
+        res.status(500).json(status);
+    }
+});
+
 // Fallback to serve index.html for SPA router
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
