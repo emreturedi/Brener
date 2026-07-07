@@ -17,8 +17,10 @@ window.BrenerApp.Degerleme = {
         } else if (view === 'komisyon-vergi') {
             this.renderTaxCalc(container);
         } else if (view === 'kira-dilekce-asistani') {
-            this.renderRentAssistant(container);
-        }
+                this.renderRentAssistant(container);
+            } else if (view === 'sektor-radari') {
+                this.renderSektorRadari(container);
+            }
     },
 
     // 1. Emlak Değer Tahmini (Value Predictor)
@@ -489,5 +491,414 @@ window.BrenerApp.Degerleme = {
 
         document.getElementById('rentIncreaseVal').textContent = `${inc.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺`;
         document.getElementById('rentNewVal').textContent = `${newVal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺`;
-    }
-};
+    },
+
+    renderSektorRadari(container) {
+        window.BrenerApp.updateTopbarTitle('Sektör Radarı', 'Türkiye genelinde güncel inşaat projeleri ve kamu ihaleleri');
+
+        // Initial last update state
+        let lastUpdatedMinutes = 17 * 24 * 60; // 17 days in minutes
+
+        const getFormattedLastUpdateText = (min) => {
+            if (min === 0) return 'Son güncelleme: Şimdi';
+            const days = Math.floor(min / (24 * 60));
+            if (days > 0) return `Son güncelleme: ${days} gün önce`;
+            const hours = Math.floor(min / 60);
+            if (hours > 0) return `Son güncelleme: ${hours} saat önce`;
+            return `Son güncelleme: ${min} dakika önce`;
+        };
+
+        const mockProjects = [
+            {
+                source: 'TOKİ Projesi',
+                status: 'İhale Sürecinde',
+                category: 'Konut',
+                title: 'Rize İli Hemşin İlçesi Kentsel Dönüşüm ve Gelişim Projesi 2. Etap 47 Adet Konut ve 8 Adet Dükkan İnşaatları ile Altyapı ve Çevre Düzenlemesi İşi',
+                subtext: 'TOKİ Toplu Konut / İhale Projesi. Tarih: 13 Temmuz 2026 11:00',
+                location: 'Rize',
+                authority: 'T.C. TOPLU KONUT İDARESİ BAŞKANLIĞI (TOKİ)',
+                date: '13 Tem 2026',
+                link: 'https://www.toki.gov.tr/ihale-tarihleri'
+            },
+            {
+                source: 'TOKİ Projesi',
+                status: 'İhale Sürecinde',
+                category: 'Konut',
+                title: 'Sakarya İli, Adapazarı İlçesi, Sakarya Büyükşehir Belediyesi Hizmet Binası İnşaatı ile Altyapı ve Çevre Düzenlemesi İşi',
+                subtext: 'TOKİ Toplu Konut / İhale Projesi. Tarih: 30 Haziran 2026 11:00',
+                location: 'Sakarya',
+                authority: 'T.C. TOPLU KONUT İDARESİ BAŞKANLIĞI (TOKİ)',
+                date: '30 Haz 2026',
+                link: 'https://www.toki.gov.tr/ihale-tarihleri'
+            },
+            {
+                source: 'Kamu İhalesi (EKAP)',
+                status: 'Teklif Aşamasında',
+                category: 'Altyapı',
+                title: 'Trabzon İli Ortahisar İlçesi Yağmursuyu ve Kanalizasyon Şebeke Hattı Genişletilmesi İnşaat İşi',
+                subtext: 'Trabzon İçme Suyu ve Kanalizasyon İdaresi (TİSKİ) İhale İlanı',
+                location: 'Trabzon',
+                authority: 'TİSKİ GENEL MÜDÜRLÜĞÜ',
+                date: '20 Tem 2026',
+                link: 'https://ekap.kik.gov.tr'
+            },
+            {
+                source: 'ÇED Duyurusu',
+                status: 'ÇED Olumlu',
+                category: 'Sanayi',
+                title: 'Kocaeli Dilovası Organize Sanayi Bölgesi Metal Geri Kazanım ve İleri Material Üretim Tesisi Kapasite Artışı Projesi',
+                subtext: 'Çevre, Şehircilik ve İklim Değişikliği Bakanlığı ÇED Duyurusu',
+                location: 'Kocaeli',
+                authority: 'ÇEVRE, ŞEHİRCİLİK VE İKLİM DEĞİŞİKLİĞİ BAKANLIĞI',
+                date: '12 Tem 2026',
+                link: 'https://ced.csb.gov.tr'
+            },
+            {
+                source: 'Belediye / Basın İlan (ilan.gov.tr)',
+                status: 'İlan Sürecinde',
+                category: 'Sosyal Tesis',
+                title: 'Ankara Çankaya Belediyesi Kültür Merkezi ve Semt Evi Kaba İnşaat Yapım İşi İlanı',
+                subtext: 'Çankaya Belediye Başkanlığı Destek Hizmetleri Md.',
+                location: 'Ankara',
+                authority: 'ÇANKAYA BELEDİYE BAŞKANLIĞI',
+                date: '08 Tem 2026',
+                link: 'https://www.ilan.gov.tr'
+            },
+            {
+                source: 'İstanbul Büyükşehir Bld.',
+                status: 'Değerlendirmede',
+                category: 'Ulaşım',
+                title: 'Kadıköy-Söğütlüçeşme Üsküdar-Harem Nostaljik Tramvay Hattı Altyapı ve Ray Döşeme İşleri Yapımı',
+                subtext: 'İBB Raylı Sistem Daire Başkanlığı Raylı Sistem Projeler Md.',
+                location: 'İstanbul',
+                authority: 'İSTANBUL BÜYÜKŞEHİR BELEDİYE BAŞKANLIĞI (İBB)',
+                date: '25 Tem 2026',
+                link: 'https://www.ibb.istanbul'
+            }
+        ];
+
+        let html = `
+            <style>
+                .radar-card {
+                    background: var(--bg-card);
+                    border: 1px solid var(--border-color);
+                    border-radius: 12px;
+                    padding: 20px;
+                    transition: all 0.2s;
+                }
+                .source-badge {
+                    font-size: 0.72rem;
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    font-weight: bold;
+                    display: inline-block;
+                }
+                .source-toki { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+                .source-ekap { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+                .source-ced { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+                .source-ilan { background: rgba(6, 182, 212, 0.1); color: #06b6d4; }
+                .source-ibb { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+
+                .status-badge {
+                    font-size: 0.72rem;
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid var(--border-color);
+                    color: var(--text-muted);
+                    display: inline-block;
+                }
+                .cat-badge {
+                    font-size: 0.72rem;
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid var(--border-color);
+                    color: var(--text-main);
+                    display: inline-block;
+                }
+                .radar-item-card {
+                    background: var(--bg-card);
+                    border: 1px solid var(--border-color);
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin-bottom: 16px;
+                    position: relative;
+                    transition: all 0.2s;
+                }
+                .radar-item-card:hover {
+                    border-color: var(--primary);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                }
+                .copilot-banner {
+                    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+                    border: 1px solid rgba(139, 92, 246, 0.15);
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 24px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    flex-wrap: wrap;
+                    gap: 15px;
+                }
+                .tab-pill {
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid var(--border-color);
+                    color: var(--text-muted);
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .tab-pill.active {
+                    background: #1e293b;
+                    color: white;
+                    border-color: #1e293b;
+                }
+            </style>
+
+            <!-- Top Banner Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="font-size: 2.2rem;">🌐</div>
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800;">Sektör Radarı</h2>
+                        <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-muted);">Türkiye genelinde güncel inşaat projeleri ve kamu ihaleleri</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <span id="radarLastUpdatedLabel" style="font-size: 0.8rem; color: var(--text-muted);">${getFormattedLastUpdateText(lastUpdatedMinutes)}</span>
+                    <button class="btn btn-primary" id="btnUpdateRadarNow" style="background: #10b981; border: none; font-weight: 700; color: white; display: flex; align-items: center; gap: 6px;">
+                        🔄 Şimdi Güncelle
+                    </button>
+                </div>
+            </div>
+
+            <!-- Top 4 Cards Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1.2fr; gap: 16px; margin-bottom: 24px;">
+                <div class="radar-card" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase;">Toplam Proje</div>
+                        <strong style="font-size: 1.8rem; display: block; margin-top: 6px; color: var(--text-main);">63</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Tüm kaynaklardan</span>
+                    </div>
+                    <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🏢</div>
+                </div>
+
+                <div class="radar-card" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase;">Bu Hafta</div>
+                        <strong style="font-size: 1.8rem; display: block; margin-top: 6px; color: var(--text-main);">0</strong>
+                        <span style="font-size: 0.72rem; color: #10b981; font-weight: 600;">+ yeni eklenen</span>
+                    </div>
+                    <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(59, 130, 246, 0.1); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">📈</div>
+                </div>
+
+                <div class="radar-card" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase;">Veri Kaynağı</div>
+                        <strong style="font-size: 1.8rem; display: block; margin-top: 6px; color: var(--text-main);">5</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Aktif kaynak</span>
+                    </div>
+                    <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🌐</div>
+                </div>
+
+                <div class="radar-card" style="padding: 14px 20px;">
+                    <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; font-weight: bold;">Kaynak Dağılımı ℹ</div>
+                    <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.74rem;">
+                        <div style="display: flex; justify-content: space-between;"><span>ÇED Duyurusu</span><strong style="color: #f97316;">20</strong></div>
+                        <div style="display: flex; justify-content: space-between;"><span>Kamu İhalesi (EKAP)</span><strong style="color: #3b82f6;">12</strong></div>
+                        <div style="display: flex; justify-content: space-between;"><span>Belediye / Basın İlan</span><strong style="color: #06b6d4;">5</strong></div>
+                        <div style="display: flex; justify-content: space-between;"><span>İstanbul Büyükşehir Bld.</span><strong style="color: #6366f1;">4</strong></div>
+                        <div style="display: flex; justify-content: space-between;"><span>TOKİ Projesi</span><strong style="color: #10b981;">22</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Market Copilot Banner -->
+            <div class="copilot-banner">
+                <div style="max-width: 70%;">
+                    <h3 style="margin: 0; font-size: 1rem; color: #8b5cf6; display: flex; align-items: center; gap: 6px;">✨ AI Sektör Ortağı (Market Copilot)</h3>
+                    <p style="margin: 6px 0 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                        Veritabanındaki son ihaleleri, kamu yatırımlarını ve ÇED duyurularını analiz ederek anında pazar trend raporları, bölgesel fırsatlar ve SEO içerik fikirleri üretin.
+                    </p>
+                </div>
+                <button class="btn btn-primary" id="btnSektorRadarAiAnalyze" style="background: #8b5cf6; border: none; color: white; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                    🔮 Pazar Fırsatlarını Analiz Et
+                </button>
+            </div>
+
+            <!-- Source Filters Tab Pills -->
+            <div style="display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;">
+                <div class="tab-pill active" data-source="Tüm Kaynaklar">Tüm Kaynaklar</div>
+                <div class="tab-pill" data-source="ÇED Duyurusu">ÇED Duyurusu</div>
+                <div class="tab-pill" data-source="TOKİ Projesi">TOKİ Projesi</div>
+                <div class="tab-pill" data-source="Kamu İhalesi (EKAP)">Kamu İhalesi (EKAP)</div>
+                <div class="tab-pill" data-source="Belediye / Basın İlan (ilan.gov.tr)">Belediye / Basın İlan (ilan.gov.tr)</div>
+                <div class="tab-pill" data-source="İstanbul Büyükşehir Bld.">İstanbul Büyükşehir Bld.</div>
+            </div>
+
+            <!-- Search & Filters Row -->
+            <div class="card" style="padding: 16px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;">
+                <div style="position: relative; width: 100%;">
+                    <input type="text" id="searchRadarInput" placeholder="Proje adı, firma veya il ara..." style="width: 100%; padding: 10px 10px 10px 36px;">
+                    <span style="position: absolute; left: 12px; top: 11px; color: var(--text-muted);">🔍</span>
+                </div>
+                <button class="btn btn-secondary" style="padding: 10px 20px; display: flex; align-items: center; gap: 6px;">
+                    ⚙ Filtreler
+                </button>
+                <button class="btn btn-primary" id="btnSearchRadarSubmit" style="background: #059669; border: none; color: white; font-weight: bold; padding: 10px 24px; display: flex; align-items: center; gap: 6px;">
+                    🔍 Ara
+                </button>
+            </div>
+
+            <!-- Results Section List -->
+            <div id="radarResultsList">
+                <!-- Items rendered dynamically -->
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+        // Source Styles Mapping
+        const sourceStyles = {
+            'TOKİ Projesi': 'source-toki',
+            'Kamu İhalesi (EKAP)': 'source-ekap',
+            'ÇED Duyurusu': 'source-ced',
+            'Belediye / Basın İlan (ilan.gov.tr)': 'source-ilan',
+            'İstanbul Büyükşehir Bld.': 'source-ibb'
+        };
+
+        const renderRadarItems = (items) => {
+            const resultsContainer = document.getElementById('radarResultsList');
+            if (!resultsContainer) return;
+
+            if (items.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="card" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        Aradığınız kriterlere uygun güncel proje ihalesi veya ÇED duyurusu bulunamadı.
+                    </div>
+                `;
+                return;
+            }
+
+            resultsContainer.innerHTML = items.map(p => {
+                const srcStyle = sourceStyles[p.source] || '';
+                return `
+                    <div class="radar-item-card">
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                            <span class="source-badge ${srcStyle}">${p.source}</span>
+                            <span class="status-badge">${p.status}</span>
+                            <span class="cat-badge">${p.category}</span>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 8px 0; font-size: 0.95rem; font-weight: 700; line-height: 1.5; color: var(--text-main);">
+                                    ${p.title}
+                                </h4>
+                                <span style="font-size: 0.74rem; color: var(--text-muted); display: block; margin-bottom: 12px;">
+                                    ${p.subtext}
+                                </span>
+                                
+                                <div style="display: flex; gap: 16px; font-size: 0.74rem; color: var(--text-muted); flex-wrap: wrap;">
+                                    <span>📍 ${p.location}</span>
+                                    <span>🏢 ${p.authority}</span>
+                                    <span>📅 ${p.date}</span>
+                                </div>
+                            </div>
+                            
+                            <a href="${p.link}" target="_blank" class="btn btn-secondary btn-sm" style="display: flex; align-items: center; gap: 6px; text-decoration: none; padding: 6px 12px; font-size: 0.72rem; white-space: nowrap;">
+                                🚀 Kaynağa Git
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        // Render initial data list
+        renderRadarItems(mockProjects);
+
+        // Dynamic Filtering
+        const searchInput = document.getElementById('searchRadarInput');
+        const searchBtn = document.getElementById('btnSearchRadarSubmit');
+        const tabPills = container.querySelectorAll('.tab-pill');
+        let activeFilterSource = 'Tüm Kaynaklar';
+
+        const runFilter = () => {
+            const query = searchInput.value.toLowerCase().trim();
+            const filtered = mockProjects.filter(p => {
+                const matchesSearch = p.title.toLowerCase().includes(query) || p.location.toLowerCase().includes(query) || p.authority.toLowerCase().includes(query);
+                const matchesSource = activeFilterSource === 'Tüm Kaynaklar' || p.source === activeFilterSource;
+                return matchesSearch && matchesSource;
+            });
+            renderRadarItems(filtered);
+        };
+
+        // Tab Pill Click Handler
+        tabPills.forEach(pill => {
+            pill.onclick = () => {
+                tabPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                activeFilterSource = pill.getAttribute('data-source');
+                runFilter();
+            };
+        });
+
+        searchBtn.onclick = runFilter;
+        searchInput.onkeydown = (e) => {
+            if (e.key === 'Enter') runFilter();
+        };
+
+        // Update Radar Now Button
+        document.getElementById('btnUpdateRadarNow').onclick = () => {
+            lastUpdatedMinutes = 0;
+            document.getElementById('radarLastUpdatedLabel').textContent = getFormattedLastUpdateText(lastUpdatedMinutes);
+            window.BrenerApp.showToast('success', 'Sektör Radarı verileri ihaleler ve ÇED duyurularıyla anlık senkronize edildi!');
+            window.BrenerApp.logActivity('degerleme', 'Sektör Radarı verileri güncellendi.', 'success');
+        };
+
+        // AI Market Copilot Report Modal
+        document.getElementById('btnSektorRadarAiAnalyze').onclick = () => {
+            const reportHtml = `
+                <div style="padding: 20px; font-size: 0.88rem; display: flex; flex-direction: column; gap: 16px;">
+                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.15)); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 8px; padding: 14px; border-left: 4px solid #8b5cf6;">
+                        <strong style="color: #8b5cf6; display: block; margin-bottom: 4px;">🎯 AI Copilot Özet Raporu: Haftalık Fırsatlar</strong>
+                        Rize ve Sakarya'da 2 adet büyük kamu/TOKİ yatırımı ihale ilan aşamasında. Kentsel dönüşüm kapsamında malzeme tedariki ve alt yüklenici fırsatları %35 oranında artış gösterdi.
+                    </div>
+                    
+                    <div>
+                        <strong style="display: block; margin-bottom: 6px;">💡 Bölgesel Pazar Fırsatları:</strong>
+                        <ol style="margin: 0; padding-left: 20px; line-height: 1.5;">
+                            <li><strong>Rize Hemşin (Konut & Ticari):</strong> 47 Konut ve 8 dükkan projesi için kaba inşaat demiri ve beton tedarik lojistiği fırsatı.</li>
+                            <li><strong>Sakarya Hizmet Binası:</strong> Belediye hizmet binası ince inşaat ve elektromekanik taahhüt işleri.</li>
+                            <li><strong>Kocaeli Dilovası OSB:</strong> Sanayi tesislerinde ÇED olumlu raporları sonrası metal geri kazanım tesisi altyapı iş kalemleri.</li>
+                        </ol>
+                    </div>
+
+                    <div>
+                        <strong style="display: block; margin-bottom: 6px;">📈 SEO & Blog İçerik Fikirleri:</strong>
+                        <ul style="margin: 0; padding-left: 20px; line-height: 1.5;">
+                            <li>"Kentsel Dönüşüm Projelerinde Doğru Taşeron ve Tedarik Zinciri Seçimi"</li>
+                            <li>"Sakarya ve Rize Yeni Kamu Yatırımlarının Yerel İnşaat Sektörüne Etkisi"</li>
+                        </ul>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 10px;">
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Analiz Tarihi: Bugün</span>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-secondary" onclick="window.BrenerApp.closeModal()">Kapat</button>
+                            <button class="btn btn-primary" style="background:#8b5cf6; border:none; color:white;" onclick="window.BrenerApp.closeModal(); window.BrenerApp.showToast('success', 'Rapor PDF olarak indirildi.');">Raporu İndir</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            window.BrenerApp.openModal('🔮 AI Sektör Ortağı Analiz Raporu', reportHtml);
+        };
+    },
+        };

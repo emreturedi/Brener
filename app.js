@@ -5,27 +5,27 @@
 // Establish global namespace
 window.BrenerApp = {
     // Application State
-    state: {
-        projects: [],
-        currentProjectId: null,
-        reminders: [],
-        timesheet: {}, // { date: { employeeId: status } }
-        employees: [],
-        materials: [],
-        hseIncidents: [],
-        concretePours: [],
-        claims: [], // Progress claims
-        workOrders: [],
-        customers: [],
-        users: [],
-        currentUser: null,
-        rolePermissions: {},
-        logs: [], // Activity logs
-        projectContracts: {}, // Project contract summaries
-        projectSpecs: {}, // Project technical specifications
-        specTemplates: [], // Global specification templates
-        theme: 'dark' // default
-    },
+        state: {
+            projects: [],
+            currentProjectId: null,
+            reminders: [],
+            timesheet: {}, // { date: { employeeId: status } }
+            employees: [],
+            materials: [],
+            hseIncidents: [],
+            concretePours: [],
+            claims: [], // Progress claims
+            workOrders: [],
+            customers: [],
+            users: [],
+            currentUser: null,
+                    rolePermissions: {},
+                            logs: [], // Activity logs
+                                    projectContracts: {}, // Project contract summaries
+                                    projectSpecs: {}, // Project technical specifications
+                                    specTemplates: [], // Global specification templates
+                                    theme: 'dark' // default
+                                },
 
     // Global SVG Icons utility (for crisp, zero-dependency inline SVGs)
     icons: {
@@ -88,7 +88,14 @@ window.BrenerApp = {
         settings: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
         'project-docs': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
         'ai-docs': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
-        profile: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+        profile: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+        timeline: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="5" x2="20" y2="5"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="19" x2="20" y2="19"/><circle cx="5" cy="5" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="5" cy="19" r="1"/></svg>`,
+        budget: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><path d="M12 11h4v2h-4z"/><circle cx="7" cy="12" r="2"/></svg>`,
+        reports: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
+        radar: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>`,
+        crm: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>`,
+        support: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+        presentation: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`
     },
 
     // Initialize application
@@ -100,7 +107,7 @@ window.BrenerApp = {
         this.setupProjectSelector();
         this.setupNotifications();
         this.setupMenuSearch();
-        
+
         // Handle initial routing
         this.router();
         window.addEventListener('hashchange', () => this.router());
@@ -123,12 +130,12 @@ window.BrenerApp = {
             title.addEventListener('click', () => {
                 const group = title.closest('.nav-group');
                 const wasActive = group.classList.contains('active');
-                
+
                 // Close other groups on desktop
                 if (window.innerWidth > 992) {
                     document.querySelectorAll('.nav-group').forEach(g => g.classList.remove('active'));
                 }
-                
+
                 if (!wasActive) {
                     group.classList.add('active');
                 } else {
@@ -221,18 +228,18 @@ window.BrenerApp = {
             window.location.hash = '#profil';
         });
 
-        // Logout action
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            const userName = this.state.currentUser ? this.state.currentUser.name : '';
-            this.logActivity('sistem', `Çıkış yapıldı: ${userName}`, 'info');
-            this.state.currentUser = null;
-            this.saveStateToStorage();
-            this.showToast('danger', 'Sistemden çıkış yapılıyor...');
-            setTimeout(() => {
-                window.location.hash = '#panel';
-                window.location.reload();
-            }, 1000);
-        });
+                // Logout action
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    const userName = this.state.currentUser ? this.state.currentUser.name : '';
+                    this.logActivity('sistem', `Çıkış yapıldı: ${userName}`, 'info');
+                    this.state.currentUser = null;
+                    this.saveStateToStorage();
+                    this.showToast('danger', 'Sistemden çıkış yapılıyor...');
+                    setTimeout(() => {
+                        window.location.hash = '#panel';
+                        window.location.reload();
+                    }, 1000);
+                });
     },
 
     // State Load with Rich Preloaded Mock Database
@@ -254,79 +261,60 @@ window.BrenerApp = {
             }
             if (!this.state.rolePermissions || Object.keys(this.state.rolePermissions).length === 0) {
                 this.state.rolePermissions = {
-                    sefi: { genel: true, santiye: true, 'proje-yonetimi': true, finans: false, hesaplama: true, degerleme: false, ai: true, saha: false, ekip: true, belgeler: true },
-                    muhasebe: { genel: true, santiye: false, 'proje-yonetimi': true, finans: true, hesaplama: false, degerleme: true, ai: false, saha: false, ekip: false, belgeler: true },
-                    saha: { genel: true, santiye: false, 'proje-yonetimi': false, finans: false, hesaplama: false, degerleme: false, ai: false, saha: true, ekip: true, belgeler: true }
+                    sefi: { genel: true, santiye: true, seflik: true, finans: false, hesaplama: true, degerleme: false, ai: true, saha: false, ekip: true, belgeler: true },
+                    muhasebe: { genel: true, santiye: false, seflik: false, finans: true, hesaplama: false, degerleme: true, ai: false, saha: false, ekip: false, belgeler: true },
+                    saha: { genel: true, santiye: false, seflik: false, finans: false, hesaplama: false, degerleme: false, ai: false, saha: true, ekip: true, belgeler: true }
                 };
-            }
-            if (!this.state.logs) {
-                this.state.logs = [];
-            }
-            if (!this.state.specTemplates) {
-                this.state.specTemplates = [];
-            }
-            if (!this.state.projectSpecs) {
-                this.state.projectSpecs = {};
-            } else {
-                for (let projId in this.state.projectSpecs) {
-                    const data = this.state.projectSpecs[projId];
-                    if (data && !data.clauses) {
-                        this.state.projectSpecs[projId] = {
-                            metadata: {
-                                ilce_semt: "KADIKÖY – GÖZTEPE",
-                                bina_adi: "ÇAVLI APARTMANI",
-                                ada_no: "391",
-                                parsel_no: "5",
-                                sartname_tarihi: "2026-04-17"
-                            },
-                            clauses: [
-                                { id: 'c1', title: "1. Projeler ve Kaba İnşaat", content: data.kaba_beton || "" },
-                                { id: 'c2', title: "2. Bodrum Kat", content: "" },
-                                { id: 'c3', title: "3. Binanın Dış Cephesi", content: data.cephe_kaplama || "" },
-                                { id: 'c4', title: "4. Zemin Kat ve Bina Girişi", content: "" },
-                                { id: 'c5', title: "5. Duvar ve Sıvalar", content: data.kaba_duvar || "" },
-                                { id: 'c6', title: "6. Isı Sistemi", content: data.mekanik_isitma || "" },
-                                { id: 'c7', title: "7. Sıhhi ve Pis Su Sistemleri", content: "" },
-                                { id: 'c8', title: "8. Elektrik - Klima Tesisatı", content: "" },
-                                { id: 'c9', title: "9. Televizyon Tesisat Sistemi", content: "" },
-                                { id: 'c10', title: "10. Telefon ve Görüntülü Diafon Sistemi", content: "" },
-                                { id: 'c11', title: "11. Doğalgaz Tesisatı", content: "" },
-                                { id: 'c12', title: "12. Çatı", content: "" },
-                                { id: 'c13', title: "13. Bahçe ve Dış Duvarlar", content: "" },
-                                { id: 'c14', title: "14. Asansörler", content: data.mekanik_asansor || "" },
-                                { id: 'c15', title: "15. Merdiven ve Sahanlıklar", content: "" },
-                                { id: 'c16', title: "16. Doğramalar", content: data.cephe_cam || "" },
-                                { id: 'c17', title: "17. Kapalı Garaj", content: "" },
-                                { id: 'c18', title: "18. Daire Dış ve İç Kapıları", content: data.ince_kapi || "" },
-                                { id: 'c19', title: "19. Mutfaklar", content: data.ince_mutfak || "" },
-                                { id: 'c20', title: "20. Banyo ve WC", content: "" },
-                                { id: 'c21', title: "21. Antre ve Koridorlar", content: "" },
-                                { id: 'c22', title: "22. Salon ve Odalar", content: data.ince_parke || "" },
-                                { id: 'c23', title: "23. İşçilik ve Garanti Koşulları", content: "5 Yıl Boyunca..." }
-                            ],
-                            notes: "Yarısı bizden hibe/kredi kampanyası desteklidir. Residence Konsepti tasarımdır.",
-                            sartname_durumu: "İmzalandı",
-                            signed_file_url: "https://storage.brener.com.tr/docs/cavli_sartname_signed.pdf",
-                            kat_malikleri_sayisi: 38,
-                            signed_files: [
-                                { name: "cavli_sartname_signed.pdf", size: "2.4 MB", date: "2026-04-20", url: "#" }
-                            ]
-                        };
-                    }
-                }
-            }
-
-            if (!this.state.projectContracts) {
-                this.state.projectContracts = {};
-            } else {
-                for (let projId in this.state.projectContracts) {
-                    const data = this.state.projectContracts[projId];
-                    if (data && !Array.isArray(data)) {
-                        this.state.projectContracts[projId] = [ { id: 'c_' + Date.now(), ...data } ];
-                    }
-                }
-            }
-        } else {
+                        }
+            
+                        if (!this.state.customerPresentations) {
+                            this.state.customerPresentations = {
+                                101: [
+                                    {
+                                        id: 'p1',
+                                        title: "3D Vaziyet Planı Render",
+                                        type: "image",
+                                        url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1000&q=80",
+                                        date: "2026-06-10",
+                                        size: "4.2 MB",
+                                        description: "Bodrum Port Konakları A ve B Blok dış cephe ve peyzaj 3D konsept görseli."
+                                    },
+                                    {
+                                        id: 'p2',
+                                        title: "Proje Tanıtım Filmi",
+                                        type: "video",
+                                        url: "https://assets.mixkit.co/videos/preview/mixkit-suburban-houses-aerial-view-40858-large.mp4",
+                                        thumbnail: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80",
+                                        date: "2026-06-12",
+                                        size: "24.8 MB",
+                                        description: "Drone ile havadan çekilmiş arsa konumu ve genel çevre tanıtım videosu."
+                                    },
+                                    {
+                                        id: 'p3',
+                                        title: "Detaylı Mimari Proje",
+                                        type: "pdf",
+                                        url: "https://storage.brener.com.tr/docs/mimari_proje_detaylari.pdf",
+                                        date: "2026-06-15",
+                                        size: "12.5 MB",
+                                        description: "Belediye onaylı 1/50 ölçekli kat planları, kesitler ve görünüşler."
+                                    },
+                                    {
+                                        id: 'p4',
+                                        title: "Dış Cephe Malzeme Mockup",
+                                        type: "image",
+                                        url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=80",
+                                        date: "2026-06-18",
+                                        size: "3.1 MB",
+                                        description: "Dış cephede kullanılacak doğal taş (Traverten) ve kompozit panel birleşim detayı."
+                                    }
+                                ]
+                                            };
+                                        }
+                            
+                                        if (!this.state.hakedisContracts) {
+                                            this.initHakedisState();
+                                        }
+                                    } else {
             // Load Mock database
             this.state.theme = 'dark';
             this.state.users = [
@@ -336,20 +324,24 @@ window.BrenerApp = {
                 { id: 4, name: 'Murat Kara', email: 'saha@brener.com.tr', password: 'saha123', role: 'saha' }
             ];
             this.state.currentUser = null;
-            this.state.rolePermissions = {
-                sefi: { genel: true, santiye: true, 'proje-yonetimi': true, finans: false, hesaplama: true, degerleme: false, ai: true, saha: false, ekip: true, belgeler: true },
-                muhasebe: { genel: true, santiye: false, 'proje-yonetimi': true, finans: true, hesaplama: false, degerleme: true, ai: false, saha: false, ekip: false, belgeler: true },
-                saha: { genel: true, santiye: false, 'proje-yonetimi': false, finans: false, hesaplama: false, degerleme: false, ai: false, saha: true, ekip: true, belgeler: true }
+                                    this.state.rolePermissions = {
+                                        sefi: { genel: true, santiye: true, 'proje-yonetimi': true, finans: false, hesaplama: true, degerleme: false, ai: true, saha: false, ekip: true, belgeler: true },
+                                        muhasebe: { genel: true, santiye: false, 'proje-yonetimi': true, finans: true, hesaplama: false, degerleme: true, ai: false, saha: false, ekip: false, belgeler: true },
+                                        saha: { genel: true, santiye: false, 'proje-yonetimi': false, finans: false, hesaplama: false, degerleme: false, ai: false, saha: true, ekip: true, belgeler: true                 }
+            }
+            if (!this.state.projectSpecs) {
+                this.state.projectSpecs = {};
             };
             this.state.theme = 'dark';
-            this.state.projects = [
-                { id: 101, name: 'Brener Port Konakları', location: 'Bodrum, Muğla', status: 'active', progress: 68, manager: 'Ahmet Şef', budget: 45000000, spent: 31000000 },
-                { id: 102, name: 'Brener Plaza', location: 'Ataşehir, İstanbul', status: 'active', progress: 42, manager: 'Mehmet Yılmaz', budget: 120000000, spent: 50400000 },
-                { id: 103, name: 'Brener Premium Villaları', location: 'Çeşme, İzmir', status: 'active', progress: 15, manager: 'Canan Demir', budget: 60000000, spent: 9000000 },
-                { id: 104, name: 'Brener Loft Rezidans', location: 'Nilüfer, Bursa', status: 'completed', progress: 100, manager: 'Selin Kaya', budget: 85000000, spent: 83500000 }
-            ];
+                        this.state.projects = [
+                            { id: 101, name: 'Brener Port Konakları', location: 'Bodrum, Muğla', status: 'active', progress: 68, manager: 'Ahmet Şef', budget: 45000000, spent: 31000000 },
+                            { id: 102, name: 'Brener Plaza', location: 'Ataşehir, İstanbul', status: 'active', progress: 42, manager: 'Mehmet Yılmaz', budget: 120000000, spent: 50400000 },
+                            { id: 103, name: 'Brener Premium Villaları', location: 'Çeşme, İzmir', status: 'active', progress: 15, manager: 'Canan Demir', budget: 60000000, spent: 9000000 },
+                            { id: 104, name: 'Brener Loft Rezidans', location: 'Nilüfer, Bursa', status: 'completed', progress: 100, manager: 'Selin Kaya', budget: 85000000, spent: 83500000 },
+                            { id: 105, name: 'Brener Göztepe Hastane İnşaatı', location: 'Göztepe, İstanbul', status: 'active', progress: 98, manager: 'Emre Alüminyum', budget: 85391753, spent: 100946337 }
+                        ];
             this.state.currentProjectId = 101;
-            
+
             this.state.employees = [
                 { id: 1, name: 'Hasan Demir', role: 'Kalıpçı Ustası', salary: 1500, status: 'active' },
                 { id: 2, name: 'Ali Yılmaz', role: 'Demirci Ustası', salary: 1500, status: 'active' },
@@ -393,144 +385,197 @@ window.BrenerApp = {
                 { id: 2, project: 'Brener Plaza', date: '2026-06-22', grade: 'C35', volume: 240, temp: '26°C', slump: 'S4 (16cm)', status: 'Döküldü (Kürleniyor)' }
             ];
 
-            this.state.claims = [
-                { id: 1, subcontractor: 'Öz Yapı Demir Ltd.', description: 'B Blok Zemin ve 1. Kat Demir İşleri', totalAmount: 480000, retention: 24000, netPaid: 456000, date: '2026-06-15', status: 'paid' },
-                { id: 2, subcontractor: 'Yavuz Beton Kalıp', description: 'A Blok Komple Kaba İşçilik', totalAmount: 1250000, retention: 62500, netPaid: 1187500, date: '2026-06-23', status: 'pending' }
-            ];
+                        this.state.claims = [
+                            { id: 1, subcontractor: 'Öz Yapı Demir Ltd.', description: 'B Blok Zemin ve 1. Kat Demir İşleri', totalAmount: 480000, retention: 24000, netPaid: 456000, date: '2026-06-15', status: 'paid' },
+                            { id: 2, subcontractor: 'Yavuz Beton Kalıp', description: 'A Blok Komple Kaba İşçilik', totalAmount: 1250000, retention: 62500, netPaid: 1187500, date: '2026-06-23', status: 'pending' }
+                        ];
+            
+                        this.state.customerPresentations = {
+                            101: [
+                                {
+                                    id: 'p1',
+                                    title: "3D Vaziyet Planı Render",
+                                    type: "image",
+                                    url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1000&q=80",
+                                    date: "2026-06-10",
+                                    size: "4.2 MB",
+                                    description: "Bodrum Port Konakları A ve B Blok dış cephe ve peyzaj 3D konsept görseli."
+                                },
+                                {
+                                    id: 'p2',
+                                    title: "Proje Tanıtım Filmi",
+                                    type: "video",
+                                    url: "https://assets.mixkit.co/videos/preview/mixkit-suburban-houses-aerial-view-40858-large.mp4",
+                                    thumbnail: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80",
+                                    date: "2026-06-12",
+                                    size: "24.8 MB",
+                                    description: "Drone ile havadan çekilmiş arsa konumu ve genel çevre tanıtım videosu."
+                                },
+                                {
+                                    id: 'p3',
+                                    title: "Detaylı Mimari Proje",
+                                    type: "pdf",
+                                    url: "https://storage.brener.com.tr/docs/mimari_proje_detaylari.pdf",
+                                    date: "2026-06-15",
+                                    size: "12.5 MB",
+                                    description: "Belediye onaylı 1/50 ölçekli kat planları, kesitler ve görünüşler."
+                                },
+                                {
+                                    id: 'p4',
+                                    title: "Dış Cephe Malzeme Mockup",
+                                    type: "image",
+                                    url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=80",
+                                    date: "2026-06-18",
+                                    size: "3.1 MB",
+                                    description: "Dış cephede kullanılacak doğal taş (Traverten) ve kompozit panel birleşim detayı."
+                                }
+                            ]
+                        };
+            
+    this.state.notifications = [
+                            { id: 1, title: 'Yeni İş Emri Atandı', desc: 'Caner Şen size B Blok kalıp kontrol görevini atadı.', time: '10 dakika önce', unread: true },
+                            { id: 2, title: 'Kritik Stok Uyarısı', desc: 'Çimento stoğu minimum seviyenin altına düştü!', time: '1 saat önce', unread: true },
+                            { id: 3, title: 'Beton Döküm Uyarısı', desc: 'Yarın Bodrum Projesi için beton dökümü planlandı.', time: '4 saat önce', unread: false }
+                        ];
+            
+                                    this.state.logs = [
+                                        { id: 'seed1', timestamp: new Date(Date.now() - 500000).toISOString(), user: 'Zeynep Yurt', role: 'muhasebe', category: 'finans', action: 'Yavuz Beton Kalıp kaba işçilik hakediş faturası sisteme işlendi.', type: 'info', details: 'Hakediş No: 2, Tutar: 1.250.000 TL, Teminat Kesintisi: %5' },
+                                        { id: 'seed2', timestamp: new Date(Date.now() - 1000000).toISOString(), user: 'Caner Şen', role: 'sefi', category: 'santiye', action: 'Şantiye Günlüğü raporu kaydedildi.', type: 'success', details: 'Hava: Açık 30°C. Demir bağlama ve temel kalıp imalatları tamamlandı.' },
+                                        { id: 'seed3', timestamp: new Date(Date.now() - 3600000).toISOString(), user: 'Murat Kara', role: 'saha', category: 'saha', action: 'B Blok Zemin Demir Bağlama iş emri tamamlandı olarak işaretlendi.', type: 'success', details: 'Usta: Ali Yılmaz. Projeye uygun 12 ton demir döşendi.' },
+                                        { id: 'seed4', timestamp: new Date(Date.now() - 7200000).toISOString(), user: 'Emre Türedi', role: 'admin', category: 'proje', action: 'Aktif proje değiştirildi: Brener Port Konakları.', type: 'info', details: 'Proje ID: 101, Konum: Bodrum, Muğla' },
+                                        { id: 'seed5', timestamp: new Date(Date.now() - 86400000).toISOString(), user: 'Sistem', role: 'system', category: 'sistem', action: 'admin@brener.com.tr kullanıcısı sisteme başarılı giriş yaptı.', type: 'success', details: 'IP: 127.0.0.1, Tarayıcı: Chrome Windows' }
+                                    ];
+                        
+                                                this.state.projectContracts = {
+                                                    101: [
+                                                        {
+                                                            id: 'c_seed_1',
+                                                            apartman_ismi: "Port Apartmanı",
+                                                            adres: "Bodrum Marina Yolu No:45, Muğla",
+                                                            ada: "402",
+                                                            parsel: "12",
+                                                            arsa_m2: 1500,
+                                                            malik_sayisi: "24 Daire",
+                                                            oran: 45,
+                                                            yarisi_bizden: true,
+                                                            sozlesme_tarihi: "2025-06-03",
+                                                            sozlesme_tarihi_bitis: "2025-09-15",
+                                                            yikim_tarihi: "2025-10-10",
+                                                            ruhsat_donemi: "ŞUBAT",
+                                                            insaat_suresi: "18 AY",
+                                                            is_gecikmesi_cezasi: 20000,
+                                                            teminat_mektubu: "10.000.000 TL Tutarlı Teminat Mektubu Verildi",
+                                                            tasinma_yardimi: "Her Daire İçin 15.000 TL",
+                                                            kira_yardimi: "Aylık 7.500 TL",
+                                                            kira_baslangic_bitis: "Yıkım Tarihinden İtibaren Teslim Tarihine Kadar",
+                                                            emlak_vergileri: "Yüklenici",
+                                                            kapici_tazminat: "Yüklenici Tarafından Karşılanacaktır",
+                                                            mulkiyet_tapu_masrafi: "Kat Maliki",
+                                                            milestones: [
+                                                                { name: "Temel", percent: 20 },
+                                                                { name: "Su Basman + Zemin Kat Beton", percent: 20 },
+                                                                { name: "Kaba İnşaat", percent: 20 },
+                                                                { name: "Duvar + Sıva + Elektrik + Mekanik", percent: 10 },
+                                                                { name: "Doğrama + Cam", percent: 10 },
+                                                                { name: "Mobilya", percent: 10 },
+                                                                { name: "Fiili Teslim", percent: 10 }
+                                                            ],
+                                                            müteahhit_hakedisi: "11 Daire",
+                                                            temsil_heyeti: ["Gülendam Gürsan", "Nazik Ada", "Nermin Argan", "Fatma Tözman", "Mahmure Bozkurt"],
+                                                            karar_orani: "5 TE 3",
+                                                            ihtilaf_merkezi: "İSTAÇ",
+                                                            fesih_sarti: "4 AY İNŞAAT İLERLEMEZSE"
+                                                                            }
+                                                                        ]
+                                                                    };
+                                                                                this.state.specTemplates = [
+                                                                                    {
+                                                                                        name: "Standart Kentsel Dönüşüm Şartnamesi",
+                                                                                        clauses: [
+                                                                                            { id: 't1', title: "1. Projeler ve Kaba İnşaat", content: "Statik projeye göre C30/37 hazır beton ve B420C demir kullanılacaktır." },
+                                                                                            { id: 't2', title: "2. Bodrum Kat", content: "Bodrum katlarda perde beton izolasyonları mebran kaplama ile korunacaktır." },
+                                                                                            { id: 't3', title: "3. Binanın Dış Cephesi", content: "Dış cephe taşyünü yalıtım üzeri alüminyum kompozit panel kaplama olacaktır." },
+                                                                                            { id: 't4', title: "4. Zemin Kat ve Bina Girişi", content: "Bina girişi zemin kaplaması doğal mermer ve görüntülü diafon paneli olacaktır." },
+                                                                                            { id: 't5', title: "5. Duvar ve Sıvalar", content: "Daire bölücü duvarlarda çift sıra gazbeton arası ses yalıtımı yapılacaktır." },
+                                                                                            { id: 't6', title: "6. Isı Sistemi", content: "Dairelerde Rehau marka yerden ısıtma sistemi kurulacaktır." },
+                                                                                            { id: 't7', title: "7. Sıhhi ve Pis Su Sistemleri", content: "Pis su boruları Fıratpen sessiz boru serisi olacaktır." },
+                                                                                            { id: 't8', title: "8. Elektrik - Klima Tesisatı", content: "Klima tesisatı her odaya bakır borulama şeklinde çekilecektir." },
+                                                                                            { id: 't9', title: "9. Televizyon Tesisat Sistemi", content: "Her daireye 3 adet bağımsız uydu hattı çekilecektir." },
+                                                                                            { id: 't10', title: "10. Telefon ve Görüntülü Diafon Sistemi", content: "Audio marka 7 inç görüntülü interkom ekranı kurulacaktır." },
+                                                                                            { id: 't11', title: "11. Doğalgaz Tesisatı", content: "Gaz tesisatı kapı önüne kadar çekilip sayaç vanası bırakılacaktır." },
+                                                                                            { id: 't12', title: "12. Çatı", content: "Çatı çelik konstrüksiyon üzeri ısı yalıtımı ve arduazlı mebran kaplama olacaktır." },
+                                                                                            { id: 't13', title: "13. Bahçe ve Dış Duvarlar", content: "Bahçe duvarları betonarme üzeri şık aydınlatmalı ve peyzajlı yapılacaktır." },
+                                                                                            { id: 't14', title: "14. Asansörler", content: "Kone veya Schindler marka 10 kişilik çift hızlı asansör kurulacaktır." },
+                                                                                            { id: 't15', title: "15. Merdiven ve Sahanlıklar", content: "Merdiven basamakları bej mermer, korkuluklar alüminyum profil olacaktır." },
+                                                                                            { id: 't16', title: "16. Doğramalar", content: "Rehau veya pimapen marka çift camlı konfor serisi pencereler." },
+                                                                                            { id: 't17', title: "17. Kapalı Garaj", content: "Her daire için 1 araçlık kapalı otopark alanı tahsis edilecektir." },
+                                                                                            { id: 't18', title: "18. Daire Dış ve İç Kapıları", content: "Daire dış kapısı Kale çelik kapı, iç kapılar Dortek lake kapı olacaktır." },
+                                                                                            { id: 't19', title: "19. Mutfaklar", content: "Mutfak dolapları Lineadecor, tezgah kuvars Belenco olacaktır." },
+                                                                                            { id: 't20', title: "20. Banyo ve WC", content: "Gömme rezervuar Vitra marka, seramikler Kütahya Seramik olacaktır." },
+                                                                                            { id: 't21', title: "21. Antre ve Koridorlar", content: "Girişte lake kapaklı portmanto dolabı hazır teslim edilecektir." },
+                                                                                            { id: 't22', title: "22. Salon ve Odalar", content: "Zeminler 1. sınıf derzli lamine parke olacaktır." },
+                                                                                            { id: 't23', title: "23. İşçilik ve Garanti Koşulları", content: "İmalat hatalarına karşı 5 yıl boyunca yüklenici garantisi kapsamındadır." }
+                                                                                        ]
+                                                                                    }
+                                                                                ];
+                                                                    
+                                                                                this.state.projectSpecs = {
+                                                                                    101: {
+                                                                                        metadata: {
+                                                                                            ilce_semt: "KADIKÖY – GÖZTEPE",
+                                                                                            bina_adi: "ÇAVLI APARTMANI",
+                                                                                            ada_no: "391",
+                                                                                            parsel_no: "5",
+                                                                                            sartname_tarihi: "2026-04-17"
+                                                                                        },
+                                                                                        clauses: [
+                                                                                            { id: 'c1', title: "1. Projeler ve Kaba İnşaat", content: "Statik projeye uygun C30/37 Hazır Beton (TS EN 206) ve B420C Nervürlü İnşaat Demiri kullanılacaktır." },
+                                                                                            { id: 'c2', title: "2. Bodrum Kat", content: "Bodrum kat perdeleri mebran bohçalama yöntemiyle su yalıtımı yapılacak ve XPS levhalarla korunacaktır." },
+                                                                                            { id: 'c3', title: "3. Binanın Dış Cephesi", content: "150 yoğunluklu Taşyünü Cephe Yalıtımı (5cm) üzerine Alüminyum Kompozit Panel ve Doğal Taş (Traverten) kaplama yapılacaktır." },
+                                                                                            { id: 'c4', title: "4. Zemin Kat ve Bina Girişi", content: "Bina giriş holü zeminleri traverten mermer, duvarlar kısmi ahşap kaplama ve paslanmaz posta kutulu olacaktır." },
+                                                                                            { id: 'c5', title: "5. Duvar ve Sıvalar", content: "Dış duvarlar 25cm kalınlığında Ytong gazbeton, iç duvarlar alçı sıva üzeri Dyo silinebilir boya olacaktır." },
+                                                                                            { id: 'c6', title: "6. Isı Sistemi", content: "Merkezi sistem pay ölçerli Rehau marka yerden ısıtma borulaması tesis edilecektir." },
+                                                                                            { id: 'c7', title: "7. Sıhhi ve Pis Su Sistemleri", content: "Sıhhi tesisat boruları PPRC cam elyaf takviyeli, pis su boruları sessiz boru serisi olacaktır." },
+                                                                                            { id: 'c8', title: "8. Elektrik - Klima Tesisatı", content: "Klima tesisatı her odaya bakır borulama şeklinde çekilecektir (Siemens sigortalar)." },
+                                                                                            { id: 'c9', title: "9. Televizyon Tesisat Sistemi", content: "Merkezi uydu santrali kurulacak, her odada TV prizi bulunacaktır." },
+                                                                                            { id: 'c10', title: "10. Telefon ve Görüntülü Diafon Sistemi", content: "Bina girişine Audio marka kameralı zil paneli, dairelere 7 inç renkli interkom ekranı kurulacaktır." },
+                                                                                            { id: 'c11', title: "11. Doğalgaz Tesisatı", content: "Mutfak ocağı ve banyo sıcak su kullanımı için kolon doğalgaz hattı çekilecektir." },
+                                                                                            { id: 'c12', title: "12. Çatı", content: "Çelik konstrüksiyon çatı, taşyünü ısı yalıtımı üzeri antrasit renkli çelik kiremit kaplama olacaktır." },
+                                                                                            { id: 'c13', title: "13. Bahçe ve Dış Duvarlar", content: "Bahçe sınır duvarları brüt betonarme üstü panel çit, bahçe peyzajı otomatik sulamalı olacaktır." },
+                                                                                            { id: 'c14', title: "14. Asansörler", content: "Kone 10 Kişilik Sedye Uyumlu VVVF frekans kontrollü lüks kabinli asansör tesis edilecektir." },
+                                                                                            { id: 'c15', title: "15. Merdiven ve Sahanlıklar", content: "Merdiven basamakları Muğla beyazı mermer, korkuluklar temperli camlı alüminyum olacaktır." },
+                                                                                            { id: 'c16', title: "16. Doğramalar", content: "Rehau PVC Doğrama - Isıcam Sinerji (4+16+4) çift açılımlı konfor pencereler." },
+                                                                                            { id: 'c17', title: "17. Kapalı Garaj", content: "Kapalı otopark zeminleri helikopter perdahlı beton ve epoksi çizgilendirmeli olacaktır." },
+                                                                                            { id: 'c18', title: "18. Daire Dış ve İç Kapıları", content: "Daire dış kapıları Dortek çelik kapı, iç kapıları Dortek lake panel ahşap kapı." },
+                                                                                            { id: 'c19', title: "19. Mutfaklar", content: "Mutfak dolapları Lineadecor, tezgah kuvars Belenco marka, ankastre cihazlar Siemens." },
+                                                                                            { id: 'c20', title: "20. Banyo ve WC", content: "Seramikler Kütahya Seramik 60x120 rektifiyeli granit, vitrifiyeler Vitra, bataryalar Artema." },
+                                                                                            { id: 'c21', title: "21. Antre ve Koridorlar", content: "Giriş holüne asma tavan led ışık bandı ve gömme portmanto dolabı yapılacaktır." },
+                                                                                            { id: 'c22', title: "22. Salon ve Odalar", content: "Şerifoğlu Lamine Parke (14mm Meşe) zemin kaplaması ve lüks ahşap süpürgelikler." },
+                                                                                            { id: 'c23', title: "23. İşçilik ve Garanti Koşulları", content: "Brener Group kalitesiyle tüm ince ve kaba işçilikler 5 Yıl Boyunca firma garantimiz altındadır." }
+                                                                                        ],
+                                                                                        notes: "Yarısı bizden hibe/kredi kampanyası desteklidir. Residence Konsepti tasarımdır.",
+                                                                                        sartname_durumu: "İmzalandı",
+                                                                                        signed_file_url: "https://storage.brener.com.tr/docs/cavli_sartname_signed.pdf",
+                                                                                        kat_malikleri_sayisi: 38,
+                                                                                        signed_files: [
+                                                                                            { name: "cavli_sartname_signed.pdf", size: "2.4 MB", date: "2026-04-20", url: "#"                 }
+        ]
+    }
+};
 
-            this.state.notifications = [
-                { id: 1, title: 'Yeni İş Emri Atandı', desc: 'Caner Şen size B Blok kalıp kontrol görevini atadı.', time: '10 dakika önce', unread: true },
-                { id: 2, title: 'Kritik Stok Uyarısı', desc: 'Çimento stoğu minimum seviyenin altına düştü!', time: '1 saat önce', unread: true },
-                { id: 3, title: 'Beton Döküm Uyarısı', desc: 'Yarın Bodrum Projesi için beton dökümü planlandı.', time: '4 saat önce', unread: false }
-            ];
-
-            this.state.logs = [
-                { id: 'seed1', timestamp: new Date(Date.now() - 500000).toISOString(), user: 'Zeynep Yurt', role: 'muhasebe', category: 'finans', action: 'Yavuz Beton Kalıp kaba işçilik hakediş faturası sisteme işlendi.', type: 'info', details: 'Hakediş No: 2, Tutar: 1.250.000 TL, Teminat Kesintisi: %5' },
-                { id: 'seed2', timestamp: new Date(Date.now() - 1000000).toISOString(), user: 'Caner Şen', role: 'sefi', category: 'santiye', action: 'Şantiye Günlüğü raporu kaydedildi.', type: 'success', details: 'Hava: Açık 30°C. Demir bağlama ve temel kalıp imalatları tamamlandı.' },
-                { id: 'seed3', timestamp: new Date(Date.now() - 3600000).toISOString(), user: 'Murat Kara', role: 'saha', category: 'saha', action: 'B Blok Zemin Demir Bağlama iş emri tamamlandı olarak işaretlendi.', type: 'success', details: 'Usta: Ali Yılmaz. Projeye uygun 12 ton demir döşendi.' },
-                { id: 'seed4', timestamp: new Date(Date.now() - 7200000).toISOString(), user: 'Emre Türedi', role: 'admin', category: 'proje', action: 'Aktif proje değiştirildi: Brener Port Konakları.', type: 'info', details: 'Proje ID: 101, Konum: Bodrum, Muğla' },
-                { id: 'seed5', timestamp: new Date(Date.now() - 86400000).toISOString(), user: 'Sistem', role: 'system', category: 'sistem', action: 'admin@brener.com.tr kullanıcısı sisteme başarılı giriş yaptı.', type: 'success', details: 'IP: 127.0.0.1, Tarayıcı: Chrome Windows' }
-            ];
-
-            this.state.projectContracts = {
-                101: [
-                    {
-                        id: 'c_seed_1',
-                        apartman_ismi: "Port Apartmanı",
-                        adres: "Bodrum Marina Yolu No:45, Muğla",
-                        ada: "402",
-                        parsel: "12",
-                        arsa_m2: 1500,
-                        malik_sayisi: "24 Daire",
-                        oran: 45,
-                        yarisi_bizden: true,
-                        sozlesme_tarihi: "2025-06-03",
-                        sozlesme_tarihi_bitis: "2025-09-15",
-                        yikim_tarihi: "2025-10-10",
-                        ruhsat_donemi: "ŞUBAT",
-                        insaat_suresi: "18 AY",
-                        is_gecikmesi_cezasi: 20000,
-                        teminat_mektubu: "10.000.000 TL Tutarlı Teminat Mektubu Verildi",
-                        tasinma_yardimi: "Her Daire İçin 15.000 TL",
-                        kira_yardimi: "Aylık 7.500 TL",
-                        kira_baslangic_bitis: "Yıkım Tarihinden İtibaren Teslim Tarihine Kadar",
-                        emlak_vergileri: "Yüklenici",
-                        kapici_tazminat: "Yüklenici Tarafından Karşılanacaktır",
-                        mulkiyet_tapu_masrafi: "Kat Maliki",
-                        milestones: [
-                            { name: "Temel", percent: 20 },
-                            { name: "Su Basman + Zemin Kat Beton", percent: 20 },
-                            { name: "Kaba İnşaat", percent: 20 },
-                            { name: "Duvar + Sıva + Elektrik + Mekanik", percent: 10 },
-                            { name: "Doğrama + Cam", percent: 10 },
-                            { name: "Mobilya", percent: 10 },
-                            { name: "Fiili Teslim", percent: 10 }
-                        ],
-                        müteahhit_hakedisi: "11 Daire",
-                        temsil_heyeti: ["Gülendam Gürsan", "Nazik Ada", "Nermin Argan", "Fatma Tözman", "Mahmure Bozkurt"],
-                        karar_orani: "5 TE 3",
-                        ihtilaf_merkezi: "İSTAÇ",
-                        fesih_sarti: "4 AY İNŞAAT İLERLEMEZSE"
+            if (!this.state.projectContracts) {
+                this.state.projectContracts = {};
+            } else {
+                for (let projId in this.state.projectContracts) {
+                    const data = this.state.projectContracts[projId];
+                    if (data && !Array.isArray(data)) {
+                        this.state.projectContracts[projId] = [ { id: 'c_' + Date.now(), ...data } ];
                     }
-                ]
-            };
-            this.state.specTemplates = [
-                {
-                    name: "Standart Kentsel Dönüşüm Şartnamesi",
-                    clauses: [
-                        { id: 't1', title: "1. Projeler ve Kaba İnşaat", content: "Statik projeye göre C30/37 hazır beton ve B420C demir kullanılacaktır." },
-                        { id: 't2', title: "2. Bodrum Kat", content: "Bodrum katlarda perde beton izolasyonları mebran kaplama ile korunacaktır." },
-                        { id: 't3', title: "3. Binanın Dış Cephesi", content: "Dış cephe taşyünü yalıtım üzeri alüminyum kompozit panel kaplama olacaktır." },
-                        { id: 't4', title: "4. Zemin Kat ve Bina Girişi", content: "Bina girişi zemin kaplaması doğal mermer ve görüntülü diafon paneli olacaktır." },
-                        { id: 't5', title: "5. Duvar ve Sıvalar", content: "Daire bölücü duvarlarda çift sıra gazbeton arası ses yalıtımı yapılacaktır." },
-                        { id: 't6', title: "6. Isı Sistemi", content: "Dairelerde Rehau marka yerden ısıtma sistemi kurulacaktır." },
-                        { id: 't7', title: "7. Sıhhi ve Pis Su Sistemleri", content: "Pis su boruları Fıratpen sessiz boru serisi olacaktır." },
-                        { id: 't8', title: "8. Elektrik - Klima Tesisatı", content: "Klima tesisatı her odaya bakır borulama şeklinde çekilecektir." },
-                        { id: 't9', title: "9. Televizyon Tesisat Sistemi", content: "Her daireye 3 adet bağımsız uydu hattı çekilecektir." },
-                        { id: 't10', title: "10. Telefon ve Görüntülü Diafon Sistemi", content: "Audio marka 7 inç görüntülü interkom ekranı kurulacaktır." },
-                        { id: 't11', title: "11. Doğalgaz Tesisatı", content: "Gaz tesisatı kapı önüne kadar çekilip sayaç vanası bırakılacaktır." },
-                        { id: 't12', title: "12. Çatı", content: "Çatı çelik konstrüksiyon üzeri ısı yalıtımı ve arduazlı mebran kaplama olacaktır." },
-                        { id: 't13', title: "13. Bahçe ve Dış Duvarlar", content: "Bahçe duvarları betonarme üzeri şık aydınlatmalı ve peyzajlı yapılacaktır." },
-                        { id: 't14', title: "14. Asansörler", content: "Kone veya Schindler marka 10 kişilik çift hızlı asansör kurulacaktır." },
-                        { id: 't15', title: "15. Merdiven ve Sahanlıklar", content: "Merdiven basamakları bej mermer, korkuluklar alüminyum profil olacaktır." },
-                        { id: 't16', title: "16. Doğramalar", content: "Rehau veya pimapen marka çift camlı konfor serisi pencereler." },
-                        { id: 't17', title: "17. Kapalı Garaj", content: "Her daire için 1 araçlık kapalı otopark alanı tahsis edilecektir." },
-                        { id: 't18', title: "18. Daire Dış ve İç Kapıları", content: "Daire dış kapısı Kale çelik kapı, iç kapılar Dortek lake kapı olacaktır." },
-                        { id: 't19', title: "19. Mutfaklar", content: "Mutfak dolapları Lineadecor, tezgah kuvars Belenco olacaktır." },
-                        { id: 't20', title: "20. Banyo ve WC", content: "Gömme rezervuar Vitra marka, seramikler Kütahya Seramik olacaktır." },
-                        { id: 't21', title: "21. Antre ve Koridorlar", content: "Girişte lake kapaklı portmanto dolabı hazır teslim edilecektir." },
-                        { id: 't22', title: "22. Salon ve Odalar", content: "Zeminler 1. sınıf derzli lamine parke olacaktır." },
-                        { id: 't23', title: "23. İşçilik ve Garanti Koşulları", content: "İmalat hatalarına karşı 5 yıl boyunca yüklenici garantisi kapsamındadır." }
-                    ]
-                }
-            ];
-
-            this.state.projectSpecs = {
-                101: {
-                    metadata: {
-                        ilce_semt: "KADIKÖY – GÖZTEPE",
-                        bina_adi: "ÇAVLI APARTMANI",
-                        ada_no: "391",
-                        parsel_no: "5",
-                        sartname_tarihi: "2026-04-17"
-                    },
-                    clauses: [
-                        { id: 'c1', title: "1. Projeler ve Kaba İnşaat", content: "Statik projeye uygun C30/37 Hazır Beton (TS EN 206) ve B420C Nervürlü İnşaat Demiri kullanılacaktır." },
-                        { id: 'c2', title: "2. Bodrum Kat", content: "Bodrum kat perdeleri mebran bohçalama yöntemiyle su yalıtımı yapılacak ve XPS levhalarla korunacaktır." },
-                        { id: 'c3', title: "3. Binanın Dış Cephesi", content: "150 yoğunluklu Taşyünü Cephe Yalıtımı (5cm) üzerine Alüminyum Kompozit Panel ve Doğal Taş (Traverten) kaplama yapılacaktır." },
-                        { id: 'c4', title: "4. Zemin Kat ve Bina Girişi", content: "Bina giriş holü zeminleri traverten mermer, duvarlar kısmi ahşap kaplama ve paslanmaz posta kutulu olacaktır." },
-                        { id: 'c5', title: "5. Duvar ve Sıvalar", content: "Dış duvarlar 25cm kalınlığında Ytong gazbeton, iç duvarlar alçı sıva üzeri Dyo silinebilir boya olacaktır." },
-                        { id: 'c6', title: "6. Isı Sistemi", content: "Merkezi sistem pay ölçerli Rehau marka yerden ısıtma borulaması tesis edilecektir." },
-                        { id: 'c7', title: "7. Sıhhi ve Pis Su Sistemleri", content: "Sıhhi tesisat boruları PPRC cam elyaf takviyeli, pis su boruları sessiz boru serisi olacaktır." },
-                        { id: 'c8', title: "8. Elektrik - Klima Tesisatı", content: "Klima tesisatı her odaya bakır borulama şeklinde çekilecektir (Siemens sigortalar)." },
-                        { id: 'c9', title: "9. Televizyon Tesisat Sistemi", content: "Merkezi uydu santrali kurulacak, her odada TV prizi bulunacaktır." },
-                        { id: 'c10', title: "10. Telefon ve Görüntülü Diafon Sistemi", content: "Bina girişine Audio marka kameralı zil paneli, dairelere 7 inç renkli interkom ekranı kurulacaktır." },
-                        { id: 'c11', title: "11. Doğalgaz Tesisatı", content: "Mutfak ocağı ve banyo sıcak su kullanımı için kolon doğalgaz hattı çekilecektir." },
-                        { id: 'c12', title: "12. Çatı", content: "Çelik konstrüksiyon çatı, taşyünü ısı yalıtımı üzeri antrasit renkli çelik kiremit kaplama olacaktır." },
-                        { id: 'c13', title: "13. Bahçe ve Dış Duvarlar", content: "Bahçe sınır duvarları brüt betonarme üstü panel çit, bahçe peyzajı otomatik sulamalı olacaktır." },
-                        { id: 'c14', title: "14. Asansörler", content: "Kone 10 Kişilik Sedye Uyumlu VVVF frekans kontrollü lüks kabinli asansör tesis edilecektir." },
-                        { id: 'c15', title: "15. Merdiven ve Sahanlıklar", content: "Merdiven basamakları Muğla beyazı mermer, korkuluklar temperli camlı alüminyum olacaktır." },
-                        { id: 'c16', title: "16. Doğramalar", content: "Rehau PVC Doğrama - Isıcam Sinerji (4+16+4) çift açılımlı konfor pencereler." },
-                        { id: 'c17', title: "17. Kapalı Garaj", content: "Kapalı otopark zeminleri helikopter perdahlı beton ve epoksi çizgilendirmeli olacaktır." },
-                        { id: 'c18', title: "18. Daire Dış ve İç Kapıları", content: "Daire dış kapıları Dortek çelik kapı, iç kapıları Dortek lake panel ahşap kapı." },
-                        { id: 'c19', title: "19. Mutfaklar", content: "Mutfak dolapları Lineadecor, tezgah kuvars Belenco marka, ankastre cihazlar Siemens." },
-                        { id: 'c20', title: "20. Banyo ve WC", content: "Seramikler Kütahya Seramik 60x120 rektifiyeli granit, vitrifiyeler Vitra, bataryalar Artema." },
-                        { id: 'c21', title: "21. Antre ve Koridorlar", content: "Giriş holüne asma tavan led ışık bandı ve gömme portmanto dolabı yapılacaktır." },
-                        { id: 'c22', title: "22. Salon ve Odalar", content: "Şerifoğlu Lamine Parke (14mm Meşe) zemin kaplaması ve lüks ahşap süpürgelikler." },
-                        { id: 'c23', title: "23. İşçilik ve Garanti Koşulları", content: "Brener Group kalitesiyle tüm ince ve kaba işçilikler 5 Yıl Boyunca firma garantimiz altındadır." }
-                    ],
-                    notes: "Yarısı bizden hibe/kredi kampanyası desteklidir. Residence Konsepti tasarımdır.",
-                    sartname_durumu: "İmzalandı",
-                    signed_file_url: "https://storage.brener.com.tr/docs/cavli_sartname_signed.pdf",
-                    kat_malikleri_sayisi: 38,
-                    signed_files: [
-                        { name: "cavli_sartname_signed.pdf", size: "2.4 MB", date: "2026-04-20", url: "#" }
-                    ]
                 }
             };
-
-            this.saveStateToStorage();
-        }
+                        
+                                    this.saveStateToStorage();
+                    }
 
         // Apply theme
         if (this.state.theme === 'light') {
@@ -544,42 +589,42 @@ window.BrenerApp = {
         }
     },
 
-    // Save State
-    saveStateToStorage() {
-        localStorage.setItem('brener_app_state', JSON.stringify(this.state));
-    },
-
-    // Activity Logger
-    logActivity(category, action, type = 'info', details = '') {
-        if (!this.state.logs) {
-            this.state.logs = [];
-        }
-        
-        const timestamp = new Date().toISOString();
-        const user = this.state.currentUser ? this.state.currentUser.name : 'Misafir';
-        const role = this.state.currentUser ? this.state.currentUser.role : 'guest';
-        
-        const logEntry = {
-            id: Date.now() + Math.random().toString(36).substr(2, 9),
-            timestamp,
-            user,
-            role,
-            category, // 'sistem' | 'proje' | 'santiye' | 'finans' | 'saha' | 'ai'
-            action,
-            type, // 'info' | 'success' | 'warning' | 'danger'
-            details
-        };
-        
-        this.state.logs.unshift(logEntry);
-        
-        // Keep logs limit to avoid storage bloat (e.g. 200 logs max)
-        if (this.state.logs.length > 200) {
-            this.state.logs.pop();
-        }
-        
-        // Use direct localStorage set to avoid recursion
-        localStorage.setItem('brener_app_state', JSON.stringify(this.state));
-    },
+        // Save State
+        saveStateToStorage() {
+            localStorage.setItem('brener_app_state', JSON.stringify(this.state));
+        },
+    
+        // Activity Logger
+        logActivity(category, action, type = 'info', details = '') {
+            if (!this.state.logs) {
+                this.state.logs = [];
+            }
+            
+            const timestamp = new Date().toISOString();
+            const user = this.state.currentUser ? this.state.currentUser.name : 'Misafir';
+            const role = this.state.currentUser ? this.state.currentUser.role : 'guest';
+            
+            const logEntry = {
+                id: Date.now() + Math.random().toString(36).substr(2, 9),
+                timestamp,
+                user,
+                role,
+                category, // 'sistem' | 'proje' | 'santiye' | 'finans' | 'saha' | 'ai'
+                action,
+                type, // 'info' | 'success' | 'warning' | 'danger'
+                details
+            };
+            
+            this.state.logs.unshift(logEntry);
+            
+            // Keep logs limit to avoid storage bloat (e.g. 200 logs max)
+            if (this.state.logs.length > 200) {
+                this.state.logs.pop();
+            }
+            
+            // Use direct localStorage set to avoid recursion
+            localStorage.setItem('brener_app_state', JSON.stringify(this.state));
+        },
 
     // Project Utilities
     getActiveProject() {
@@ -612,9 +657,9 @@ window.BrenerApp = {
             this.state.theme = 'dark';
             this.updateThemeUI('dark');
         }
-        this.saveStateToStorage();
-        this.logActivity('sistem', `Tema modu değiştirildi: ${this.state.theme === 'dark' ? 'Gece Modu' : 'Gündüz Modu'}`, 'info');
-        this.showToast('info', `Tema modu değiştirildi: ${this.state.theme === 'dark' ? 'Gece Modu' : 'Gündüz Modu'}`);
+                this.saveStateToStorage();
+                this.logActivity('sistem', `Tema modu değiştirildi: ${this.state.theme === 'dark' ? 'Gece Modu' : 'Gündüz Modu'}`, 'info');
+                this.showToast('info', `Tema modu değiştirildi: ${this.state.theme === 'dark' ? 'Gece Modu' : 'Gündüz Modu'}`);
     },
 
     updateThemeUI(theme) {
@@ -634,11 +679,11 @@ window.BrenerApp = {
         const searchInput = document.getElementById('menuSearchInput');
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
-            
+
             document.querySelectorAll('.nav-group').forEach(group => {
                 let groupHasMatch = false;
                 const items = group.querySelectorAll('.nav-item');
-                
+
                 items.forEach(item => {
                     const label = item.querySelector('.nav-label').textContent.toLowerCase();
                     if (label.includes(query)) {
@@ -718,7 +763,7 @@ window.BrenerApp = {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        
+
         let icon = '';
         if (type === 'success') icon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
         else if (type === 'danger') icon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
@@ -762,12 +807,12 @@ window.BrenerApp = {
         const input = document.getElementById('aiChatInput');
         const container = document.getElementById('aiChatMessages');
         const query = input.value.trim();
-        if (!query) return;
-
-        this.logActivity('ai', `AI Asistan sorgusu gönderildi: "${query}"`, 'info');
-
-        // User message
-        const userMsg = document.createElement('div');
+                if (!query) return;
+        
+                this.logActivity('ai', `AI Asistan sorgusu gönderildi: "${query}"`, 'info');
+        
+                // User message
+                const userMsg = document.createElement('div');
         userMsg.className = 'message user';
         userMsg.textContent = query;
         container.appendChild(userMsg);
@@ -786,7 +831,7 @@ window.BrenerApp = {
             thinking.remove();
             const aiMsg = document.createElement('div');
             aiMsg.className = 'message ai';
-            
+
             const currentHash = window.location.hash || '#panel';
             const normalizedQuery = query.toLowerCase();
             let response = '';
@@ -824,18 +869,28 @@ window.BrenerApp = {
         const contentWindow = document.getElementById('contentWindow');
         const hash = window.location.hash || '#panel';
         const viewName = hash.replace('#', '');
-        
+
         // Route protection mapping
         const viewGroupMap = {
             'panel': 'genel',
             'projelerim': 'genel',
             'hatirlaticilar': 'genel',
+            'talepler': 'genel',
             'santiye-gunlugu': 'santiye',
             'is-programi': 'santiye',
             'personel-puantaj': 'santiye',
             'malzeme-stok': 'santiye',
             'isg-kaza': 'santiye',
             'hava-beton': 'santiye',
+            'musteri-raporu': 'santiye',
+            'malik-raporu': 'santiye',
+            'hakedis-yonetim': 'hakedis-yonetim',
+            'butce-maliyet': 'hakedis-yonetim',
+            'proje-sozlesme-ozeti': 'proje-yonetimi',
+            'teknik-sartname': 'proje-yonetimi',
+            'musteri-sunumlari': 'proje-yonetimi',
+            'proje-asamalari': 'proje-yonetimi',
+            'musteri-takip': 'proje-yonetimi',
             'hakedis': 'finans',
             'tahsilat-takibi': 'finans',
             'teklif-sozlesme': 'finans',
@@ -855,6 +910,7 @@ window.BrenerApp = {
             'bolge-analizi': 'degerleme',
             'komisyon-vergi': 'degerleme',
             'kira-dilekce-asistani': 'degerleme',
+            'sektor-radari': 'degerleme',
             'ai-asistan': 'ai',
             'emlak-ai-danisman': 'ai',
             'ai-fotograf-analizi': 'ai',
@@ -887,10 +943,8 @@ window.BrenerApp = {
             'proje-belgeleri': 'belgeler',
             'ai-evrak-merkezi': 'belgeler',
             'profil': 'belgeler',
-            'sistem-loglari': 'belgeler',
-            'proje-sozlesme-ozeti': 'proje-yonetimi',
-            'teknik-sartname': 'proje-yonetimi',
-            'kullanici-yonetimi': 'admin'
+            'kullanici-yonetimi': 'belgeler',
+            'sistem-loglari': 'belgeler'
         };
 
         // Guard against unauthorized views
@@ -932,15 +986,15 @@ window.BrenerApp = {
         setTimeout(() => {
             try {
                 let rendered = false;
-                
+
                 // Route mapping using window modules
                 if (window.BrenerApp.Dashboard && viewName === 'panel') {
                     window.BrenerApp.Dashboard.render(contentWindow);
                     rendered = true;
-                } else if (window.BrenerApp.Santiye && ['santiye-gunlugu', 'is-programi', 'personel-puantaj', 'malzeme-stok', 'isg-kaza', 'hava-beton'].includes(viewName)) {
+                } else if (window.BrenerApp.Santiye && ['santiye-gunlugu', 'is-programi', 'personel-puantaj', 'malzeme-stok', 'isg-kaza', 'hava-beton', 'musteri-raporu', 'malik-raporu'].includes(viewName)) {
                     window.BrenerApp.Santiye.render(viewName, contentWindow);
                     rendered = true;
-                } else if (window.BrenerApp.Finans && ['hakedis', 'tahsilat-takibi', 'teklif-sozlesme', 'kat-karsiligi', 'muhasebe-disa-aktar'].includes(viewName)) {
+                                } else if (window.BrenerApp.Finans && ['hakedis', 'hakedis-yonetim', 'tahsilat-takibi', 'teklif-sozlesme', 'kat-karsiligi', 'muhasebe-disa-aktar', 'butce-maliyet'].includes(viewName)) {
                     window.BrenerApp.Finans.render(viewName, contentWindow);
                     rendered = true;
                 } else if (window.BrenerApp.Hesaplama && ['maliyet-hesapla', 'tadilat-hesabi', 'arsa-payi', 'mimari-yonetmelik', 'harita-imar', 'metraj-malzeme', 'anlik-fiyatlar'].includes(viewName)) {
@@ -949,16 +1003,16 @@ window.BrenerApp = {
                 } else if (window.BrenerApp.Degerleme && ['emlak-deger-tahmini', 'arsa-degerleme', 'emlak-takip', 'emsal-karsilastirma', 'bolge-analizi', 'komisyon-vergi', 'kira-dilekce-asistani'].includes(viewName)) {
                     window.BrenerApp.Degerleme.render(viewName, contentWindow);
                     rendered = true;
-                } else if (window.BrenerApp.AI && ['ai-asistan', 'emlak-ai-danisman', 'ai-fotograf-analizi', 'ai-plan-okuma', 'sesli-ai-sefi', 'ai-taslak-plan', 'ai-tadilat-tasarim', 'ai-mekan-yerlesim', 'ai-3d-cephe', 'ai-2d-vaziyet', 'yonetmelik-imar-asistani'].includes(viewName)) {
-                    window.BrenerApp.AI.render(viewName, contentWindow);
-                    rendered = true;
-                } else if (window.BrenerApp.ProjeYonetimi && ['proje-sozlesme-ozeti', 'teknik-sartname'].includes(viewName)) {
-                    window.BrenerApp.ProjeYonetimi.render(viewName, contentWindow);
-                    rendered = true;
+                                } else if (window.BrenerApp.AI && ['ai-asistan', 'emlak-ai-danisman', 'ai-fotograf-analizi', 'ai-plan-okuma', 'sesli-ai-sefi', 'ai-taslak-plan', 'ai-tadilat-tasarim', 'ai-mekan-yerlesim', 'ai-3d-cephe', 'ai-2d-vaziyet', 'yonetmelik-imar-asistani'].includes(viewName)) {
+                                    window.BrenerApp.AI.render(viewName, contentWindow);
+                                    rendered = true;
+                                                                } else if (window.BrenerApp.ProjeYonetimi && ['proje-sozlesme-ozeti', 'teknik-sartname', 'musteri-sunumlari', 'proje-asamalari', 'musteri-takip'].includes(viewName)) {
+                                                                    window.BrenerApp.ProjeYonetimi.render(viewName, contentWindow);
+                                                                    rendered = true;
                 } else if (window.BrenerApp.Saha && ['musteri-cari', 'is-emirleri', 'tadilat-formu', 'siparis-fisi', 'servis-teklifi', 'randevu-takvimi'].includes(viewName)) {
                     window.BrenerApp.Saha.render(viewName, contentWindow);
                     rendered = true;
-                } else if (window.BrenerApp.Belgeler && ['firma-yonetimi', 'gorevlerim', 'firmaya-katil', 'belgeler-projeler', 'belgeler-finans', 'fon-yonetimi', 'belgeler-satis', 'evrak-uretici', 'akilli-arsiv', 'fizibilite', 'belgeler-araclar', 'ayarlar', 'proje-belgeleri', 'ai-evrak-merkezi', 'profil', 'kullanici-yonetimi', 'sistem-loglari'].includes(viewName)) {
+                                } else if (window.BrenerApp.Belgeler && ['firma-yonetimi', 'gorevlerim', 'firmaya-katil', 'belgeler-projeler', 'belgeler-finans', 'fon-yonetimi', 'belgeler-satis', 'evrak-uretici', 'akilli-arsiv', 'fizibilite', 'belgeler-araclar', 'ayarlar', 'proje-belgeleri', 'ai-evrak-merkezi', 'profil', 'kullanici-yonetimi', 'sistem-loglari'].includes(viewName)) {
                     window.BrenerApp.Belgeler.render(viewName, contentWindow);
                     rendered = true;
                 } else if (viewName === 'projelerim') {
@@ -967,6 +1021,9 @@ window.BrenerApp = {
                     rendered = true;
                 } else if (viewName === 'hatirlaticilar') {
                     this.renderReminders(contentWindow);
+                    rendered = true;
+                } else if (window.BrenerApp.Talepler && viewName === 'talepler') {
+                    window.BrenerApp.Talepler.render(contentWindow);
                     rendered = true;
                 }
 
@@ -1002,7 +1059,7 @@ window.BrenerApp = {
     // Core View Renderer: Projects
     renderProjects(container) {
         this.updateTopbarTitle('Projelerim', 'Aktif Şantiyeler ve Portföy Yönetimi');
-        
+
         let projectsHtml = `
             <div class="card-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
                 <h2>Proje Portföyü</h2>
@@ -1116,26 +1173,26 @@ window.BrenerApp = {
                     spent: 0
                 };
 
-                this.state.projects.push(newProj);
-                this.state.currentProjectId = newProj.id;
-                this.logActivity('proje', `Yeni şantiye projesi oluşturuldu: ${name}`, 'success', `Bütçe: ${budget} TL, Konum: ${location}`);
-                this.saveStateToStorage();
-                this.setupProjectSelector();
-                this.showToast('success', `${name} projesi başarıyla portföye eklendi ve aktif yapıldı!`);
-                document.getElementById('modalCloseBtn').click();
-                this.router();
+                                this.state.projects.push(newProj);
+                                this.state.currentProjectId = newProj.id;
+                                this.logActivity('proje', `Yeni şantiye projesi oluşturuldu: ${name}`, 'success', `Bütçe: ${budget} TL, Konum: ${location}`);
+                                this.saveStateToStorage();
+                                this.setupProjectSelector();
+                                this.showToast('success', `${name} projesi başarıyla portföye eklendi ve aktif yapıldı!`);
+                                document.getElementById('modalCloseBtn').click();
+                                this.router();
             };
         };
     },
 
-    selectProject(id) {
-        this.state.currentProjectId = id;
-        this.saveStateToStorage();
-        this.setupProjectSelector();
-        this.logActivity('proje', `Aktif proje değiştirildi: ${this.getActiveProject().name}`, 'info', `Proje ID: ${id}`);
-        this.showToast('success', `Aktif proje değiştirildi: ${this.getActiveProject().name}`);
-        this.router();
-    },
+        selectProject(id) {
+            this.state.currentProjectId = id;
+            this.saveStateToStorage();
+            this.setupProjectSelector();
+            this.logActivity('proje', `Aktif proje değiştirildi: ${this.getActiveProject().name}`, 'info', `Proje ID: ${id}`);
+            this.showToast('success', `Aktif proje değiştirildi: ${this.getActiveProject().name}`);
+            this.router();
+        },
 
     // Core View Renderer: Reminders
     renderReminders(container) {
@@ -1237,66 +1294,66 @@ window.BrenerApp = {
                     return;
                 }
 
-                this.state.reminders.push({
-                    id: Date.now(),
-                    title,
-                    date,
-                    priority,
-                    done: false
-                });
-
-                this.logActivity('sistem', `Yeni hatırlatıcı eklendi: ${title}`, 'success', `Son Tarih: ${date}, Öncelik: ${priority}`);
-                this.saveStateToStorage();
-                this.showToast('success', 'Yeni hatırlatıcı başarıyla eklendi.');
-                document.getElementById('modalCloseBtn').click();
-                this.router();
+                                this.state.reminders.push({
+                                    id: Date.now(),
+                                    title,
+                                    date,
+                                    priority,
+                                    done: false
+                                });
+                
+                                this.logActivity('sistem', `Yeni hatırlatıcı eklendi: ${title}`, 'success', `Son Tarih: ${date}, Öncelik: ${priority}`);
+                                this.saveStateToStorage();
+                                this.showToast('success', 'Yeni hatırlatıcı başarıyla eklendi.');
+                                document.getElementById('modalCloseBtn').click();
+                                this.router();
             };
         };
     },
 
-    toggleReminder(id) {
-        const r = this.state.reminders.find(rem => rem.id === id);
-        if (r) {
-            r.done = !r.done;
-            this.saveStateToStorage();
-            this.logActivity('sistem', `Hatırlatıcı durumu güncellendi: ${r.title} (${r.done ? 'Tamamlandı' : 'Yapılacak'})`, 'info');
-            this.showToast('success', `Hatırlatıcı durumu güncellendi.`);
-            this.router();
-        }
-    },
+        toggleReminder(id) {
+            const r = this.state.reminders.find(rem => rem.id === id);
+            if (r) {
+                r.done = !r.done;
+                this.saveStateToStorage();
+                this.logActivity('sistem', `Hatırlatıcı durumu güncellendi: ${r.title} (${r.done ? 'Tamamlandı' : 'Yapılacak'})`, 'info');
+                this.showToast('success', `Hatırlatıcı durumu güncellendi.`);
+                this.router();
+            }
+        },
 
-    deleteReminder(id) {
-        const r = this.state.reminders.find(rem => rem.id === id);
-        const title = r ? r.title : id;
-        this.state.reminders = this.state.reminders.filter(rem => rem.id !== id);
-        this.saveStateToStorage();
-        this.logActivity('sistem', `Hatırlatıcı silindi: ${title}`, 'warning');
-        this.showToast('danger', 'Hatırlatıcı listeden silindi.');
-        this.router();
-    },
+        deleteReminder(id) {
+            const r = this.state.reminders.find(rem => rem.id === id);
+            const title = r ? r.title : id;
+            this.state.reminders = this.state.reminders.filter(rem => rem.id !== id);
+            this.saveStateToStorage();
+            this.logActivity('sistem', `Hatırlatıcı silindi: ${title}`, 'warning');
+            this.showToast('danger', 'Hatırlatıcı listeden silindi.');
+            this.router();
+        },
 
     checkAuthentication() {
         const overlay = document.getElementById('loginOverlay');
-        
+
         if (!this.state.currentUser) {
             document.body.classList.add('auth-mode');
-            
+
             // Setup submit listener
             const submitBtn = document.getElementById('loginSubmitBtn');
             submitBtn.onclick = () => {
                 const email = document.getElementById('loginEmail').value.trim();
                 const pass = document.getElementById('loginPassword').value.trim();
-                
+
                 const user = this.state.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === pass);
-                if (user) {
-                    this.state.currentUser = user;
-                    this.saveStateToStorage();
-                    this.logActivity('sistem', `Başarılı giriş yapıldı: ${user.name} (${user.email})`, 'success', `Rol: ${user.role}`);
-                    this.showToast('success', `Başarıyla giriş yapıldı. Hoş geldiniz, ${user.name}!`);
-                    document.body.classList.remove('auth-mode');
-                    this.initAppSession();
-                    window.location.hash = '#panel';
-                    this.router();
+                                if (user) {
+                                    this.state.currentUser = user;
+                                    this.saveStateToStorage();
+                                    this.logActivity('sistem', `Başarılı giriş yapıldı: ${user.name} (${user.email})`, 'success', `Rol: ${user.role}`);
+                                    this.showToast('success', `Başarıyla giriş yapıldı. Hoş geldiniz, ${user.name}!`);
+                                    document.body.classList.remove('auth-mode');
+                                    this.initAppSession();
+                                    window.location.hash = '#panel';
+                                    this.router();
                 } else {
                     this.showToast('danger', 'Hatalı e-posta adresi veya şifre!');
                 }
@@ -1369,11 +1426,301 @@ window.BrenerApp = {
             if (perms[groupCode] === true) {
                 group.style.display = 'block';
             } else {
-                group.style.display = 'none';
-            }
-        });
-    }
-};
+                                group.style.display = 'none';
+                            }
+                        });
+                    },
+                
+                    initHakedisState() {
+                        this.state.hakedisContracts = [
+                            {
+                                id: 'con_1',
+                                projectId: 101, // Bodrum Port Konakları
+                                contractorName: "Öz Yapı Cephe Sistemleri A.Ş.",
+                                workDescription: "Dış Cephe Kompozit Panel ve Strüktürel Silikonlu Cam Cephe Kaplama İmalatları",
+                                contractDate: "2026-01-10",
+                                siteHandoverDate: "2026-01-15",
+                                contractEndDate: "2026-10-15",
+                                contractAmountUsd: 150000.00,
+                                contractAmountTry: 3500000.00,
+                                advanceGivenUsd: 30000.00,
+                                advancePercentUsd: 0.20, // %20
+                                cashGuaranteeRate: 0.05, // %5
+                                vatRate: 0.20, // %20
+                                vatWithholdingRate: 0.40, // 4/10 tevkifat
+                                stoppageRate: 0.03, // %3 stopaj
+                                status: "ACTIVE"
+                            }
+                        ];
+                
+                        this.state.hakedisContractItems = [
+                            {
+                                id: 'item_1',
+                                contractId: 'con_1',
+                                itemCode: "13.A.1",
+                                groupCode: "13.A",
+                                description: "Alüminyum Alt Konstrüksiyon ve Ankraj Montajı",
+                                unit: "m²",
+                                unitPriceUsd: 12.00,
+                                unitPriceTry: 300.00,
+                                contractQty: 1800
+                            },
+                            {
+                                id: 'item_2',
+                                contractId: 'con_1',
+                                itemCode: "13.A.2",
+                                groupCode: "13.A",
+                                description: "Taşyünü Yalıtım Levhası Uygulaması (5cm kalınlık, 150 yoğunluk)",
+                                unit: "m²",
+                                unitPriceUsd: 8.00,
+                                unitPriceTry: 200.00,
+                                contractQty: 1800
+                            },
+                            {
+                                id: 'item_3',
+                                contractId: 'con_1',
+                                itemCode: "13.B.1",
+                                groupCode: "13.B",
+                                description: "Alüminyum Kompozit Levha (4mm kalınlık, PVDF boyalı) Cephe Kaplaması",
+                                unit: "m²",
+                                unitPriceUsd: 35.00,
+                                unitPriceTry: 900.00,
+                                contractQty: 1200
+                            },
+                            {
+                                id: 'item_4',
+                                contractId: 'con_1',
+                                itemCode: "13.B.2",
+                                groupCode: "13.B",
+                                description: "Strüktürel Silikonlu Çift Cam Cephe Kaplama (6+12+6 Temperli Konfor Cam)",
+                                unit: "m²",
+                                unitPriceUsd: 95.00,
+                                unitPriceTry: 2500.00,
+                                contractQty: 600
+                            }
+                        ];
+                
+                        this.state.progressPayments = [];
+                        this.state.periodItemEntries = [];
+                        this.state.otherDeductionEntries = [];
+                        this.state.defectDeductions = [];
+                        this.state.siteRecords = [];
+                        this.state.paymentApprovals = [];
+                
+                        // Now, seed a completed Period 1 progress payment
+                        const pay1Id = 'pay_1';
+                        this.state.progressPayments.push({
+                            id: pay1Id,
+                            contractId: 'con_1',
+                            paymentNo: 1,
+                            isFinal: false,
+                            periodDate: "2026-05-15",
+                            status: "APPROVED",
+                            prevCumulativeUsd: 0,
+                            prevCumulativeTry: 0,
+                            manufacturingAmountUsd: 36000.00,
+                            manufacturingAmountTry: 920000.00,
+                            additionsAmountUsd: 2000.00,
+                            additionsAmountTry: 50000.00,
+                            servicesAmountUsd: 1000.00,
+                            servicesAmountTry: 20000.00,
+                            grossAmountUsd: 39000.00,
+                            grossAmountTry: 990000.00,
+                            vatAmountUsd: 7800.00,
+                            vatAmountTry: 198000.00,
+                            vatWithholdingUsd: -3120.00,
+                            vatWithholdingTry: -79200.00,
+                            grossWithVatUsd: 43680.00,
+                            grossWithVatTry: 1108800.00,
+                            advanceDeductionUsd: 7200.00,
+                            advanceDeductionTry: 0.00,
+                            cashGuaranteeDeductionUsd: 1800.00,
+                            cashGuaranteeDeductionTry: 46000.00,
+                            stoppageDeductionUsd: 1170.00,
+                            stoppageDeductionTry: 29700.00,
+                            penaltyDeductionUsd: 0.00,
+                            penaltyDeductionTry: 0.00,
+                            otherDeductionsUsd: 0.00,
+                            otherDeductionsTry: 0.00,
+                            totalDeductionsUsd: 10170.00,
+                            totalDeductionsTry: 75700.00,
+                            netPayableUsd: 33510.00,
+                            netPayableTry: 1033100.00
+                        });
+                
+                        // Seed entries for Period 1
+                        this.state.periodItemEntries.push(
+                            { id: 'e1_1', progressPaymentId: pay1Id, contractItemId: 'item_1', periodQty: 800, cumulativeQty: 800, periodAmountUsd: 9600, periodAmountTry: 240000, cumulativeAmountUsd: 9600, cumulativeAmountTry: 240000, measurementDetails: [], note: "" },
+                            { id: 'e1_2', progressPaymentId: pay1Id, contractItemId: 'item_2', periodQty: 800, cumulativeQty: 800, periodAmountUsd: 6400, periodAmountTry: 160000, cumulativeAmountUsd: 6400, cumulativeAmountTry: 160000, measurementDetails: [], note: "" },
+                            { id: 'e1_3', progressPaymentId: pay1Id, contractItemId: 'item_3', periodQty: 300, cumulativeQty: 300, periodAmountUsd: 10500, periodAmountTry: 270000, cumulativeAmountUsd: 10500, cumulativeAmountTry: 270000, measurementDetails: [], note: "" },
+                            { id: 'e1_4', progressPaymentId: pay1Id, contractItemId: 'item_4', periodQty: 100, cumulativeQty: 100, periodAmountUsd: 9500, periodAmountTry: 250000, cumulativeAmountUsd: 9500, cumulativeAmountTry: 250000, measurementDetails: [], note: "" }
+                        );
+                
+                        // Seed Period 2 as DRAFT
+                        const pay2Id = 'pay_2';
+                        this.state.progressPayments.push({
+                            id: pay2Id,
+                            contractId: 'con_1',
+                            paymentNo: 2,
+                            isFinal: false,
+                            periodDate: "2026-06-15",
+                            status: "DRAFT",
+                            prevCumulativeUsd: 39000.00,
+                            prevCumulativeTry: 990000.00,
+                            manufacturingAmountUsd: 0,
+                            manufacturingAmountTry: 0,
+                            additionsAmountUsd: 0,
+                            additionsAmountTry: 0,
+                            servicesAmountUsd: 0,
+                            servicesAmountTry: 0,
+                            grossAmountUsd: 0,
+                            grossAmountTry: 0,
+                            vatAmountUsd: 0,
+                            vatAmountTry: 0,
+                            vatWithholdingUsd: 0,
+                            vatWithholdingTry: 0,
+                            grossWithVatUsd: 0,
+                            grossWithVatTry: 0,
+                            advanceDeductionUsd: 0,
+                            advanceDeductionTry: 0,
+                            cashGuaranteeDeductionUsd: 0,
+                            cashGuaranteeDeductionTry: 0,
+                            stoppageDeductionUsd: 0,
+                            stoppageDeductionTry: 0,
+                            penaltyDeductionUsd: 0,
+                            penaltyDeductionTry: 0,
+                            otherDeductionsUsd: 0,
+                            otherDeductionsTry: 0,
+                            totalDeductionsUsd: 0,
+                            totalDeductionsTry: 0,
+                            netPayableUsd: 0,
+                            netPayableTry: 0
+                        });
+                
+                        // Seed entries for Period 2
+                        this.state.periodItemEntries.push(
+                            { id: 'e2_1', progressPaymentId: pay2Id, contractItemId: 'item_1', periodQty: 0, cumulativeQty: 800, periodAmountUsd: 0, periodAmountTry: 0, cumulativeAmountUsd: 9600, cumulativeAmountTry: 240000, measurementDetails: [], note: "" },
+                            { id: 'e2_2', progressPaymentId: pay2Id, contractItemId: 'item_2', periodQty: 0, cumulativeQty: 800, periodAmountUsd: 0, periodAmountTry: 0, cumulativeAmountUsd: 6400, cumulativeAmountTry: 160000, measurementDetails: [], note: "" },
+                            { id: 'e2_3', progressPaymentId: pay2Id, contractItemId: 'item_3', periodQty: 0, cumulativeQty: 300, periodAmountUsd: 0, periodAmountTry: 0, cumulativeAmountUsd: 10500, cumulativeAmountTry: 270000, measurementDetails: [], note: "" },
+                            { id: 'e2_4', progressPaymentId: pay2Id, contractItemId: 'item_4', periodQty: 0, cumulativeQty: 100, periodAmountUsd: 0, periodAmountTry: 0, cumulativeAmountUsd: 9500, cumulativeAmountTry: 250000, measurementDetails: [], note: "" }
+                        );
+                
+                        this.calculateProgressPayment(pay2Id);
+                    },
+                
+                    calculateProgressPayment(paymentId) {
+                        const pay = this.state.progressPayments.find(p => p.id === paymentId);
+                        if (!pay) return;
+                        const contract = this.state.hakedisContracts.find(c => c.id === pay.contractId);
+                        if (!contract) return;
+                
+                        // 1. Previous Cumulative Gross
+                        const prevPay = this.state.progressPayments.find(p => p.contractId === pay.contractId && p.paymentNo === pay.paymentNo - 1);
+                        pay.prevCumulativeUsd = prevPay ? (prevPay.prevCumulativeUsd + prevPay.grossAmountUsd) : 0;
+                        pay.prevCumulativeTry = prevPay ? (prevPay.prevCumulativeTry + prevPay.grossAmountTry) : 0;
+                
+                        // 2. Manufacturing amounts from entries
+                        let totalPeriodMfgUsd = 0;
+                        let totalPeriodMfgTry = 0;
+                
+                        const currentEntries = this.state.periodItemEntries.filter(e => e.progressPaymentId === paymentId);
+                        const items = this.state.hakedisContractItems.filter(i => i.contractId === pay.contractId);
+                
+                        currentEntries.forEach(entry => {
+                            const item = items.find(i => i.id === entry.contractItemId);
+                            if (!item) return;
+                
+                            entry.periodAmountUsd = entry.periodQty * item.unitPriceUsd;
+                            entry.periodAmountTry = entry.periodQty * item.unitPriceTry;
+                
+                            let prevQty = 0;
+                            if (prevPay) {
+                                const prevEntry = this.state.periodItemEntries.find(e => e.progressPaymentId === prevPay.id && e.contractItemId === item.id);
+                                if (prevEntry) prevQty = prevEntry.cumulativeQty;
+                            }
+                
+                            entry.cumulativeQty = prevQty + entry.periodQty;
+                            entry.cumulativeAmountUsd = entry.cumulativeQty * item.unitPriceUsd;
+                            entry.cumulativeAmountTry = entry.cumulativeQty * item.unitPriceTry;
+                
+                            entry.overContractWarning = entry.cumulativeQty > item.contractQty;
+                
+                            totalPeriodMfgUsd += entry.periodAmountUsd;
+                            totalPeriodMfgTry += entry.periodAmountTry;
+                        });
+                
+                        pay.manufacturingAmountUsd = Math.round(totalPeriodMfgUsd * 100) / 100;
+                        pay.manufacturingAmountTry = Math.round(totalPeriodMfgTry * 100) / 100;
+                
+                        // 3. Cumulative Manufacturing
+                        let prevCumulativeMfgUsd = 0;
+                        if (prevPay) {
+                            const allPrevPayments = this.state.progressPayments.filter(p => p.contractId === pay.contractId && p.paymentNo < pay.paymentNo);
+                            prevCumulativeMfgUsd = allPrevPayments.reduce((s, p) => s + p.manufacturingAmountUsd, 0);
+                        }
+                        const thisCumulativeMfgUsd = prevCumulativeMfgUsd + pay.manufacturingAmountUsd;
+                
+                        // 4. Gross = Mfg + Additions + Services
+                        pay.grossAmountUsd = Math.round((pay.manufacturingAmountUsd + (pay.additionsAmountUsd || 0) + (pay.servicesAmountUsd || 0)) * 100) / 100;
+                        pay.grossAmountTry = Math.round((pay.manufacturingAmountTry + (pay.additionsAmountTry || 0) + (pay.servicesAmountTry || 0)) * 100) / 100;
+                
+                        // 5. VAT
+                        pay.vatAmountUsd = Math.round((pay.grossAmountUsd * contract.vatRate) * 100) / 100;
+                        pay.vatAmountTry = Math.round((pay.grossAmountTry * contract.vatRate) * 100) / 100;
+                
+                        // 6. VAT Withholding
+                        pay.vatWithholdingUsd = -Math.round((pay.vatAmountUsd * contract.vatWithholdingRate) * 100) / 100;
+                        pay.vatWithholdingTry = -Math.round((pay.vatAmountTry * contract.vatWithholdingRate) * 100) / 100;
+                
+                        // 7. Gross with VAT = Gross + VAT + Withholding
+                        pay.grossWithVatUsd = Math.round((pay.grossAmountUsd + pay.vatAmountUsd + pay.vatWithholdingUsd) * 100) / 100;
+                        pay.grossWithVatTry = Math.round((pay.grossAmountTry + pay.vatAmountTry + pay.vatWithholdingTry) * 100) / 100;
+                
+                        // 8. Deductions
+                        // Avans Deduction
+                        if (contract.advancePercentUsd > 0 && contract.advanceGivenUsd > 0) {
+                            const targetCumulativeAdvance = Math.min(thisCumulativeMfgUsd * contract.advancePercentUsd, contract.advanceGivenUsd);
+                            const allPrevPayments = this.state.progressPayments.filter(p => p.contractId === pay.contractId && p.paymentNo < pay.paymentNo);
+                            const prevDeductedAdvanceUsd = allPrevPayments.reduce((s, p) => s + p.advanceDeductionUsd, 0);
+                
+                            const remainingAdvance = contract.advanceGivenUsd - prevDeductedAdvanceUsd;
+                            let deduction = targetCumulativeAdvance - prevDeductedAdvanceUsd;
+                            pay.advanceDeductionUsd = Math.max(0, Math.min(Math.round(deduction * 100) / 100, Math.round(remainingAdvance * 100) / 100));
+                        } else {
+                            pay.advanceDeductionUsd = 0;
+                        }
+                        pay.advanceDeductionTry = 0;
+                
+                        // Cash Guarantee
+                        pay.cashGuaranteeDeductionUsd = Math.round((pay.manufacturingAmountUsd * contract.cashGuaranteeRate) * 100) / 100;
+                        pay.cashGuaranteeDeductionTry = Math.round((pay.manufacturingAmountTry * contract.cashGuaranteeRate) * 100) / 100;
+                
+                        // Stoppage
+                        pay.stoppageDeductionUsd = Math.round((pay.grossAmountUsd * contract.stoppageRate) * 100) / 100;
+                        pay.stoppageDeductionTry = Math.round((pay.grossAmountTry * contract.stoppageRate) * 100) / 100;
+                
+                        // Other and Defect Deductions
+                        const currentOtherDeductions = this.state.otherDeductionEntries.filter(d => d.progressPaymentId === pay.id && !d.isDeferred);
+                        const currentDefectDeductions = this.state.defectDeductions.filter(d => d.progressPaymentId === pay.id);
+                
+                        let otherUsd = currentOtherDeductions.filter(d => d.currency === 'USD').reduce((s, d) => s + parseFloat(d.amount), 0);
+                        let otherTry = currentOtherDeductions.filter(d => d.currency === 'TRY').reduce((s, d) => s + parseFloat(d.amount), 0);
+                
+                        otherUsd += currentDefectDeductions.reduce((s, d) => s + parseFloat(d.amountUsd), 0);
+                        otherTry += currentDefectDeductions.reduce((s, d) => s + parseFloat(d.amountTry), 0);
+                
+                        pay.otherDeductionsUsd = Math.round(otherUsd * 100) / 100;
+                        pay.otherDeductionsTry = Math.round(otherTry * 100) / 100;
+                
+                        // Total Deductions (S)
+                        pay.totalDeductionsUsd = Math.round((pay.advanceDeductionUsd + pay.cashGuaranteeDeductionUsd + pay.stoppageDeductionUsd + (pay.penaltyDeductionUsd || 0) + pay.otherDeductionsUsd) * 100) / 100;
+                        pay.totalDeductionsTry = Math.round((pay.advanceDeductionTry + pay.cashGuaranteeDeductionTry + pay.stoppageDeductionTry + (pay.penaltyDeductionTry || 0) + pay.otherDeductionsTry) * 100) / 100;
+                
+                        // Net Payable (Q) = G - S
+                        pay.netPayableUsd = Math.round((pay.grossWithVatUsd - pay.totalDeductionsUsd) * 100) / 100;
+                        pay.netPayableTry = Math.round((pay.grossWithVatTry - pay.totalDeductionsTry) * 100) / 100;
+                    }
+                };
 
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {

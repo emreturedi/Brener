@@ -90,29 +90,343 @@ window.BrenerApp.Belgeler = {
     },
 
     // 2. Görevlerim (Personal Checklist)
-    renderTasks(container) {
-        window.BrenerApp.updateTopbarTitle('Görevlerim', 'Kişisel Yapılacaklar Listesi');
+    // 2. Görevlerim (Personal Checklist)
+    initTasksData() {
+        if (!window.BrenerApp.state.tasks) {
+            window.BrenerApp.state.tasks = [
+                { id: 'TSK-001', title: 'Haftalık şantiye raporlarını gözden geçir.', category: 'Şantiye', priority: 'Yüksek', completed: false, date: '2026-07-10' },
+                { id: 'TSK-002', title: 'Taşeron hakediş onaylarını tamamla.', category: 'Finans', priority: 'Yüksek', completed: true, date: '2026-07-05' },
+                { id: 'TSK-003', title: 'Bodrum belediye ruhsat yazısını takip et.', category: 'Ruhsat', priority: 'Orta', completed: false, date: '2026-07-12' },
+                { id: 'TSK-004', title: 'Mimari detay çizim revizyonlarını kontrol et.', category: 'Tasarım', priority: 'Düşük', completed: false, date: '2026-07-15' }
+            ];
+            window.BrenerApp.saveStateToStorage();
+        }
+    },
 
-        let html = `
-            <div class="card" style="max-width: 600px; margin: 0 auto;">
-                <div class="card-header">
-                    <h2>Kişisel İş Listem</h2>
+    renderTasks(container) {
+        window.BrenerApp.updateTopbarTitle('Görevlerim', 'Kişisel Yapılacaklar ve İş Takip Paneli');
+        this.initTasksData();
+
+        let currentFilterStatus = 'all'; 
+        let currentFilterPriority = 'all'; 
+        let currentFilterCategory = 'all'; 
+
+        const renderLayout = () => {
+            const tasks = window.BrenerApp.state.tasks || [];
+            const completedCount = tasks.filter(t => t.completed).length;
+            const totalCount = tasks.length;
+            const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+            let html = `
+                <style>
+                    .task-dashboard {
+                        display: grid;
+                        grid-template-columns: 1fr 280px;
+                        gap: 20px;
+                        align-items: start;
+                    }
+                    .task-card {
+                        background: var(--bg-card);
+                        border: 1px solid var(--border-color);
+                        border-radius: 10px;
+                        padding: 16px;
+                        margin-bottom: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        transition: all 0.2s;
+                    }
+                    .task-card:hover {
+                        border-color: var(--primary);
+                        transform: translateX(4px);
+                    }
+                    .task-card.completed {
+                        opacity: 0.6;
+                    }
+                    .task-card.completed .task-title {
+                        text-decoration: line-through;
+                        color: var(--text-muted);
+                    }
+                    .badge-priority {
+                        font-size: 0.65rem;
+                        padding: 3px 8px;
+                        border-radius: 4px;
+                        font-weight: 700;
+                    }
+                    .badge-p-high { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+                    .badge-p-medium { background: rgba(249, 115, 22, 0.15); color: #f97316; }
+                    .badge-p-low { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+
+                    .badge-cat {
+                        font-size: 0.65rem;
+                        padding: 3px 8px;
+                        border-radius: 4px;
+                        background: rgba(255, 255, 255, 0.05);
+                        color: var(--text-muted);
+                        border: 1px solid var(--border-color);
+                    }
+                    .filter-pill {
+                        padding: 6px 12px;
+                        background: rgba(255,255,255,0.02);
+                        border: 1px solid var(--border-color);
+                        border-radius: 20px;
+                        font-size: 0.76rem;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        color: var(--text-muted);
+                    }
+                    .filter-pill:hover {
+                        color: var(--text-main);
+                        border-color: var(--primary);
+                    }
+                    .filter-pill.active {
+                        background: var(--primary);
+                        color: #000;
+                        border-color: var(--primary);
+                        font-weight: bold;
+                    }
+                </style>
+
+                <div class="task-dashboard">
+                    
+                    <div>
+                        <div class="card" style="margin-bottom: 20px; padding: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div>
+                                    <h2 style="margin: 0; font-size: 1.15rem;">📌 Görev Listesi</h2>
+                                    <span style="font-size: 0.78rem; color: var(--text-muted);">${completedCount} / ${totalCount} Görev Tamamlandı</span>
+                                </div>
+                                <button class="btn btn-primary btn-sm" id="btnAddNewTask">+ Yeni Görev Ekle</button>
+                            </div>
+                            <div class="progress-bar-bg" style="height: 8px; border-radius: 4px;">
+                                <div class="progress-bar-fill" style="width: ${percent}%; background: var(--success); height: 8px; border-radius: 4px; transition: width 0.4s ease;"></div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;">
+                            <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-right: 5px;">Durum:</span>
+                            <div class="filter-pill ${currentFilterStatus === 'all' ? 'active' : ''}" data-filter-status="all">Tümü</div>
+                            <div class="filter-pill ${currentFilterStatus === 'pending' ? 'active' : ''}" data-filter-status="pending">Bekleyenler</div>
+                            <div class="filter-pill ${currentFilterStatus === 'completed' ? 'active' : ''}" data-filter-status="completed">Tamamlananlar</div>
+                        </div>
+
+                        <div id="tasksListContainer"></div>
+                    </div>
+
+                    <div>
+                        <div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <h3 style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--text-main);">🏷 Kategoriler</h3>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div class="filter-pill ${currentFilterCategory === 'all' ? 'active' : ''}" data-filter-cat="all" style="text-align: center;">Tüm Kategoriler</div>
+                                    <div class="filter-pill ${currentFilterCategory === 'Şantiye' ? 'active' : ''}" data-filter-cat="Şantiye" style="text-align: center;">🔨 Şantiye</div>
+                                    <div class="filter-pill ${currentFilterCategory === 'Finans' ? 'active' : ''}" data-filter-cat="Finans" style="text-align: center;">💰 Finans</div>
+                                    <div class="filter-pill ${currentFilterCategory === 'Ruhsat' ? 'active' : ''}" data-filter-cat="Ruhsat" style="text-align: center;">📜 Ruhsat</div>
+                                    <div class="filter-pill ${currentFilterCategory === 'Tasarım' ? 'active' : ''}" data-filter-cat="Tasarım" style="text-align: center;">📐 Tasarım</div>
+                                    <div class="filter-pill ${currentFilterCategory === 'Diğer' ? 'active' : ''}" data-filter-cat="Diğer" style="text-align: center;">⚙ Diğer</div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--text-main);">⚡ Öncelik Seviyesi</h3>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div class="filter-pill ${currentFilterPriority === 'all' ? 'active' : ''}" data-filter-priority="all" style="text-align: center;">Tüm Öncelikler</div>
+                                    <div class="filter-pill ${currentFilterPriority === 'Yüksek' ? 'active' : ''}" data-filter-priority="Yüksek" style="text-align: center; border-color: rgba(239, 68, 68, 0.4);">🔴 Yüksek</div>
+                                    <div class="filter-pill ${currentFilterPriority === 'Orta' ? 'active' : ''}" data-filter-priority="Orta" style="text-align: center; border-color: rgba(249, 115, 22, 0.4);">🟡 Orta</div>
+                                    <div class="filter-pill ${currentFilterPriority === 'Düşük' ? 'active' : ''}" data-filter-priority="Düşük" style="text-align: center; border-color: rgba(59, 130, 246, 0.4);">🔵 Düşük</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
-                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                        <input type="checkbox" style="width: 18px; height: 18px;"> Haftalık şantiye raporlarını gözden geçir.
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                        <input type="checkbox" checked style="width: 18px; height: 18px;"> Taşeron hakediş onaylarını tamamla.
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                        <input type="checkbox" style="width: 18px; height: 18px;"> Bodrum belediye ruhsat yazısını takip et.
-                    </label>
-                </div>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 24px;" onclick="window.BrenerApp.showToast('success', 'Kişisel Yapılacaklar listesi güncellendi.')">Kaydet</button>
-            </div>
-        `;
-        container.innerHTML = html;
+            `;
+            container.innerHTML = html;
+        };
+
+        const renderList = () => {
+            const tasks = window.BrenerApp.state.tasks || [];
+            const listContainer = document.getElementById('tasksListContainer');
+            if (!listContainer) return;
+
+            let filtered = tasks.filter(t => {
+                if (currentFilterStatus === 'pending' && t.completed) return false;
+                if (currentFilterStatus === 'completed' && !t.completed) return false;
+                if (currentFilterPriority !== 'all' && t.priority !== currentFilterPriority) return false;
+                if (currentFilterCategory !== 'all' && t.category !== currentFilterCategory) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px; border: 1px dashed var(--border-color); border-radius: 8px; color: var(--text-muted); font-size: 0.85rem;">
+                        Seçili filtrelere uygun görev bulunamadı.
+                    </div>
+                `;
+                return;
+            }
+
+            listContainer.innerHTML = filtered.map(t => {
+                let badgeClass = "badge-p-low";
+                if (t.priority === 'Yüksek') badgeClass = "badge-p-high";
+                else if (t.priority === 'Orta') badgeClass = "badge-p-medium";
+
+                return `
+                    <div class="task-card ${t.completed ? 'completed' : ''}" data-id="${t.id}">
+                        <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                            <input type="checkbox" class="task-toggle" ${t.completed ? 'checked' : ''} style="width: 20px; height: 20px; cursor: pointer;">
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <strong class="task-title" style="font-size: 0.9rem; color: var(--text-main);">${t.title}</strong>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <span class="badge-cat">${t.category}</span>
+                                    <span class="badge-priority ${badgeClass}">${t.priority}</span>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted);">Tarih: ${t.date ? new Date(t.date).toLocaleDateString('tr-TR') : 'Belirtilmedi'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm btn-delete-task" style="padding: 6px 10px; color: var(--danger); background: transparent; border: none; font-size: 1rem; cursor: pointer;" title="Görevi Sil">🗑</button>
+                    </div>
+                `;
+            }).join('');
+
+            listContainer.querySelectorAll('.task-toggle').forEach(chk => {
+                chk.onchange = () => {
+                    const card = chk.closest('.task-card');
+                    const id = card.getAttribute('data-id');
+                    const task = tasks.find(t => t.id === id);
+                    if (task) {
+                        task.completed = chk.checked;
+                        window.BrenerApp.saveStateToStorage();
+                        renderLayout();
+                        renderList();
+                        setupEvents();
+                    }
+                };
+            });
+
+            listContainer.querySelectorAll('.btn-delete-task').forEach(btn => {
+                btn.onclick = () => {
+                    if (confirm('Bu görevi silmek istediğinize emin misiniz?')) {
+                        const card = btn.closest('.task-card');
+                        const id = card.getAttribute('data-id');
+                        window.BrenerApp.state.tasks = tasks.filter(t => t.id !== id);
+                        window.BrenerApp.saveStateToStorage();
+                        renderLayout();
+                        renderList();
+                        setupEvents();
+                    }
+                };
+            });
+        };
+
+        const setupEvents = () => {
+            container.querySelectorAll('[data-filter-status]').forEach(btn => {
+                btn.onclick = () => {
+                    currentFilterStatus = btn.getAttribute('data-filter-status');
+                    renderLayout();
+                    renderList();
+                    setupEvents();
+                };
+            });
+
+            container.querySelectorAll('[data-filter-cat]').forEach(btn => {
+                btn.onclick = () => {
+                    currentFilterCategory = btn.getAttribute('data-filter-cat');
+                    renderLayout();
+                    renderList();
+                    setupEvents();
+                };
+            });
+
+            container.querySelectorAll('[data-filter-priority]').forEach(btn => {
+                btn.onclick = () => {
+                    currentFilterPriority = btn.getAttribute('data-filter-priority');
+                    renderLayout();
+                    renderList();
+                    setupEvents();
+                };
+            });
+
+            const addBtn = document.getElementById('btnAddNewTask');
+            if (addBtn) {
+                addBtn.onclick = () => {
+                    const modalHtml = `
+                        <div style="padding: 16px;">
+                            <div class="form-group">
+                                <label>Görev Açıklaması</label>
+                                <input type="text" id="newTaskTitle" placeholder="Örn. Haftalık saha fotoğraflarını yükle" style="width: 100%;">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;">
+                                <div class="form-group">
+                                    <label>Kategori</label>
+                                    <select id="newTaskCategory" style="width: 100%;">
+                                        <option value="Şantiye">🔨 Şantiye</option>
+                                        <option value="Finans">💰 Finans</option>
+                                        <option value="Ruhsat">📜 Ruhsat</option>
+                                        <option value="Tasarım">📐 Tasarım</option>
+                                        <option value="Diğer">⚙ Diğer</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Öncelik</label>
+                                    <select id="newTaskPriority" style="width: 100%;">
+                                        <option value="Yüksek">🔴 Yüksek</option>
+                                        <option value="Orta" selected>🟡 Orta</option>
+                                        <option value="Düşük">🔵 Düşük</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top: 10px;">
+                                <label>Son Tarih</label>
+                                <input type="date" id="newTaskDate" style="width: 100%;">
+                            </div>
+                            <div style="display:flex; gap:12px; margin-top:20px; justify-content:flex-end;">
+                                <button class="btn btn-secondary" onclick="window.BrenerApp.closeModal()">Kapat</button>
+                                <button class="btn btn-primary" id="btnConfirmAddTask">Görev Ekle</button>
+                            </div>
+                        </div>
+                    `;
+
+                    window.BrenerApp.openModal('📌 Yeni Görev Ekle', modalHtml);
+
+                    document.getElementById('btnConfirmAddTask').onclick = () => {
+                        const title = document.getElementById('newTaskTitle').value.trim();
+                        const category = document.getElementById('newTaskCategory').value;
+                        const priority = document.getElementById('newTaskPriority').value;
+                        const date = document.getElementById('newTaskDate').value;
+
+                        if (!title) {
+                            alert('Lütfen görev açıklamasını doldurun!');
+                            return;
+                        }
+
+                        const newTask = {
+                            id: `TSK-00\${(window.BrenerApp.state.tasks || []).length + 1}`,
+                            title,
+                            category,
+                            priority,
+                            completed: false,
+                            date: date || new Date().toISOString().split('T')[0]
+                        };
+
+                        window.BrenerApp.state.tasks = window.BrenerApp.state.tasks || [];
+                        window.BrenerApp.state.tasks.push(newTask);
+                        window.BrenerApp.saveStateToStorage();
+                        
+                        window.BrenerApp.closeModal();
+                        window.BrenerApp.showToast('success', 'Yeni kişisel görev başarıyla eklendi.');
+
+                        renderLayout();
+                        renderList();
+                        setupEvents();
+                    };
+                };
+            }
+        };
+
+        renderLayout();
+        renderList();
+        setupEvents();
     },
 
     // 3. Firmaya Katıl
@@ -610,32 +924,106 @@ window.BrenerApp.Belgeler = {
         window.BrenerApp.updateTopbarTitle('Sistem Ayarları', 'Brener Group Platform Yapılandırmaları');
 
         let html = `
-            <div class="card" style="max-width: 600px; margin: 0 auto;">
-                <div class="card-header" style="margin-bottom: 20px;">
-                    <h2>Platform Tercihleri</h2>
+            <div style="display: flex; flex-direction: column; gap: 20px; max-width: 600px; margin: 0 auto;">
+                <!-- Platform Preferences Card -->
+                <div class="card">
+                    <div class="card-header" style="margin-bottom: 20px;">
+                        <h2>Platform Tercihleri</h2>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" checked style="width: 18px; height: 18px;"> E-Posta Bildirimlerini Aktif Et
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" checked style="width: 18px; height: 18px;"> Kritik Stok Limitinde Otomatik Satın Alma Talebi Oluştur
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Para Birimi Varsayılanı</label>
+                        <select>
+                            <option value="TRY">Türk Lirası (₺)</option>
+                            <option value="USD">Amerikan Doları ($)</option>
+                            <option value="EUR">Euro (€)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%; margin-top: 10px;" onclick="window.BrenerApp.showToast('success', 'Ayarlarınız kaydedildi.')">Ayarları Kaydet</button>
                 </div>
-                <div class="form-group">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" checked style="width: 18px; height: 18px;"> E-Posta Bildirimlerini Aktif Et
-                    </label>
+
+                <!-- Database Migration and Backup Card -->
+                <div class="card" style="border-color: rgba(204,163,82,0.3);">
+                    <div class="card-header" style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        <h2 style="color: var(--primary);">💾 Veritabanı Yönetimi & Sunucuya Taşıma</h2>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+                        Brener Group platformundaki tüm verilerinizi (Projeler, Şartnameler, Sözleşmeler, Çalışanlar ve Sistem Günlükleri) hosting ortamına taşımak veya yedeklemek için aşağıdaki araçları kullanabilirsiniz.
+                    </p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <button class="btn btn-primary" id="btnExportDb" style="width: 100%; font-weight: bold; padding: 12px 20px;">
+                            📥 Tüm Veritabanını JSON Olarak İndir (Export)
+                        </button>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button class="btn btn-secondary" id="btnImportDbTrigger" style="flex: 1; padding: 12px 20px;">
+                                📤 Veritabanını Geri Yükle (Import)
+                            </button>
+                            <input type="file" id="dbImportFileInput" style="display: none;" accept=".json">
+                        </div>
+                    </div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; display: block; text-align: center;">
+                        * İçe aktarma işlemi tarayıcıdaki tüm mevcut verilerinizi sıfırlayarak yüklenen dosyadaki verileri yazar.
+                    </span>
                 </div>
-                <div class="form-group">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" checked style="width: 18px; height: 18px;"> Kritik Stok Limitinde Otomatik Satın Alma Talebi Oluştur
-                    </label>
-                </div>
-                <div class="form-group">
-                    <label>Para Birimi Varsayılanı</label>
-                    <select>
-                        <option value="TRY">Türk Lirası (₺)</option>
-                        <option value="USD">Amerikan Doları ($)</option>
-                        <option value="EUR">Euro (€)</option>
-                    </select>
-                </div>
-                <button class="btn btn-primary" style="width:100%; margin-top: 10px;" onclick="window.BrenerApp.showToast('success', 'Ayarlarınız kaydedildi.')">Ayarları Kaydet</button>
             </div>
         `;
         container.innerHTML = html;
+
+        // Hook up database actions
+        document.getElementById('btnExportDb').onclick = () => {
+            const stateStr = JSON.stringify(window.BrenerApp.state, null, 4);
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(stateStr);
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `brener_veritabani_yedegi_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            
+            window.BrenerApp.logActivity('sistem', 'Tüm veritabanı yedeği JSON olarak dışa aktarıldı.', 'success');
+            window.BrenerApp.showToast('success', 'Tüm veritabanı başarıyla indirildi.');
+        };
+
+        const fileInput = document.getElementById('dbImportFileInput');
+        document.getElementById('btnImportDbTrigger').onclick = () => {
+            fileInput.click();
+        };
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedState = JSON.parse(event.target.result);
+                    if (importedState && typeof importedState === 'object' && importedState.users && importedState.projectSpecs) {
+                        window.BrenerApp.state = importedState;
+                        window.BrenerApp.saveStateToStorage();
+                        
+                        window.BrenerApp.showToast('success', 'Veritabanı başarıyla içe aktarıldı! Sistem yeniden yükleniyor...');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        alert('Hata: Yüklenen dosya geçerli bir Brener veritabanı yedeği değil!');
+                    }
+                } catch (err) {
+                    alert('Yükleme sırasında hata oluştu: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
     },
 
     // 13. AI Evrak Merkezi
@@ -739,37 +1127,65 @@ Gereğini arz ederiz.</textarea>
         const initials = user.name.split(' ').map(p => p[0]).join('').toUpperCase().substring(0, 2);
 
         let html = `
-            <div class="card" style="max-width: 500px; margin: 0 auto; padding: 32px;" id="profileCardContainer">
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <div style="width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #ebd197); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; color: var(--text-dark); box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.2);">
-                        ${initials}
-                    </div>
-                    <h2 style="font-weight: 700; font-size: 1.5rem;">${user.name}</h2>
-                    <span class="badge badge-success" style="margin-top: 8px; font-size: 0.75rem;">${roleLabels[user.role] || user.role}</span>
-                </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px; max-width: 1000px; margin: 0 auto;">
                 
-                <div style="display: flex; flex-direction: column; gap: 16px; border-top: 1px solid var(--border-color); padding-top: 24px; font-size: 0.95rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--text-muted);">📧 E-Posta:</span>
-                        <strong>${user.email}</strong>
+                <!-- Profil Bilgileri Card -->
+                <div class="card" style="padding: 32px;" id="profileCardContainer">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <div style="width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #ebd197); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; color: var(--text-dark); box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.2);">
+                            ${initials}
+                        </div>
+                        <h2 style="font-weight: 700; font-size: 1.5rem;">${user.name}</h2>
+                        <span class="badge badge-success" style="margin-top: 8px; font-size: 0.75rem;">${roleLabels[user.role] || user.role}</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--text-muted);">📞 Telefon:</span>
-                        <strong>${user.phone || '+90 532 111 22 33'}</strong>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 16px; border-top: 1px solid var(--border-color); padding-top: 24px; font-size: 0.95rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted);">📧 E-Posta:</span>
+                            <strong>${user.email}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted);">📞 Telefon:</span>
+                            <strong>${user.phone || '+90 532 111 22 33'}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted);">🏢 Şirket:</span>
+                            <strong>Brener Group</strong>
+                        </div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--text-muted);">🏢 Şirket:</span>
-                        <strong>Brener Group</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--text-muted);">🔒 Şifre:</span>
-                        <strong>••••••••</strong>
+                    
+                    <div style="display: flex; gap: 12px; margin-top: 32px;">
+                        <button class="btn btn-primary" style="width: 100%;" onclick="window.BrenerApp.Belgeler.toggleProfileEdit()">İletişim Bilgilerini Düzenle</button>
                     </div>
                 </div>
-                
-                <div style="display: flex; gap: 12px; margin-top: 32px;">
-                    <button class="btn btn-primary" style="width: 100%;" onclick="window.BrenerApp.Belgeler.toggleProfileEdit()">Profili Düzenle</button>
+
+                <!-- Şifre Değiştir Card -->
+                <div class="card" style="padding: 32px;">
+                    <div class="card-header" style="margin-bottom: 20px;">
+                        <h2>🔒 Şifre Değiştir</h2>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-top: 4px;">
+                            Hesap güvenliğiniz için şifrenizi düzenli aralıklarla değiştirin.
+                        </span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Mevcut Şifre</label>
+                        <input type="password" id="changePassCurrent" placeholder="••••••••" style="width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); padding:10px; border-radius:8px; color:var(--text-main);" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Yeni Şifre</label>
+                        <input type="password" id="changePassNew" placeholder="Yeni şifrenizi girin (en az 6 karakter)" style="width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); padding:10px; border-radius:8px; color:var(--text-main);" required>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label>Yeni Şifre (Tekrar)</label>
+                        <input type="password" id="changePassNewConfirm" placeholder="Yeni şifrenizi tekrar girin" style="width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); padding:10px; border-radius:8px; color:var(--text-main);" required>
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%;" onclick="window.BrenerApp.Belgeler.changePasswordAction()">Şifreyi Güncelle</button>
                 </div>
+
             </div>
         `;
         container.innerHTML = html;
@@ -783,14 +1199,14 @@ Gereğini arz ederiz.</textarea>
         container.innerHTML = `
             <div style="text-align: center; margin-bottom: 24px;">
                 <h2 style="font-weight: 700;">Profili Düzenle</h2>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Kişisel iletişim bilgilerinizi ve şifrenizi güncelleyin.</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Kişisel iletişim bilgilerinizi güncelleyin.</p>
             </div>
             
             <div class="form-group">
                 <label>Adı Soyadı</label>
                 <input type="text" id="editProfileName" value="${user.name}" required>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 24px;">
                 <label>Telefon Numarası</label>
                 <input type="text" id="editProfilePhone" value="${user.phone || '+90 532 111 22 33'}" required>
             </div>
@@ -798,12 +1214,8 @@ Gereğini arz ederiz.</textarea>
                 <label>E-Posta (Değiştirilemez)</label>
                 <input type="email" value="${user.email}" disabled style="opacity: 0.6;">
             </div>
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label>Yeni Şifre</label>
-                <input type="password" id="editProfilePass" value="${user.password}" style="width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); padding:10px; border-radius:8px; color:var(--text-main);" required>
-            </div>
             
-            <div style="display: flex; gap: 12px;">
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
                 <button class="btn btn-secondary" style="flex: 1;" onclick="window.BrenerApp.Belgeler.renderProfile(document.getElementById('contentWindow'))">İptal</button>
                 <button class="btn btn-primary" style="flex: 1;" onclick="window.BrenerApp.Belgeler.saveProfileEdits()">Değişiklikleri Kaydet</button>
             </div>
@@ -813,33 +1225,76 @@ Gereğini arz ederiz.</textarea>
     saveProfileEdits() {
         const name = document.getElementById('editProfileName').value.trim();
         const phone = document.getElementById('editProfilePhone').value.trim();
-        const pass = document.getElementById('editProfilePass').value.trim();
 
-        if (!name || !pass) {
-            alert('Lütfen Ad Soyad ve Şifre alanlarını doldurun!');
+        if (!name) {
+            alert('Lütfen Ad Soyad alanını doldurun!');
             return;
         }
 
         const user = window.BrenerApp.state.currentUser;
         if (!user) return;
 
-        // Update current session user details
+        // Update details
         user.name = name;
         user.phone = phone;
-        user.password = pass;
 
-        // Sync with users list in state
+        // Sync list
         const stateUser = window.BrenerApp.state.users.find(u => u.id === user.id);
         if (stateUser) {
             stateUser.name = name;
             stateUser.phone = phone;
-            stateUser.password = pass;
         }
 
         window.BrenerApp.saveStateToStorage();
-        window.BrenerApp.initAppSession(); // Update avatar and initials in topbar
+        window.BrenerApp.initAppSession();
         window.BrenerApp.showToast('success', 'Profil bilgileriniz başarıyla güncellendi.');
         this.renderProfile(document.getElementById('contentWindow'));
+    },
+
+    changePasswordAction() {
+        const currentPass = document.getElementById('changePassCurrent').value.trim();
+        const newPass = document.getElementById('changePassNew').value.trim();
+        const confirmPass = document.getElementById('changePassNewConfirm').value.trim();
+
+        const user = window.BrenerApp.state.currentUser;
+        if (!user) return;
+
+        if (!currentPass || !newPass || !confirmPass) {
+            alert('Lütfen tüm şifre alanlarını doldurun!');
+            return;
+        }
+
+        if (currentPass !== user.password) {
+            alert('Mevcut şifreniz hatalı!');
+            return;
+        }
+
+        if (newPass.length < 6) {
+            alert('Yeni şifre en az 6 karakter olmalıdır!');
+            return;
+        }
+
+        if (newPass !== confirmPass) {
+            alert('Yeni şifreler uyuşmuyor!');
+            return;
+        }
+
+        // Update password
+        user.password = newPass;
+
+        // Sync with users list
+        const stateUser = window.BrenerApp.state.users.find(u => u.id === user.id);
+        if (stateUser) {
+            stateUser.password = newPass;
+        }
+
+        window.BrenerApp.saveStateToStorage();
+        window.BrenerApp.showToast('success', 'Şifreniz başarıyla değiştirildi.');
+        
+        // Reset input fields
+        document.getElementById('changePassCurrent').value = '';
+        document.getElementById('changePassNew').value = '';
+        document.getElementById('changePassNewConfirm').value = '';
     },
 
     renderUserManagement(container) {
@@ -848,47 +1303,137 @@ Gereğini arz ederiz.</textarea>
         const users = window.BrenerApp.state.users;
         const rolePermissions = window.BrenerApp.state.rolePermissions;
 
-        const groups = [
-            { code: 'genel', label: 'Genel (Panel, Projeler, Hatırlatıcılar)' },
-            { code: 'proje-yonetimi', label: 'Proje Yönetimi (Proje Sözleşme Özeti)' },
-            { code: 'santiye', label: 'Şantiye Yönetimi (Günlük, Gantt, Puantaj, Stok, İSG, Beton)' },
-            { code: 'finans', label: 'Finans & Muhasebe (Hakediş, Tahsilat, Teklif/Sözleşme)' },
-            { code: 'hesaplama', label: 'Hesaplama Araçları (Maliyet, Metraj, Fiyatlar)' },
-            { code: 'degerleme', label: 'Değerleme (Appraisal, Emlak Takip, CMA)' },
-            { code: 'ai', label: 'AI Modülleri (Analiz, Çizim, Ses, Plan Okuma)' },
-            { code: 'saha', label: 'Saha & Servis (Kanban, Sipariş Fişi, Randevular)' },
-            { code: 'ekip', label: 'Firma & Ekip (Ekip Şeması, Görevlerim)' },
-            { code: 'belgeler', label: 'Belgeler & Hesap (Arşiv, Evrak Üretici, Ayarlar)' }
+        const roles = [
+            { code: 'admin', label: 'Yönetici' },
+            { code: 'finans_sorumlusu', label: 'Finans Sorumlusu' },
+            { code: 'ofis', label: 'Ofis Personeli' },
+            { code: 'proje_yoneticisi', label: 'Proje Yöneticisi' },
+            { code: 'saha_personeli', label: 'Saha Personeli' },
+            { code: 'satis', label: 'Satış Sorumlusu' },
+            { code: 'proje_muduru', label: 'Proje Müdürü' },
+            { code: 'mimar', label: 'Mimar / İç Mimar' },
+            { code: 'insaat_muhendisi', label: 'İnşaat Mühendisi' },
+            { code: 'metraj_uzmani', label: 'Metraj ve Keşif Uzmanı' },
+            { code: 'isg', label: 'İSG' },
+            { code: 'sefi', label: 'Şantiye Şefi' },
+            { code: 'formen', label: 'Ustabaşı / Formen' },
+            { code: 'isci', label: 'Usta / İşçi' },
+            { code: 'saha_muhendisi', label: 'Saha Mühendisi / Tekniker' }
         ];
 
-        const roles = [
-            { code: 'sefi', label: 'Şantiye Şefi' },
-            { code: 'muhasebe', label: 'Muhasebeci' },
-            { code: 'saha', label: 'Saha Ekibi' }
-        ];
+        // Parse navigation elements dynamically from DOM (Ensures auto-update when menu changes)
+        const getSidebarMenuStructure = () => {
+            const structure = [];
+            
+            // 1. Scan direct top-level nav-items (not in a group)
+            const directItems = [];
+            document.querySelectorAll('.sidebar-nav > .nav-item').forEach(item => {
+                const viewName = item.getAttribute('data-view');
+                const labelEl = item.querySelector('.nav-label');
+                if (viewName && labelEl && viewName !== 'kullanici-yonetimi') {
+                    directItems.push({
+                        code: viewName,
+                        label: labelEl.textContent.trim()
+                    });
+                }
+            });
+            
+            if (directItems.length > 0) {
+                structure.push({
+                    code: 'general_direct',
+                    label: 'Genel Bağlantılar',
+                    items: directItems
+                });
+            }
+
+            // 2. Scan group navs
+            document.querySelectorAll('.sidebar-nav .nav-group').forEach(group => {
+                const groupCode = group.getAttribute('data-group');
+                const titleEl = group.querySelector('.nav-group-title span');
+                if (!groupCode || !titleEl) return;
+                
+                const items = [];
+                group.querySelectorAll('.nav-item').forEach(item => {
+                    const viewName = item.getAttribute('data-view');
+                    const labelEl = item.querySelector('.nav-label');
+                    if (viewName && labelEl) {
+                        items.push({
+                            code: viewName,
+                            label: labelEl.textContent.trim()
+                        });
+                    }
+                });
+                
+                structure.push({
+                    code: groupCode,
+                    label: titleEl.textContent.trim(),
+                    items: items
+                });
+            });
+            
+            return structure;
+        };
+
+        const menuStructure = getSidebarMenuStructure();
+
+        let headerCells = '<th style="width: 180px; min-width: 180px; max-width: 180px; text-align: left; padding: 12px 8px; font-size: 0.75rem;">Menü / Modül Grubu</th>';
+        roles.forEach(r => {
+            headerCells += `<th style="text-align: center; width: 68px; min-width: 68px; max-width: 68px; white-space: normal; word-wrap: break-word; padding: 12px 2px; font-size: 0.62rem; line-height: 1.1; text-transform: uppercase; vertical-align: bottom;">${r.label}</th>`;
+        });
 
         let matrixRows = '';
-        groups.forEach(g => {
-            let cells = '';
-            roles.forEach(r => {
-                const isChecked = rolePermissions[r.code]?.[g.code] === true ? 'checked' : '';
-                cells += `
-                    <td>
-                        <input type="checkbox" class="matrix-checkbox" data-role="${r.code}" data-group="${g.code}" ${isChecked}>
-                    </td>
-                `;
-            });
+        menuStructure.forEach(group => {
+            // Group Header Row
             matrixRows += `
-                <tr>
-                    <td><strong>${g.label}</strong></td>
-                    ${cells}
+                <tr style="background: rgba(255, 255, 255, 0.04); font-weight: 700;">
+                    <td colspan="${roles.length + 1}" style="padding: 10px 8px; color: var(--primary); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        📁 ${group.label}
+                    </td>
                 </tr>
             `;
+
+            // Sub-menu Items
+            group.items.forEach(item => {
+                let cells = '';
+                roles.forEach(r => {
+                    const isChecked = rolePermissions[r.code]?.[item.code] !== false;
+                    cells += `
+                        <td style="text-align: center; width: 68px; min-width: 68px; max-width: 68px; padding: 8px 2px;">
+                            <input type="checkbox" class="matrix-checkbox" data-role="${r.code}" data-view="${item.code}" ${isChecked ? 'checked' : ''}>
+                        </td>
+                    `;
+                });
+
+                matrixRows += `
+                    <tr>
+                        <td style="width: 180px; min-width: 180px; max-width: 180px; white-space: normal; word-wrap: break-word; padding: 8px 8px 8px 24px; font-size: 0.8rem; color: var(--text-main);">
+                            📄 ${item.label}
+                        </td>
+                        ${cells}
+                    </tr>
+                `;
+            });
         });
 
         let userRows = '';
         users.forEach(u => {
-            const roleLabels = { admin: 'Yönetici (Admin)', sefi: 'Şantiye Şefi', muhasebe: 'Muhasebeci', saha: 'Saha Ekibi' };
+            const roleLabels = { 
+                admin: 'Yönetici',
+                finans_sorumlusu: 'Finans Sorumlusu',
+                ofis: 'Ofis Personeli',
+                proje_yoneticisi: 'Proje Yöneticisi',
+                saha_personeli: 'Saha Personeli',
+                satis: 'Satış Sorumlusu',
+                proje_muduru: 'Proje Müdürü',
+                mimar: 'Mimar / İç Mimar',
+                insaat_muhendisi: 'İnşaat Mühendisi',
+                metraj_uzmani: 'Metraj ve Keşif Uzmanı',
+                isg: 'İSG',
+                sefi: 'Şantiye Şefi',
+                formen: 'Ustabaşı / Formen',
+                isci: 'Usta / İşçi',
+                saha_muhendisi: 'Saha Mühendisi / Tekniker'
+            };
             userRows += `
                 <tr>
                     <td><strong>${u.name}</strong></td>
@@ -902,42 +1447,16 @@ Gereğini arz ederiz.</textarea>
         });
 
         let html = `
-            <div class="grid-2col">
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                <!-- Aktif Kullanıcı Hesapları Card -->
                 <div class="card">
-                    <div class="card-header">
-                        <h2>Yeni Kullanıcı Hesabı Aç</h2>
-                    </div>
-                    <div class="form-group">
-                        <label>Kullanıcı Adı Soyadı</label>
-                        <input type="text" id="newUserName" placeholder="Örn: Ahmet Yılmaz" required>
-                    </div>
-                    <div class="form-group">
-                        <label>E-Posta Adresi</label>
-                        <input type="email" id="newUserEmail" placeholder="ahmet@brener.com.tr" required>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Şifre</label>
-                            <input type="password" id="newUserPass" placeholder="••••••••" style="width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); padding:10px; border-radius:8px; color:var(--text-main);" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Sistem Rolü</label>
-                            <select id="newUserRole">
-                                <option value="sefi">Şantiye Şefi</option>
-                                <option value="muhasebe">Muhasebeci</option>
-                                <option value="saha">Saha Ekibi</option>
-                                <option value="admin">Yönetici (Admin)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" id="saveNewUserBtn" style="width: 100%; margin-top: 10px;">Kullanıcıyı Kaydet</button>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h2>Aktif Kullanıcı Hesapları</h2>
+                        <button class="btn btn-primary btn-sm" id="btnOpenAddUserModal" style="display: flex; align-items: center; gap: 6px;">
+                            ➕ Yeni Kullanıcı Ekle
+                        </button>
                     </div>
-                    <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                    <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
                         <table>
                             <thead>
                                 <tr>
@@ -953,81 +1472,254 @@ Gereğini arz ederiz.</textarea>
                         </table>
                     </div>
                 </div>
-            </div>
 
-            <div class="card" style="margin-top: 24px;">
-                <div class="card-header">
-                    <h2>Rol & Yetki Maskeleme Matrisi</h2>
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">Admin rolü tüm modüllere tam yetkilidir.</span>
-                </div>
-                <div class="table-responsive">
-                    <table class="matrix-table">
-                        <thead>
-                            <tr>
-                                <th>Menü / Modül Grubu</th>
-                                <th>Şantiye Şefi</th>
-                                <th>Muhasebeci</th>
-                                <th>Saha Ekibi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="matrixTableBody">
-                            ${matrixRows}
-                        </tbody>
-                    </table>
-                </div>
-                <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
-                    <button class="btn btn-primary" id="saveMatrixBtn">Yetki Matrisini Kaydet & Uygula</button>
+                <!-- Yetki Matrisi Card -->
+                <div class="card">
+                    <div class="card-header" style="margin-bottom: 20px;">
+                        <h2>Rol & Yetki Maskeleme Matrisi</h2>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-top: 4px;">
+                            Admin rolü tüm modüllere tam yetkilidir.
+                        </span>
+                    </div>
+                    <div class="table-responsive" style="overflow-x: auto; width: 100%; max-width: 100%; display: block; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <table class="matrix-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 1200px;">
+                            <thead>
+                                <tr>
+                                    ${headerCells}
+                                </tr>
+                            </thead>
+                            <tbody id="matrixTableBody">
+                                ${matrixRows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+                        <button class="btn btn-primary" id="saveMatrixBtn">Yetki Matrisini Kaydet & Uygula</button>
+                    </div>
                 </div>
             </div>
         `;
         container.innerHTML = html;
 
-        // Save User Action
-        document.getElementById('saveNewUserBtn').onclick = () => {
-            const name = document.getElementById('newUserName').value.trim();
-            const email = document.getElementById('newUserEmail').value.trim();
-            const pass = document.getElementById('newUserPass').value.trim();
-            const role = document.getElementById('newUserRole').value;
+        // Open Modal Event Bind
+        document.getElementById('btnOpenAddUserModal').onclick = () => {
+            const modalHtml = `
+                <style>
+                    .modal-toggle-container {
+                        background: rgba(255, 255, 255, 0.02);
+                        border: 1px solid var(--border-color);
+                        border-radius: 10px;
+                        padding: 14px 16px;
+                        margin-bottom: 20px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    .modal-switch {
+                        position: relative;
+                        display: inline-block;
+                        width: 46px;
+                        height: 24px;
+                    }
+                    .modal-switch input {
+                        opacity: 0;
+                        width: 0;
+                        height: 0;
+                    }
+                    .modal-slider {
+                        position: absolute;
+                        cursor: pointer;
+                        top: 0; left: 0; right: 0; bottom: 0;
+                        background-color: rgba(255, 255, 255, 0.1);
+                        transition: .3s;
+                        border-radius: 24px;
+                    }
+                    .modal-slider:before {
+                        position: absolute;
+                        content: "";
+                        height: 18px;
+                        width: 18px;
+                        left: 3px;
+                        bottom: 3px;
+                        background-color: white;
+                        transition: .3s;
+                        border-radius: 50%;
+                    }
+                    input:checked + .modal-slider {
+                        background-color: #ea580c;
+                    }
+                    input:checked + .modal-slider:before {
+                        transform: translateX(22px);
+                    }
+                </style>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; margin-top: -10px;">
+                    Organizasyonunuza yeni bir kullanıcı ekleyin
+                </div>
 
-            if (!name || !email || !pass) {
-                alert('Lütfen tüm alanları doldurun!');
-                return;
-            }
+                <!-- Taşeron / Saha Kullanıcısı Toggle -->
+                <div class="modal-toggle-container">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.92rem; color: var(--text-main);">Taşeron / Saha Kullanıcısı</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Bu kullanıcı dashboard'a giriş yapamaz, sadece WhatsApp ile kullanılır</div>
+                    </div>
+                    <label class="modal-switch">
+                        <input type="checkbox" id="addTaseronSwitch">
+                        <span class="modal-slider"></span>
+                    </label>
+                </div>
 
-            const exists = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-            if (exists) {
-                alert('Bu e-posta adresine ait bir kullanıcı zaten mevcut!');
-                return;
-            }
+                <div class="form-group">
+                    <label>Ad Soyad</label>
+                    <input type="text" id="addUserName" placeholder="Ahmet Yılmaz" required style="width:100%;">
+                </div>
 
-            users.push({
-                id: Date.now(),
-                name,
-                email,
-                password: pass,
-                role
-            });
+                <div class="form-group">
+                    <label>E-posta</label>
+                    <input type="email" id="addUserEmail" placeholder="ahmet@santiyenet.com" required style="width:100%;">
+                </div>
 
-            window.BrenerApp.saveStateToStorage();
-            window.BrenerApp.showToast('success', `${name} için yeni kullanıcı hesabı başarıyla oluşturuldu.`);
-            this.renderUserManagement(container);
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" id="addUserPass" placeholder="En az 6 karakter" required style="width:100%;">
+                </div>
+
+                <div class="form-group">
+                    <label>Telefon Numarası</label>
+                    <input type="text" id="addUserPhone" placeholder="05XX XXX XX XX" style="width:100%;">
+                </div>
+
+                <div class="form-group">
+                    <label>Rol</label>
+                    <select id="addUserRole" style="width:100%;">
+                        <option value="">Rol seçin...</option>
+                        <option value="admin">Yönetici</option>
+                        <option value="finans_sorumlusu">Finans Sorumlusu</option>
+                        <option value="ofis">Ofis Personeli</option>
+                        <option value="proje_yoneticisi">Proje Yöneticisi</option>
+                        <option value="saha_personeli">Saha Personeli</option>
+                        <option value="satis">Satış Sorumlusu</option>
+                        <option value="proje_muduru">Proje Müdürü</option>
+                        <option value="mimar">Mimar / İç Mimar</option>
+                        <option value="insaat_muhendisi">İnşaat Mühendisi</option>
+                        <option value="metraj_uzmani">Metraj ve Keşif Uzmanı</option>
+                        <option value="isg">İSG</option>
+                        <option value="sefi">Şantiye Şefi</option>
+                        <option value="formen">Ustabaşı / Formen</option>
+                        <option value="isci">Usta / İşçi</option>
+                        <option value="saha_muhendisi">Saha Mühendisi / Tekniker</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                    <button class="btn btn-secondary" id="btnCancelAddUser" style="padding: 10px 24px; font-weight: 600; border-radius: 8px;">İptal</button>
+                    <button class="btn" id="btnConfirmAddUser" style="background: #ea580c; color: white; padding: 10px 24px; font-weight: 600; border-radius: 8px; border: none;">Oluştur</button>
+                </div>
+            `;
+
+            window.BrenerApp.openModal('Yeni Kullanıcı Ekle', modalHtml);
+
+            // Handle toggle changes
+            const taseronSwitch = document.getElementById('addTaseronSwitch');
+            const emailInput = document.getElementById('addUserEmail');
+            const passInput = document.getElementById('addUserPass');
+            const roleSelect = document.getElementById('addUserRole');
+
+            taseronSwitch.onchange = () => {
+                if (taseronSwitch.checked) {
+                    emailInput.value = 'saha_whatsapp@brener.com';
+                    emailInput.disabled = true;
+                    passInput.value = 'whatsapp_user_field';
+                    passInput.disabled = true;
+                    roleSelect.value = 'saha';
+                    roleSelect.disabled = true;
+                } else {
+                    emailInput.value = '';
+                    emailInput.disabled = false;
+                    passInput.value = '';
+                    passInput.disabled = false;
+                    roleSelect.value = '';
+                    roleSelect.disabled = false;
+                }
+            };
+
+            // Cancel button
+            document.getElementById('btnCancelAddUser').onclick = () => {
+                document.getElementById('modalCloseBtn').click();
+            };
+
+            // Create button submit action
+            document.getElementById('btnConfirmAddUser').onclick = () => {
+                const name = document.getElementById('addUserName').value.trim();
+                const email = emailInput.value.trim();
+                const pass = passInput.value.trim();
+                const role = roleSelect.value;
+                const phone = document.getElementById('addUserPhone').value.trim();
+
+                if (!name) {
+                    alert('Lütfen Ad Soyad girin!');
+                    return;
+                }
+                if (!email) {
+                    alert('Lütfen E-posta girin!');
+                    return;
+                }
+                if (!pass || pass.length < 6) {
+                    alert('Şifre en az 6 karakter olmalıdır!');
+                    return;
+                }
+                if (!role) {
+                    alert('Lütfen bir Rol seçin!');
+                    return;
+                }
+
+                // Check duplicates
+                const exists = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+                if (exists) {
+                    alert('Bu e-posta adresine sahip bir kullanıcı zaten var!');
+                    return;
+                }
+
+                // Add to state
+                users.push({
+                    id: Date.now(),
+                    name,
+                    email,
+                    password: pass,
+                    role,
+                    phone: phone || ''
+                });
+
+                window.BrenerApp.saveStateToStorage();
+                window.BrenerApp.showToast('success', `${name} için yeni kullanıcı hesabı başarıyla oluşturuldu.`);
+                document.getElementById('modalCloseBtn').click();
+                this.renderUserManagement(container);
+            };
         };
 
         // Save Matrix Action
         document.getElementById('saveMatrixBtn').onclick = () => {
             const checkboxes = document.querySelectorAll('.matrix-checkbox');
+            
+            // Rebuild rolePermissions structure cleanly
+            window.BrenerApp.state.rolePermissions = {};
+            
             checkboxes.forEach(cb => {
                 const r = cb.getAttribute('data-role');
-                const g = cb.getAttribute('data-group');
+                const viewCode = cb.getAttribute('data-view');
+                if (!r || !viewCode) return;
+                
                 const isChecked = cb.checked;
                 
-                if (!rolePermissions[r]) rolePermissions[r] = {};
-                rolePermissions[r][g] = isChecked;
+                if (!window.BrenerApp.state.rolePermissions[r]) {
+                    window.BrenerApp.state.rolePermissions[r] = {};
+                }
+                // Store false explicitly if unchecked so default logic checks out
+                window.BrenerApp.state.rolePermissions[r][viewCode] = isChecked;
             });
 
             window.BrenerApp.saveStateToStorage();
             window.BrenerApp.applyRolePermissions();
-            window.BrenerApp.showToast('success', 'Rol Yetki Matrisi başarıyla güncellendi ve tüm rollere uygulandı.');
+            window.BrenerApp.showToast('success', 'Tüm menü ve alt menü yetkileri başarıyla güncellendi ve uygulandı.');
             this.renderUserManagement(container);
         };
     },

@@ -7,12 +7,20 @@ window.BrenerApp.ProjeYonetimi = {
     mode: 'list', // 'list' or 'form'
     editingContractId: null,
     temsilHeyetiTags: [],
+    presentationFilter: 'all',
+    presentationSearch: '',
 
     render(view, container) {
         if (view === 'proje-sozlesme-ozeti') {
             this.renderMain(container);
         } else if (view === 'teknik-sartname') {
             this.renderSpecs(container);
+        } else if (view === 'musteri-sunumlari') {
+            this.renderPresentations(container);
+        } else if (view === 'proje-asamalari') {
+            this.renderPhases(container);
+        } else if (view === 'musteri-takip') {
+            this.renderCrm(container);
         }
     },
 
@@ -990,7 +998,7 @@ window.BrenerApp.ProjeYonetimi = {
                     window.onload = function() {
                         window.print();
                     };
-                </script>
+                <\/script>
             </body>
             </html>
         `);
@@ -2065,10 +2073,1606 @@ window.BrenerApp.ProjeYonetimi = {
                     window.onload = function() {
                         window.print();
                     };
-                </script>
+                <\/script>
             </body>
             </html>
         `);
         printWindow.document.close();
-    }
+    },
+
+    renderPresentations(container) {
+        const activeProj = window.BrenerApp.getActiveProject();
+        if (!activeProj) {
+            container.innerHTML = `
+                <div class="card" style="text-align: center; padding: 40px;">
+                    <h2>Aktif Proje Seçilmedi</h2>
+                    <p style="color: var(--text-muted); margin-top: 10px;">Lütfen üst menüden bir proje seçin.</p>
+                </div>
+            `;
+            return;
+        }
+
+        window.BrenerApp.updateTopbarTitle('Müşteri Sunumları & Galeri', `${activeProj.name} — Görsel, Video ve PDF Sunum Dokümanları`);
+
+        // Initialize state arrays
+        if (!window.BrenerApp.state.customerPresentations) {
+            window.BrenerApp.state.customerPresentations = {};
+        }
+        if (!window.BrenerApp.state.customerPresentations[activeProj.id]) {
+            window.BrenerApp.state.customerPresentations[activeProj.id] = [];
+        }
+
+        const presentations = window.BrenerApp.state.customerPresentations[activeProj.id];
+
+        let html = `
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Üst Aksiyon & İstatistik Kartı -->
+                <div class="card" style="background: linear-gradient(135deg, rgba(204,163,82,0.1), rgba(21,29,45,0.5)); border-color: rgba(204,163,82,0.3);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <span class="badge badge-primary" style="margin-bottom: 5px;">Müşteri Sunumu Gösterimi</span>
+                            <h2 style="margin: 0; font-size: 1.4rem; color: var(--text-main);">🖥️ Sunum ve Galeri Paneli</h2>
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Müşterilerinize ve arsa sahiplerine yapılacak sunumlar için dosyaları yönetin.</p>
+                        </div>
+                        <div>
+                            <button class="btn btn-primary" id="btnLaunchSlideshow" style="padding: 12px 24px; font-weight: 700; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.25);">
+                                🖥️ Sunum Modunu Başlat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-3col" style="grid-template-columns: 2fr 1fr; align-items: start; gap: 20px;">
+                    <!-- SOL: GALERİ VE DOSYALAR -->
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div class="card">
+                            <!-- Filtre ve Arama Araç Çubuğu -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                                <div style="display: flex; gap: 8px;" class="presentation-tabs">
+                                    <button class="btn ${this.presentationFilter === 'all' ? 'btn-primary' : 'btn-secondary'} btn-sm pres-tab-btn" data-type="all">Tümü</button>
+                                    <button class="btn ${this.presentationFilter === 'image' ? 'btn-primary' : 'btn-secondary'} btn-sm pres-tab-btn" data-type="image">🖼️ Görseller</button>
+                                    <button class="btn ${this.presentationFilter === 'video' ? 'btn-primary' : 'btn-secondary'} btn-sm pres-tab-btn" data-type="video">🎥 Videolar</button>
+                                    <button class="btn ${this.presentationFilter === 'pdf' ? 'btn-primary' : 'btn-secondary'} btn-sm pres-tab-btn" data-type="pdf">📄 PDF Belgeleri</button>
+                                </div>
+                                <div style="position: relative; width: 220px;">
+                                    <input type="text" id="presSearchInput" value="${this.presentationSearch}" placeholder="Galeri içinde ara..." style="width: 100%; padding: 8px 12px; font-size: 0.85rem;">
+                                </div>
+                            </div>
+
+                            <!-- Dosyalar Grid Listesi -->
+                            <div class="grid-2col" id="presItemsGrid" style="gap: 15px;">
+                                <!-- Dinamik yüklenecek -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SAĞ: YENİ DOSYA YÜKLEME FORMU -->
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div class="card" style="position: sticky; top: 20px;">
+                            <div class="card-header" style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                                <h3 style="color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px; margin: 0;">
+                                    📤 Yeni Sunum Dosyası Ekle
+                                </h3>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Dosya / Sunum Başlığı</label>
+                                <input type="text" id="newPresTitle" placeholder="Örn: Kat Planı Render..." class="custom-input">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Dosya Türü</label>
+                                <select id="newPresType" class="custom-input">
+                                    <option value="image">Görsel (JPG, PNG, WebP)</option>
+                                    <option value="video">Video (MP4, WebM)</option>
+                                    <option value="pdf">PDF Belgesi</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Dosya Adresi (URL / Embed)</label>
+                                <input type="text" id="newPresUrl" placeholder="https://domain.com/dosya.jpg veya mock" class="custom-input">
+                                <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: block;">
+                                    * Harici dosya URL'i girin ya da test için bilgisayarınızdan dosya seçin.
+                                </span>
+                            </div>
+
+                            <!-- Yerel dosya yükleme simulatoru -->
+                            <div class="form-group" style="border: 2px dashed var(--border-color); border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.2s;" id="presDropzone">
+                                <div style="font-size: 1.5rem; margin-bottom: 6px;">📂</div>
+                                <div style="font-size: 0.8rem; font-weight: 600;">Yerel Dosya Seç (Simüle Et)</div>
+                                <input type="file" id="presFileInput" style="display: none;" accept="image/*,video/*,application/pdf">
+                                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;" id="presFileName">Maksimum 50MB</div>
+                            </div>
+
+                            <!-- Yükleme İlerleme Çubuğu -->
+                            <div id="presUploadProgressWrapper" style="display: none; margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 4px;">
+                                    <span>Yükleniyor...</span>
+                                    <span id="presProgressPercent">0%</span>
+                                </div>
+                                <div class="progress-bar-bg" style="height: 6px;">
+                                    <div class="progress-bar-fill" id="presProgressBarFill" style="width: 0%; height: 100%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Dosya Açıklaması</label>
+                                <textarea id="newPresDesc" placeholder="Müşteriye sunulacak detaylı açıklama..." style="height: 60px;"></textarea>
+                            </div>
+
+                            <button class="btn btn-primary" id="btnSaveNewPres" style="width: 100%; margin-top: 10px;">
+                                💾 Dosyayı Galeriye Ekle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CUSTOM FULLSCREEN PRESENTATION OVERLAY -->
+            <div id="presFullscreenOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 15, 26, 0.98); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; color: #ffffff; font-family: var(--font-family);">
+                <!-- Overlay Header -->
+                <div style="position: absolute; top: 0; left: 0; width: 100%; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0)); box-sizing: border-box; z-index: 10;">
+                    <div>
+                        <h2 id="presSlideTitle" style="margin: 0; font-size: 1.5rem; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Slide Title</h2>
+                        <p id="presSlideDesc" style="margin: 4px 0 0 0; font-size: 0.85rem; color: #a0aec0; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Slide Description</p>
+                    </div>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <span id="presSlideIndex" style="font-size: 1rem; font-weight: bold; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px;">1 / 5</span>
+                        <button id="btnCloseFullscreenPres" style="background: rgba(255,0,0,0.2); border: 1px solid rgba(255,0,0,0.4); color: #ff8888; border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseenter="this.style.background='rgba(255,0,0,0.4)'" onmouseleave="this.style.background='rgba(255,0,0,0.2)'">✕</button>
+                    </div>
+                </div>
+
+                <!-- Slide Content Frame -->
+                <div id="presSlideContentFrame" style="width: 85%; height: 70%; display: flex; justify-content: center; align-items: center; position: relative;">
+                    <!-- Media element dynamically rendered -->
+                </div>
+
+                <!-- Navigation Controls -->
+                <button id="btnPresPrev" style="position: absolute; left: 30px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; width: 60px; height: 60px; border-radius: 50%; font-size: 1.8rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseenter="this.style.background='rgba(255,255,255,0.15)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">◀</button>
+                <button id="btnPresNext" style="position: absolute; right: 30px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; width: 60px; height: 60px; border-radius: 50%; font-size: 1.8rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseenter="this.style.background='rgba(255,255,255,0.15)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">▶</button>
+
+                <!-- Footer Autoplay controls -->
+                <div style="position: absolute; bottom: 30px; display: flex; gap: 15px; align-items: center; background: rgba(0,0,0,0.6); padding: 12px 24px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08);">
+                    <button id="btnPresPlayPause" style="background: var(--primary); border: none; color: black; font-weight: bold; border-radius: 20px; padding: 6px 16px; cursor: pointer;">⏸ Autoplay Duraklat</button>
+                    <span style="font-size: 0.85rem; color: #a0aec0;">Interval: 5s</span>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+        // Render and filter functions
+        const renderGalleryItems = () => {
+            const grid = document.getElementById('presItemsGrid');
+            grid.innerHTML = '';
+
+            const filtered = presentations.filter(p => {
+                const matchesType = this.presentationFilter === 'all' || p.type === this.presentationFilter;
+                const matchesSearch = p.title.toLowerCase().includes(this.presentationSearch.toLowerCase()) ||
+                                      (p.description && p.description.toLowerCase().includes(this.presentationSearch.toLowerCase()));
+                return matchesType && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: span 2; text-align: center; padding: 40px; color: var(--text-muted);">
+                        Arama kriterlerine veya filtreye uygun sunum dosyası bulunamadı.
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'card presentation-item-card';
+                card.style = 'padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 100%; border: 1px solid var(--border-color); position: relative;';
+
+                // Render thumbnail template based on type
+                let mediaThumbnail = '';
+                if (p.type === 'image') {
+                    mediaThumbnail = `
+                        <div style="width: 100%; height: 160px; background: url('${p.url}') center/cover no-repeat; position: relative;">
+                            <span class="badge badge-success" style="position: absolute; top: 10px; left: 10px; font-size: 0.65rem;">Görsel</span>
+                        </div>
+                    `;
+                } else if (p.type === 'video') {
+                    const thumb = p.thumbnail || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80';
+                    mediaThumbnail = `
+                        <div style="width: 100%; height: 160px; background: url('${thumb}') center/cover no-repeat; position: relative; display: flex; align-items: center; justify-content: center;">
+                            <span class="badge badge-danger" style="position: absolute; top: 10px; left: 10px; font-size: 0.65rem;">Video</span>
+                            <div style="width: 45px; height: 45px; border-radius: 50%; background: rgba(0,0,0,0.6); border: 2px solid #fff; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; cursor: pointer;">▶</div>
+                        </div>
+                    `;
+                } else if (p.type === 'pdf') {
+                    mediaThumbnail = `
+                        <div style="width: 100%; height: 160px; background: linear-gradient(135deg, #1e293b, #0f172a); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+                            <span class="badge badge-info" style="position: absolute; top: 10px; left: 10px; font-size: 0.65rem;">PDF Belgesi</span>
+                            <span style="font-size: 3rem;">📄</span>
+                            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: bold; font-family: monospace;">PDF DOCUMENT</span>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    ${mediaThumbnail}
+                    <div style="padding: 15px; display: flex; flex-direction: column; flex-grow: 1;">
+                        <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.3;">${p.title}</h4>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 12px 0; line-height: 1.4; flex-grow: 1;">
+                            ${p.description || 'Açıklama girilmemiş.'}
+                        </p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: auto;">
+                            <span>📅 ${p.date}</span>
+                            <span>💾 ${p.size || '—'}</span>
+                        </div>
+                        <div style="display: flex; gap: 6px; margin-top: 12px;">
+                            <button class="btn btn-primary btn-sm btn-show-media" data-id="${p.id}" style="flex: 2; padding: 6px 8px; font-size: 0.75rem;">🔍 Göster (Detay)</button>
+                            <button class="btn btn-secondary btn-sm btn-copy-link" data-url="${p.url}" style="flex: 1; padding: 6px 8px; font-size: 0.75rem;">🔗 Link</button>
+                            <button class="btn btn-danger btn-sm btn-delete-media" data-id="${p.id}" style="padding: 6px 8px; font-size: 0.75rem;">🗑️</button>
+                        </div>
+                    </div>
+                `;
+
+                // Wire up actions within cards
+                card.querySelector('.btn-show-media').onclick = () => {
+                    this.showPresentationLightbox(p);
+                };
+
+                card.querySelector('.btn-copy-link').onclick = () => {
+                    navigator.clipboard.writeText(p.url);
+                    window.BrenerApp.showToast('success', 'Dosya adresi kopyalandı.');
+                };
+
+                card.querySelector('.btn-delete-media').onclick = () => {
+                    if (confirm(`"${p.title}" dosyasını silmek istediğinize emin misiniz?`)) {
+                        const updated = presentations.filter(x => x.id !== p.id);
+                        window.BrenerApp.state.customerPresentations[activeProj.id] = updated;
+                        window.BrenerApp.saveStateToStorage();
+                        
+                        window.BrenerApp.logActivity('proje', `Sunum dosyası silindi: ${p.title}`, 'warning');
+                        window.BrenerApp.showToast('danger', 'Dosya başarıyla silindi.');
+                        
+                        // Reload presentations list
+                        this.renderPresentations(container);
+                    }
+                };
+
+                grid.appendChild(card);
+            });
+        };
+
+        // Autocomplete search input query
+        const searchInput = document.getElementById('presSearchInput');
+        searchInput.oninput = (e) => {
+            this.presentationSearch = e.target.value;
+            renderGalleryItems();
+        };
+
+        // Filter tab selection
+        container.querySelectorAll('.pres-tab-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                container.querySelectorAll('.pres-tab-btn').forEach(x => {
+                    x.classList.remove('btn-primary');
+                    x.classList.add('btn-secondary');
+                });
+                btn.classList.add('btn-primary');
+                btn.classList.remove('btn-secondary');
+
+                this.presentationFilter = btn.getAttribute('data-type');
+                renderGalleryItems();
+            };
+        });
+
+        // Dropzone simulators
+        const dropzone = document.getElementById('presDropzone');
+        const fileInput = document.getElementById('presFileInput');
+        const fileNameDisp = document.getElementById('presFileName');
+
+        dropzone.onclick = () => fileInput.click();
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileNameDisp.textContent = `${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`;
+                
+                // Prefill fields
+                document.getElementById('newPresTitle').value = file.name.split('.').slice(0, -1).join('.');
+                
+                const ext = file.name.split('.').pop().toLowerCase();
+                const typeSelect = document.getElementById('newPresType');
+                if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+                    typeSelect.value = 'image';
+                    document.getElementById('newPresUrl').value = URL.createObjectURL(file); // Temporary mock blob url
+                } else if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) {
+                    typeSelect.value = 'video';
+                    document.getElementById('newPresUrl').value = 'https://assets.mixkit.co/videos/preview/mixkit-suburban-houses-aerial-view-40858-large.mp4'; // Use fallback mp4
+                } else if (ext === 'pdf') {
+                    typeSelect.value = 'pdf';
+                    document.getElementById('newPresUrl').value = 'https://storage.brener.com.tr/docs/mimari_proje_detaylari.pdf';
+                }
+            }
+        };
+
+        // Add item submit handler
+        document.getElementById('btnSaveNewPres').onclick = () => {
+            const title = document.getElementById('newPresTitle').value.trim();
+            const type = document.getElementById('newPresType').value;
+            const url = document.getElementById('newPresUrl').value.trim();
+            const desc = document.getElementById('newPresDesc').value.trim();
+
+            if (!title || !url) {
+                alert('Lütfen Başlık ve Dosya Adresi (URL) alanlarını doldurun.');
+                return;
+            }
+
+            // Simulate progress bar before saving
+            const progressWrapper = document.getElementById('presUploadProgressWrapper');
+            const progressBarFill = document.getElementById('presProgressBarFill');
+            const progressPercent = document.getElementById('presProgressPercent');
+            
+            progressWrapper.style.display = 'block';
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                progressBarFill.style.width = `${progress}%`;
+                progressPercent.textContent = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // Add new presentation object to array
+                    const newAsset = {
+                        id: 'p_' + Date.now(),
+                        title,
+                        type,
+                        url,
+                        date: new Date().toLocaleDateString('tr-TR'),
+                        size: (Math.random() * 5 + 1).toFixed(1) + ' MB',
+                        description: desc
+                    };
+
+                    presentations.push(newAsset);
+                    window.BrenerApp.state.customerPresentations[activeProj.id] = presentations;
+                    window.BrenerApp.saveStateToStorage();
+                    
+                    window.BrenerApp.logActivity('proje', `Yeni sunum dosyası yüklendi: ${title}`, 'success');
+                    window.BrenerApp.showToast('success', 'Dosya başarıyla sunum galerisine eklendi.');
+                    
+                    // Redraw entire component
+                    this.renderPresentations(container);
+                }
+            }, 100);
+        };
+
+        // Start presentation slideshow deck
+        document.getElementById('btnLaunchSlideshow').onclick = () => {
+            this.launchPresentationsSlideshow(presentations);
+        };
+
+        // Initial grid draw
+        renderGalleryItems();
+    },
+
+    showPresentationLightbox(asset) {
+        let content = '';
+
+        if (asset.type === 'image') {
+            content = `
+                <div style="text-align: center;">
+                    <img src="${asset.url}" style="max-width: 100%; max-height: 500px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
+                    <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-main); text-align: left; line-height: 1.5; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 6px; border-left: 3px solid var(--primary);">
+                        <strong>Dosya Detayı:</strong> ${asset.description || 'Açıklama girilmemiş.'}
+                    </p>
+                </div>
+            `;
+        } else if (asset.type === 'video') {
+            content = `
+                <div style="text-align: center;">
+                    <video src="${asset.url}" controls autoplay style="width: 100%; max-height: 480px; border-radius: 8px; box-shadow: var(--shadow-lg); background: #000;"></video>
+                    <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-main); text-align: left; line-height: 1.5; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 6px; border-left: 3px solid var(--primary);">
+                        <strong>Video Detayı:</strong> ${asset.description || 'Açıklama girilmemiş.'}
+                    </p>
+                </div>
+            `;
+        } else if (asset.type === 'pdf') {
+            content = `
+                <div style="text-align: center;">
+                    <div style="background: rgba(255,255,255,0.02); border: 1px dashed var(--border-color); padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px; margin-bottom: 15px;">
+                        <span style="font-size: 4rem;">📄</span>
+                        <h3 style="margin: 0; color: var(--text-main);">${asset.title}</h3>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 400px;">Bu bir PDF belgesidir. Güvenli tarayıcı uyumluluğu nedeniyle harici sekmede açabilir veya doğrudan indirebilirsiniz.</p>
+                        <div style="display: flex; gap: 10px;">
+                            <a href="${asset.url}" target="_blank" class="btn btn-primary" style="text-decoration: none;">📄 PDF Belgesini Aç</a>
+                            <a href="${asset.url}" download class="btn btn-secondary" style="text-decoration: none;">📥 Bilgisayara İndir</a>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--text-main); text-align: left; line-height: 1.5; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 6px; border-left: 3px solid var(--primary);">
+                        <strong>Dosya Detayı:</strong> ${asset.description || 'Açıklama girilmemiş.'}
+                    </p>
+                </div>
+            `;
+        }
+
+        window.BrenerApp.openModal(asset.title, content);
+    },
+
+    launchPresentationsSlideshow(assets) {
+        if (assets.length === 0) {
+            alert('Sunum yapılacak dosya bulunmamaktadır!');
+            return;
+        }
+
+        const overlay = document.getElementById('presFullscreenOverlay');
+        overlay.style.display = 'flex';
+
+        let currentIndex = 0;
+        let autoplayTimer = null;
+        let isPlaying = true;
+
+        const updateSlide = () => {
+            const item = assets[currentIndex];
+            document.getElementById('presSlideTitle').textContent = item.title;
+            document.getElementById('presSlideDesc').textContent = item.description || 'Açıklama girilmemiş.';
+            document.getElementById('presSlideIndex').textContent = `${currentIndex + 1} / ${assets.length}`;
+
+            const frame = document.getElementById('presSlideContentFrame');
+            frame.innerHTML = '';
+
+            if (item.type === 'image') {
+                frame.innerHTML = `<img src="${item.url}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">`;
+            } else if (item.type === 'video') {
+                frame.innerHTML = `<video src="${item.url}" controls autoplay style="max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: #000;"></video>`;
+            } else if (item.type === 'pdf') {
+                frame.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 40px; border-radius: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                        <span style="font-size: 5rem;">📄</span>
+                        <h2 style="margin: 0; color: #fff;">${item.title}</h2>
+                        <p style="color: #a0aec0; max-width: 400px; font-size: 0.9rem;">Detaylı mimari paftalar ve resmi dökümanlar için PDF belgesi.</p>
+                        <a href="${item.url}" target="_blank" class="btn btn-primary" style="text-decoration: none; padding: 12px 30px; font-size: 1rem; border-radius: 30px;">📄 Belgeyi Yeni Sekmede Aç</a>
+                    </div>
+                `;
+            }
+        };
+
+        const stopAutoplay = () => {
+            if (autoplayTimer) {
+                clearInterval(autoplayTimer);
+                autoplayTimer = null;
+            }
+            isPlaying = false;
+            document.getElementById('btnPresPlayPause').textContent = '▶ Autoplay Başlat';
+            document.getElementById('btnPresPlayPause').style.background = '#e2e8f0';
+            document.getElementById('btnPresPlayPause').style.color = 'black';
+        };
+
+        const startAutoplay = () => {
+            stopAutoplay();
+            isPlaying = true;
+            document.getElementById('btnPresPlayPause').textContent = '⏸ Autoplay Duraklat';
+            document.getElementById('btnPresPlayPause').style.background = 'var(--primary)';
+            document.getElementById('btnPresPlayPause').style.color = 'black';
+
+            autoplayTimer = setInterval(() => {
+                currentIndex = (currentIndex + 1) % assets.length;
+                updateSlide();
+            }, 5000);
+        };
+
+        // Navigation bindings
+        document.getElementById('btnPresNext').onclick = () => {
+            stopAutoplay();
+            currentIndex = (currentIndex + 1) % assets.length;
+            updateSlide();
+        };
+
+        document.getElementById('btnPresPrev').onclick = () => {
+            stopAutoplay();
+            currentIndex = (currentIndex - 1 + assets.length) % assets.length;
+            updateSlide();
+        };
+
+        document.getElementById('btnPresPlayPause').onclick = () => {
+            if (isPlaying) {
+                stopAutoplay();
+            } else {
+                startAutoplay();
+            }
+        };
+
+        document.getElementById('btnCloseFullscreenPres').onclick = () => {
+            stopAutoplay();
+            overlay.style.display = 'none';
+        };
+
+        // Keyboard navigation
+        const handleKeyDown = (e) => {
+            if (overlay.style.display === 'flex') {
+                if (e.key === 'ArrowRight') {
+                    document.getElementById('btnPresNext').click();
+                } else if (e.key === 'ArrowLeft') {
+                    document.getElementById('btnPresPrev').click();
+                } else if (e.key === 'Escape') {
+                    document.getElementById('btnCloseFullscreenPres').click();
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+
+        // Remove keyboard event handler when overlay closes
+        document.getElementById('btnCloseFullscreenPres').addEventListener('click', () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        });
+
+        // Initialize first slide
+        updateSlide();
+        startAutoplay();
+    },
+
+    renderPhases(container) {
+        const activeProj = window.BrenerApp.getActiveProject();
+        if (!activeProj) {
+            container.innerHTML = `
+                <div class="card" style="text-align: center; padding: 40px;">
+                    <h2>Aktif Proje Seçilmedi</h2>
+                    <p style="color: var(--text-muted); margin-top: 10px;">Lütfen üst menüden bir proje seçin.</p>
+                </div>
+            `;
+            return;
+        }
+
+        window.BrenerApp.updateTopbarTitle('Proje Aşamaları', `${activeProj.name} — Zaman Planı ve İlerleme Takibi`);
+
+        // Initialize default phases if not exists
+        let phases = JSON.parse(localStorage.getItem(`brener_phases_${activeProj.id}`));
+        if (!phases || phases.length === 0) {
+            phases = [
+                { id: 1, name: 'Tahliye & Yıkım', status: 'Tamamlandı', date: '14 Şub 2025', progress: '0/4 görev tamamlandı', percent: 0, alert: null },
+                { id: 2, name: 'Temel & Hafriyat', status: 'Tamamlandı', date: '28 Mar 2025', progress: '0/3 görev tamamlandı', percent: 0, alert: null },
+                { id: 3, name: 'Kaba İnşaat (Bodrum-3. Kat)', status: 'Şu Anki Aşama', date: '30 Haz 2025', progress: '0/4 görev tamamlandı', percent: 0, alert: { text: 'Gecikti (169 gün)', type: 'danger' } },
+                { id: 4, name: 'Kaba İnşaat (4-7. Kat) & Çatı', status: 'Tamamlanmadı', date: '15 Eyl 2025', progress: 'Tüm görevler tamamlandı', percent: 0, alert: null },
+                { id: 5, name: 'İnce İşler & Tesisat', status: 'Tamamlanmadı', date: '31 Eki 2025', progress: 'Tüm görevler tamamlandı', percent: 0, alert: null },
+                { id: 6, name: 'Dış Cephe & Teslim', status: 'Tamamlanmadı', date: '30 Kas 2025', progress: 'Tüm görevler tamamlandı', percent: 0, alert: { text: '1 fon bağlı', type: 'info' } }
+            ];
+            localStorage.setItem(`brener_phases_${activeProj.id}`, JSON.stringify(phases));
+        }
+
+        // Find current phase
+        const currentPhaseObj = phases.find(p => p.status === 'Şu Anki Aşama') || { name: 'Belirtilmedi' };
+
+        let phasesHtml = `
+            <style>
+                .phase-card {
+                    background: var(--bg-card);
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    padding: 16px 20px;
+                    margin-bottom: 12px;
+                    transition: all 0.3s;
+                    position: relative;
+                }
+                .phase-card.active-phase {
+                    border-color: #3b82f6;
+                    background: rgba(59, 130, 246, 0.03);
+                    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.05);
+                }
+                .circle-icon {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                }
+                .circle-completed {
+                    background: #d1fae5;
+                    color: #065f46;
+                }
+                .circle-active {
+                    background: #dbeafe;
+                    color: #1e40af;
+                }
+                .circle-pending {
+                    background: rgba(255,255,255,0.08);
+                    color: var(--text-muted);
+                    border: 1px solid var(--border-color);
+                }
+                .arrow-btn {
+                    background: transparent;
+                    border: none;
+                    color: var(--text-muted);
+                    cursor: pointer;
+                    padding: 2px;
+                    font-size: 1.1rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: color 0.2s;
+                }
+                .arrow-btn:hover {
+                    color: var(--text-main);
+                }
+            </style>
+
+            <div class="card-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="display: flex; align-items: center; gap: 8px;">📍 Proje Aşamaları</h2>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; display: block;">
+                        Şu anki aşama: <strong style="color: var(--primary);">${currentPhaseObj.name}</strong>
+                    </span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary btn-sm" id="btnExportPhasesExcel" style="display: flex; align-items: center; gap: 6px;">
+                        📥 Excel'e Aktar
+                    </button>
+                    <button class="btn btn-secondary btn-sm" id="btnAutoCalendar" style="display: flex; align-items: center; gap: 6px;">
+                        📅 Otomatik Takvimle
+                    </button>
+                    <button class="btn btn-primary btn-sm" id="btnAddNewPhase" style="display: flex; align-items: center; gap: 6px;">
+                        ➕ Aşama Ekle
+                    </button>
+                </div>
+            </div>
+
+            <div id="phasesListContainer">
+        `;
+
+        phases.forEach((p, idx) => {
+            const isCompleted = p.status === 'Tamamlandı';
+            const isActive = p.status === 'Şu Anki Aşama';
+            
+            // Determine circle icon
+            let iconHtml = '';
+            if (isCompleted) {
+                iconHtml = `<div class="circle-icon circle-completed" title="Tamamlandı">✔️</div>`;
+            } else if (isActive) {
+                iconHtml = `<div class="circle-icon circle-active">${idx + 1}</div>`;
+            } else {
+                iconHtml = `<div class="circle-icon circle-pending">${idx + 1}</div>`;
+            }
+
+            // Determine status badge
+            let statusBadge = '';
+            if (isCompleted) {
+                statusBadge = `<span class="badge badge-success" style="font-size: 0.65rem; padding: 2px 6px;">Tamamlandı</span>`;
+            } else if (isActive) {
+                statusBadge = `<span class="badge badge-primary" style="font-size: 0.65rem; padding: 2px 6px;">Şu Anki Aşama</span>`;
+            } else {
+                statusBadge = `<span class="badge badge-secondary" style="font-size: 0.65rem; padding: 2px 6px;">Tamamlanmadı</span>`;
+            }
+
+            // Determine alert badge
+            let alertBadge = '';
+            if (p.alert) {
+                const bg = p.alert.type === 'danger' ? '#ef4444' : '#0d9488';
+                alertBadge = `<span class="badge" style="font-size: 0.65rem; padding: 2px 6px; background: ${bg}; color: #fff; display: inline-flex; align-items: center; gap: 4px; font-weight: bold;">
+                    ${p.alert.text}
+                </span>`;
+            }
+
+            phasesHtml += `
+                <div class="phase-card ${isActive ? 'active-phase' : ''}">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        
+                        <!-- Left Block: Title -->
+                        <div style="display: flex; gap: 16px; align-items: start; flex: 1;">
+                            ${iconHtml}
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--text-main);">${p.name}</h3>
+                                    ${statusBadge}
+                                    ${alertBadge}
+                                </div>
+                                <div style="display: flex; gap: 15px; font-size: 0.76rem; color: var(--text-muted); margin-top: 6px; align-items: center; flex-wrap: wrap;">
+                                    <span style="display: flex; align-items: center; gap: 4px;">
+                                        🕒 Planlanan Bitiş: <strong>${p.date}</strong>
+                                    </span>
+                                    <span>•</span>
+                                    <span style="color: ${p.progress.includes('Tüm') ? '#10b981' : 'var(--text-muted)'}; font-weight: ${p.progress.includes('Tüm') ? 'bold' : 'normal'};">
+                                        ${p.progress}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Block: Controls -->
+                        <div style="display: flex; align-items: center; gap: 12px; margin-left: 15px;">
+                            
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <button class="arrow-btn btn-move-up" data-idx="${idx}" title="Yukarı Taşı" ${idx === 0 ? 'disabled style="opacity:0.3; cursor:default;"' : ''}>▲</button>
+                                <button class="arrow-btn btn-move-down" data-idx="${idx}" title="Aşağı Taşı" ${idx === phases.length - 1 ? 'disabled style="opacity:0.3; cursor:default;"' : ''}>▼</button>
+                            </div>
+
+                            <button class="btn btn-secondary btn-sm btn-edit-phase" data-idx="${idx}" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; display: flex; align-items: center;">
+                                ⚙️ Düzenle
+                            </button>
+                            <button class="btn btn-secondary btn-sm btn-delete-phase" data-idx="${idx}" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; color: var(--danger); border-color: rgba(239, 68, 68, 0.2);">
+                                🗑️ Sil
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div style="margin-top: 12px;">
+                        <div class="progress-bar-bg" style="height: 6px; border-radius: 3px;">
+                            <div class="progress-bar-fill" style="width: ${p.percent || (isCompleted ? 100 : isActive ? 45 : 0)}%; background: ${isCompleted ? '#10b981' : isActive ? '#3b82f6' : 'rgba(255,255,255,0.1)'}; border-radius: 3px;"></div>
+                        </div>
+                        <div style="text-align: right; font-size: 0.72rem; color: var(--text-muted); margin-top: 3px;">
+                            %${p.percent || (isCompleted ? 100 : isActive ? 45 : 0)}
+                        </div>
+                    </div>
+
+                </div>
+            `;
+        });
+
+        phasesHtml += `</div>`;
+        container.innerHTML = phasesHtml;
+
+        // Bind Up / Down order changes
+        container.querySelectorAll('.btn-move-up').forEach(btn => {
+            btn.onclick = () => {
+                const idx = parseInt(btn.getAttribute('data-idx'));
+                if (idx > 0) {
+                    const temp = phases[idx];
+                    phases[idx] = phases[idx - 1];
+                    phases[idx - 1] = temp;
+                    localStorage.setItem(`brener_phases_${activeProj.id}`, JSON.stringify(phases));
+                    this.renderPhases(container);
+                }
+            };
+        });
+
+        container.querySelectorAll('.btn-move-down').forEach(btn => {
+            btn.onclick = () => {
+                const idx = parseInt(btn.getAttribute('data-idx'));
+                if (idx < phases.length - 1) {
+                    const temp = phases[idx];
+                    phases[idx] = phases[idx + 1];
+                    phases[idx + 1] = temp;
+                    localStorage.setItem(`brener_phases_${activeProj.id}`, JSON.stringify(phases));
+                    this.renderPhases(container);
+                }
+            };
+        });
+
+        document.getElementById('btnExportPhasesExcel').onclick = () => {
+            window.BrenerApp.showToast('success', 'Proje aşama planı Excel formatında dışa aktarıldı!');
+        };
+
+        document.getElementById('btnAutoCalendar').onclick = () => {
+            let baseDate = new Date();
+            phases.forEach((p, index) => {
+                p.date = new Date(baseDate.getTime() + (index * 35 * 24 * 60 * 60 * 1000)).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+            });
+            localStorage.setItem(`brener_phases_${activeProj.id}`, JSON.stringify(phases));
+            window.BrenerApp.showToast('success', 'Aşama takvim tarihleri otomatik optimize edildi!');
+            this.renderPhases(container);
+        };
+
+        document.getElementById('btnAddNewPhase').onclick = () => {
+            const addForm = `
+                <div class="form-group">
+                    <label>Aşama Başlığı *</label>
+                    <input type="text" id="newPhaseName" placeholder="Örn: İnce Sıva & Boya İşleri" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label>Planlanan Bitiş Tarihi</label>
+                        <input type="text" id="newPhaseDate" placeholder="Örn: 15 Eyl 2025" value="15 Eyl 2025">
+                    </div>
+                    <div class="form-group">
+                        <label>Durum</label>
+                        <select id="newPhaseStatus">
+                            <option value="Tamamlanmadı">Tamamlanmadı</option>
+                            <option value="Şu Anki Aşama">Şu Anki Aşama</option>
+                            <option value="Tamamlandı">Tamamlandı</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="btnSaveNewPhase" style="width: 100%; margin-top: 10px;">Aşamayı Kaydet</button>
+            `;
+            window.BrenerApp.openModal('Yeni Proje Aşaması Ekle', addForm);
+
+            document.getElementById('btnSaveNewPhase').onclick = () => {
+                const name = document.getElementById('newPhaseName').value.trim();
+                const date = document.getElementById('newPhaseDate').value.trim();
+                const status = document.getElementById('newPhaseStatus').value;
+
+                if (!name) {
+                    alert('Lütfen aşama başlığı girin!');
+                    return;
+                }
+
+                if (status === 'Şu Anki Aşama') {
+                    phases.forEach(p => {
+                        if (p.status === 'Şu Anki Aşama') p.status = 'Tamamlanmadı';
+                    });
+                }
+
+                phases.push({
+                    id: Date.now(),
+                    name,
+                    status,
+                    date: date || '31 Ara 2025',
+                    progress: '0/4 görev tamamlandı',
+                    percent: 0,
+                    alert: null
+                });
+
+                localStorage.setItem(`brener_phases_${activeProj.id}`, JSON.stringify(phases));
+                window.BrenerApp.showToast('success', 'Asama eklendi.');
+                document.getElementById('modalCloseBtn').click();
+                this.renderPhases(container);
+            };
+        };
+
+        container.querySelectorAll('.btn-delete-phase').forEach(btn => {
+            btn.onclick = () => {
+                const idx = parseInt(btn.getAttribute('data-idx'));
+                if (confirm('Aşamayı silmek istediğinize emin misiniz?')) {
+                    phases.splice(idx, 1);
+                    localStorage.setItem(`brener_phases_${activeProj.id}`, JSON.stringify(phases));
+                    this.renderPhases(container);
+                }
+            };
+        });
+
+        container.querySelectorAll('.btn-edit-phase').forEach(btn => {
+            btn.onclick = () => {
+                const idx = parseInt(btn.getAttribute('data-idx'));
+                const p = phases[idx];
+
+                const editForm = `
+                    <div class="form-group">
+                        <label>Aşama Başlığı *</label>
+                        <input type="text" id="editPhaseName" value="${p.name}" required>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Planlanan Bitiş Tarihi</label>
+                            <input type="text" id="editPhaseDate" value="${p.date}">
+                        </div>
+                        <div class="form-group">
+                            <label>Durum</label>
+                            <select id="editPhaseStatus">
+                                <option value="Tamamlanmadı" ${p.status === 'Tamamlanmadı' ? 'selected' : ''}>Tamamlanmadı</option>
+                                <option value="Şu Anki Aşama" ${p.status === 'Şu Anki Aşama' ? 'selected' : ''}>Şu Anki Aşama</option>
+                                <option value="Tamamlandı" ${p.status === 'Tamamlandı' ? 'selected' : ''}>Tamamlandı</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="btnSaveEditPhase" style="width: 100%; margin-top: 10px;">Değişiklikleri Kaydet</button>
+                `;
+                window.BrenerApp.openModal('Aşamayı Düzenle', editForm);
+
+                document.getElementById('btnSaveEditPhase').onclick = () => {
+                    p.name = document.getElementById('editPhaseName').value.trim();
+                    p.date = document.getElementById('editPhaseDate').value.trim();
+                    p.status = document.getElementById('editPhaseStatus').value;
+
+                    localStorage.setItem(`brener_phases_${activeProj.id}`, JSON.stringify(phases));
+                    window.BrenerApp.showToast('success', 'Aşama güncellendi.');
+                    document.getElementById('modalCloseBtn').click();
+                    this.renderPhases(container);
+                };
+            };
+        });
+    },
+
+    renderCrm(container) {
+        window.BrenerApp.updateTopbarTitle('Müşteri Adayları (CRM)', 'Potansiyel alıcıları takip edin, etkileşimleri yönetin ve satış funnel\'ınızı izleyin.');
+
+        // Initialize state crm leads
+        if (!window.BrenerApp.state.crmLeads) {
+            window.BrenerApp.state.crmLeads = [
+                {
+                    id: 'lead_1',
+                    firstName: 'Mustafa',
+                    lastName: 'Kaya',
+                    phone: '05329998877',
+                    project: 'Örnek Villa Projesi',
+                    budget: '8.500.000',
+                    source: 'Sosyal Medya',
+                    notes: 'Projedeki 3+1 villalarla ilgileniyor.',
+                    stage: 'Yeni Aday',
+                    type: 'Daire Satışı'
+                },
+                {
+                    id: 'lead_2',
+                    firstName: 'Hasan',
+                    lastName: 'Yılmaz',
+                    phone: '05468846094',
+                    address: 'Kadıköy, Bahariye Cad. No: 12',
+                    floors: '5',
+                    apartments: '10',
+                    landShare: '350',
+                    coOwners: '10',
+                    source: 'Tavsiye',
+                    notes: 'Kentsel dönüşüm kapsamında teklif bekliyor.',
+                    stage: 'İletişimde',
+                    type: 'Kentsel Dönüşüm'
+                }
+            ];
+            window.BrenerApp.saveStateToStorage();
+        }
+
+        const leads = window.BrenerApp.state.crmLeads;
+        this.selectedCrmTab = this.selectedCrmTab || 'Daire Satışı';
+
+        // Filter leads based on active tab
+        const activeLeads = leads.filter(l => l.type === this.selectedCrmTab);
+
+        // Metrics calculations
+        const totalLeads = activeLeads.length;
+        const hotLeads = activeLeads.filter(l => l.stage === 'Teklif Verildi' || l.stage === 'Randevu/Sunum').length;
+        const newLeads = activeLeads.filter(l => l.stage === 'Yeni Aday').length;
+        const interactionLeads = activeLeads.filter(l => l.stage !== 'Yeni Aday' && l.stage !== 'İptal Edildi').length;
+
+        let html = `
+            <style>
+                .crm-tab-bar {
+                    display: flex;
+                    gap: 12px;
+                    border-bottom: 2px solid var(--border-color);
+                    margin-bottom: 24px;
+                    padding-bottom: 8px;
+                }
+                .crm-tab {
+                    font-size: 0.95rem;
+                    font-weight: 700;
+                    color: var(--text-muted);
+                    padding: 8px 16px;
+                    cursor: pointer;
+                    position: relative;
+                    transition: all 0.2s;
+                }
+                .crm-tab:hover {
+                    color: var(--primary);
+                }
+                .crm-tab.active {
+                    color: var(--primary);
+                }
+                .crm-tab.active::after {
+                    content: "";
+                    position: absolute;
+                    bottom: -10px;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                    background: var(--primary);
+                    border-radius: 2px;
+                }
+                .kanban-board {
+                    display: grid;
+                    grid-template-columns: repeat(6, 1fr);
+                    gap: 12px;
+                    align-items: start;
+                    overflow-x: auto;
+                    padding-bottom: 16px;
+                }
+                .kanban-column {
+                    background: rgba(255,255,255,0.01);
+                    border: 1px solid var(--border-color);
+                    border-radius: 12px;
+                    padding: 12px;
+                    min-height: 400px;
+                }
+                .kanban-column-header {
+                    font-size: 0.78rem;
+                    font-weight: bold;
+                    margin-bottom: 12px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 1px solid var(--border-color);
+                    padding-bottom: 8px;
+                }
+                .kanban-card {
+                    background: var(--bg-card);
+                    border: 1px solid var(--border-color);
+                    border-radius: 10px;
+                    padding: 12px;
+                    margin-bottom: 12px;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+                    transition: all 0.25s;
+                }
+                .kanban-card:hover {
+                    border-color: var(--primary);
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                }
+                .kanban-card-title {
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                    margin: 0 0 6px 0;
+                    color: var(--text-main);
+                }
+                .kanban-card-detail {
+                    font-size: 0.72rem;
+                    color: var(--text-muted);
+                    margin-bottom: 4px;
+                    word-break: break-all;
+                }
+                .kanban-card-actions {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-top: 1px solid var(--border-color);
+                    padding-top: 8px;
+                    margin-top: 8px;
+                }
+                .kanban-btn {
+                    background: none;
+                    border: none;
+                    color: var(--text-muted);
+                    font-size: 0.8rem;
+                    cursor: pointer;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    transition: all 0.15s;
+                }
+                .kanban-btn:hover {
+                    background: rgba(255,255,255,0.05);
+                    color: var(--primary);
+                }
+            </style>
+
+            <!-- Top Header & Actions -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <h2 style="margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 8px;">👥 Müşteri Adayları (CRM)</h2>
+                    <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-muted);">Potansiyel alıcıları takip edin, etkileşimleri yönetin ve satış funnel'ınızı izleyin.</p>
+                </div>
+                <button class="btn btn-primary" id="btnCrmAddNewLead" style="background: #1e293b; border: none; color: white; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                    ➕ Yeni Aday
+                </button>
+            </div>
+
+            <!-- CRM Daire/Kentsel Donusum Tab Selection -->
+            <div class="crm-tab-bar">
+                <div class="crm-tab ${this.selectedCrmTab === 'Daire Satışı' ? 'active' : ''}" data-tab="Daire Satışı">🏢 Daire Satışı Adayları</div>
+                <div class="crm-tab ${this.selectedCrmTab === 'Kentsel Dönüşüm' ? 'active' : ''}" data-tab="Kentsel Dönüşüm">🏗 Kentsel Dönüşüm Adayları</div>
+            </div>
+
+            <!-- Metrics Row Grid -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                <div class="card" style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase;">Toplam Aday</div>
+                        <strong style="font-size: 1.6rem; display: block; margin-top: 4px; color: var(--text-main);">${totalLeads}</strong>
+                    </div>
+                    <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(59, 130, 246, 0.1); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">👤</div>
+                </div>
+
+                <div class="card" style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase;">Sıcak Takip</div>
+                        <strong style="font-size: 1.6rem; display: block; margin-top: 4px; color: var(--text-main);">${hotLeads}</strong>
+                    </div>
+                    <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(249, 115, 22, 0.1); color: #f97316; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">🔥</div>
+                </div>
+
+                <div class="card" style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase;">Yeni Gelen</div>
+                        <strong style="font-size: 1.6rem; display: block; margin-top: 4px; color: var(--text-main);">${newLeads}</strong>
+                    </div>
+                    <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(6, 182, 212, 0.1); color: #06b6d4; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">▶</div>
+                </div>
+
+                <div class="card" style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase;">Toplam Etkileşim</div>
+                        <strong style="font-size: 1.6rem; display: block; margin-top: 4px; color: var(--text-main);">${interactionLeads}</strong>
+                    </div>
+                    <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">💬</div>
+                </div>
+            </div>
+
+            <!-- Search & Filters -->
+            <div class="card" style="padding: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <div style="position: relative; flex: 1; min-width: 250px;">
+                    <input type="text" id="crmSearchInput" placeholder="İsim, e-posta veya telefon ile ara..." style="width: 100%; padding-left: 36px;">
+                    <span style="position: absolute; left: 12px; top: 11px; color: var(--text-muted);">🔍</span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" style="padding: 10px 16px;">⚙ Filtrele</button>
+                </div>
+            </div>
+
+            <!-- Slogan Guide -->
+            <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 12px;">💡 Butonları kullanarak veya düzenleme panellerinden adayların aşamalarını değiştirebilirsiniz.</p>
+
+            <!-- Kanban Board Grid -->
+            <div class="kanban-board">
+                <div class="kanban-column" data-stage="Yeni Aday">
+                    <div class="kanban-column-header">
+                        <span style="color: #3b82f6;">🔵 Yeni Aday</span>
+                        <span class="badge" style="background: rgba(59,130,246,0.15); color: #3b82f6;" id="count_YeniAday">0</span>
+                    </div>
+                    <div class="kanban-cards-container" id="container_YeniAday"></div>
+                </div>
+
+                <div class="kanban-column" data-stage="İletişimde">
+                    <div class="kanban-column-header">
+                        <span style="color: #8b5cf6;">🔵 İletişimde</span>
+                        <span class="badge" style="background: rgba(139,92,246,0.15); color: #8b5cf6;" id="count_Iletisimde">0</span>
+                    </div>
+                    <div class="kanban-cards-container" id="container_Iletisimde"></div>
+                </div>
+
+                <div class="kanban-column" data-stage="Randevu/Sunum">
+                    <div class="kanban-column-header">
+                        <span style="color: #ec4899;">🟣 Randevu/Sunum</span>
+                        <span class="badge" style="background: rgba(236,72,153,0.15); color: #ec4899;" id="count_RandevuSunum">0</span>
+                    </div>
+                    <div class="kanban-cards-container" id="container_RandevuSunum"></div>
+                </div>
+
+                <div class="kanban-column" data-stage="Teklif Verildi">
+                    <div class="kanban-column-header">
+                        <span style="color: #f59e0b;">🟡 Teklif Verildi</span>
+                        <span class="badge" style="background: rgba(245,158,11,0.15); color: #f59e0b;" id="count_TeklifVerildi">0</span>
+                    </div>
+                    <div class="kanban-cards-container" id="container_TeklifVerildi"></div>
+                </div>
+
+                <div class="kanban-column" data-stage="Satış/Kapama">
+                    <div class="kanban-column-header">
+                        <span style="color: #10b981;">🟢 Satış/Kapama</span>
+                        <span class="badge" style="background: rgba(16,185,129,0.15); color: #10b981;" id="count_SatisKapama">0</span>
+                    </div>
+                    <div class="kanban-cards-container" id="container_SatisKapama"></div>
+                </div>
+
+                <div class="kanban-column" data-stage="İptal Edildi">
+                    <div class="kanban-column-header">
+                        <span style="color: #ef4444;">🔴 İptal Edildi</span>
+                        <span class="badge" style="background: rgba(239,68,68,0.15); color: #ef4444;" id="count_IptalEdildi">0</span>
+                    </div>
+                    <div class="kanban-cards-container" id="container_IptalEdildi"></div>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+        // Render Cards initially
+        this.renderKanbanCards(activeLeads);
+
+        // Bind Search filtering
+        const crmSearch = document.getElementById('crmSearchInput');
+        crmSearch.oninput = () => {
+            const query = crmSearch.value.toLowerCase().trim();
+            const filtered = activeLeads.filter(l => {
+                return `${l.firstName} ${l.lastName}`.toLowerCase().includes(query) || l.phone.includes(query) || (l.notes && l.notes.toLowerCase().includes(query));
+            });
+            this.renderKanbanCards(filtered);
+        };
+
+        // Tab Change Binding
+        const tabs = container.querySelectorAll('.crm-tab');
+        tabs.forEach(t => {
+            t.onclick = () => {
+                this.selectedCrmTab = t.getAttribute('data-tab');
+                this.renderCrm(container);
+            };
+        });
+
+        // Add lead binding
+        document.getElementById('btnCrmAddNewLead').onclick = () => {
+            this.showCrmAddNewLeadModal(container);
+        };
+    },
+
+    renderKanbanCards(leadsList) {
+        const stages = ['Yeni Aday', 'İletişimde', 'Randevu/Sunum', 'Teklif Verildi', 'Satış/Kapama', 'İptal Edildi'];
+        
+        // Reset count labels & containers
+        stages.forEach(stg => {
+            const cleanId = stg.replace('/', '').replace(' ', '');
+            const colContainer = document.getElementById(`container_${cleanId}`);
+            const countLabel = document.getElementById(`count_${cleanId}`);
+            if (colContainer) {
+                colContainer.innerHTML = '';
+            }
+            if (countLabel) {
+                countLabel.textContent = '0';
+            }
+        });
+
+        const stageCounts = {};
+        stages.forEach(s => stageCounts[s] = 0);
+
+        leadsList.forEach(lead => {
+            const stage = lead.stage;
+            const cleanId = stage.replace('/', '').replace(' ', '');
+            const colContainer = document.getElementById(`container_${cleanId}`);
+            
+            if (colContainer) {
+                stageCounts[stage] = (stageCounts[stage] || 0) + 1;
+                
+                const card = document.createElement('div');
+                card.className = 'kanban-card';
+                card.setAttribute('data-id', lead.id);
+
+                let detailsHtml = '';
+                if (lead.type === 'Daire Satışı') {
+                    detailsHtml = `
+                        <div class="kanban-card-detail">🏢 <strong>Proje:</strong> ${lead.project || 'Genel'}</div>
+                        <div class="kanban-card-detail">💰 <strong>Bütçe:</strong> ${lead.budget ? lead.budget + ' ₺' : 'Belirtilmedi'}</div>
+                    `;
+                } else {
+                    // Kentsel Dönüşüm
+                    detailsHtml = `
+                        <div class="kanban-card-detail">📍 <strong>Adres:</strong> ${lead.address || 'Belirtilmedi'}</div>
+                        <div class="kanban-card-detail">📐 <strong>Arsa Payı:</strong> ${lead.landShare ? lead.landShare + ' m²' : 'Belirtilmedi'}</div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <h4 class="kanban-card-title">${lead.firstName} ${lead.lastName}</h4>
+                    <div class="kanban-card-detail">📞 ${lead.phone}</div>
+                    ${detailsHtml}
+                    <div class="kanban-card-detail" style="margin-top: 6px; font-style: italic; color: var(--text-muted); max-height: 32px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        "${lead.notes || 'Not girilmemiş.'}"
+                    </div>
+                    
+                    <div class="kanban-card-actions">
+                        <div style="display: flex; gap: 4px;">
+                            <button class="kanban-btn btnMoveBack" title="Geri Al">◀</button>
+                            <button class="kanban-btn btnMoveNext" title="İlerlet">▶</button>
+                        </div>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="kanban-btn btnViewLead" title="Detay / Düzenle" style="color: var(--primary);">👁</button>
+                            <button class="kanban-btn btnDeleteLead" title="Sil" style="color: #ef4444;">🗑</button>
+                        </div>
+                    </div>
+                `;
+
+                colContainer.appendChild(card);
+
+                // Bind Card Events
+                card.querySelector('.btnViewLead').onclick = (e) => {
+                    e.stopPropagation();
+                    this.showLeadDetailModal(lead.id);
+                };
+
+                card.querySelector('.btnDeleteLead').onclick = (e) => {
+                    e.stopPropagation();
+                    if (confirm('Bu müşteri adayını silmek istediğinize emin misiniz?')) {
+                        const globalList = window.BrenerApp.state.crmLeads;
+                        const idx = globalList.findIndex(l => l.id === lead.id);
+                        if (idx !== -1) {
+                            globalList.splice(idx, 1);
+                            window.BrenerApp.saveStateToStorage();
+                            window.BrenerApp.showToast('success', 'Müşteri adayı başarıyla silindi.');
+                            this.renderCrm(document.getElementById('contentWindow'));
+                        }
+                    }
+                };
+
+                // Move stage handlers
+                card.querySelector('.btnMoveBack').onclick = (e) => {
+                    e.stopPropagation();
+                    this.shiftLeadStage(lead.id, -1);
+                };
+
+                card.querySelector('.btnMoveNext').onclick = (e) => {
+                    e.stopPropagation();
+                    this.shiftLeadStage(lead.id, 1);
+                };
+            }
+        });
+
+        // Set column counts
+        stages.forEach(stg => {
+            const cleanId = stg.replace('/', '').replace(' ', '');
+            const countLabel = document.getElementById(`count_${cleanId}`);
+            if (countLabel) {
+                countLabel.textContent = stageCounts[stg] || '0';
+            }
+        });
+    },
+
+    shiftLeadStage(leadId, direction) {
+        const stages = ['Yeni Aday', 'İletişimde', 'Randevu/Sunum', 'Teklif Verildi', 'Satış/Kapama', 'İptal Edildi'];
+        const globalList = window.BrenerApp.state.crmLeads;
+        const lead = globalList.find(l => l.id === leadId);
+        
+        if (lead) {
+            const currentIdx = stages.indexOf(lead.stage);
+            if (currentIdx !== -1) {
+                let nextIdx = currentIdx + direction;
+                if (nextIdx >= 0 && nextIdx < stages.length) {
+                    lead.stage = stages[nextIdx];
+                    window.BrenerApp.saveStateToStorage();
+                    window.BrenerApp.showToast('success', `${lead.firstName} ${lead.lastName} aşaması güncellendi: ${lead.stage}`);
+                    this.renderCrm(document.getElementById('contentWindow'));
+                }
+            }
+        }
+    },
+
+    showLeadDetailModal(id) {
+        const l = window.BrenerApp.state.crmLeads.find(item => item.id === id);
+        if (!l) return;
+
+        let detailsHtml = '';
+        if (l.type === 'Daire Satışı') {
+            detailsHtml = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <span style="color: var(--text-muted); display: block; font-size: 0.74rem; text-transform: uppercase;">İlgilendiği Proje</span>
+                        <strong>🏢 ${l.project || 'Genel'}</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); display: block; font-size: 0.74rem; text-transform: uppercase;">Bütçe (₺)</span>
+                        <strong>${l.budget ? l.budget + ' ₺' : 'Belirtilmedi'}</strong>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Kentsel Dönüşüm
+            detailsHtml = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div>
+                        <span style="color: var(--text-muted); display: block; font-size: 0.74rem; text-transform: uppercase;">Mevcut Bina Adresi</span>
+                        <strong>📍 ${l.address || 'Belirtilmedi'}</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); display: block; font-size: 0.74rem; text-transform: uppercase;">Arsa Payı (m²)</span>
+                        <strong>📐 ${l.landShare ? l.landShare + ' m²' : 'Belirtilmedi'}</strong>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <span style="color: var(--text-muted); display: block; font-size: 0.74rem; text-transform: uppercase;">Bina Kat / Daire Sayısı</span>
+                        <strong>🏢 ${l.floors || 0} Kat / ${l.apartments || 0} Daire</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); display: block; font-size: 0.74rem; text-transform: uppercase;">Toplam Malik Sayısı</span>
+                        <strong>👥 ${l.coOwners || 0} Kişi</strong>
+                    </div>
+                </div>
+            `;
+        }
+
+        const modalHtml = `
+            <div style="padding: 20px; font-size: 0.9rem; display: flex; flex-direction: column; gap: 16px;">
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
+                    <div>
+                        <span style="color: var(--text-muted); display: block; font-size: 0.74rem; text-transform: uppercase;">Müşteri Adı Soyadı</span>
+                        <strong>${l.firstName} ${l.lastName}</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); display: block; font-size: 0.74rem; text-transform: uppercase;">Müşteri Tipi</span>
+                        <span class="badge badge-info" style="font-size: 0.75rem;">${l.type}</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div>
+                        <span style="color: var(--text-muted); display: block; font-size: 0.7rem; text-transform: uppercase;">Telefon</span>
+                        <strong>📞 ${l.phone}</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); display: block; font-size: 0.7rem; text-transform: uppercase;">Edinme Kaynağı</span>
+                        <strong>🔗 ${l.source}</strong>
+                    </div>
+                </div>
+
+                ${detailsHtml}
+
+                <div>
+                    <span style="color: var(--text-muted); display: block; font-size: 0.74rem; text-transform: uppercase; margin-bottom: 6px;">İlk Notlar / Görüşmeler</span>
+                    <p style="margin: 0; line-height: 1.5; padding: 10px; background: rgba(255,255,255,0.01); border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.85rem;">
+                        ${l.notes || 'Herhangi bir not girilmemiş.'}
+                    </p>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                    <button class="btn btn-secondary" onclick="window.BrenerApp.closeModal()">Kapat</button>
+                </div>
+            </div>
+        `;
+
+        window.BrenerApp.openModal('📋 Müşteri Adayı Detayları', modalHtml);
+    },
+
+    showCrmAddNewLeadModal(mainContainer) {
+        const projects = window.BrenerApp.state.projects || [];
+
+        const modalHtml = `
+            <div style="padding: 16px; font-size: 0.9rem;">
+                
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-weight: bold; color: var(--primary);">Müşteri Tipi *</label>
+                    <select id="addLeadType" style="width: 100%;">
+                        <option value="Daire Satışı">🏢 Daire Satışı</option>
+                        <option value="Kentsel Dönüşüm">🏗 Kentsel Dönüşüm</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label>AD *</label>
+                        <input type="text" id="addLeadName" placeholder="Ad" required style="width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>SOYAD *</label>
+                        <input type="text" id="addLeadSurname" placeholder="Soyad" required style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label>TELEFON *</label>
+                    <input type="text" id="addLeadPhone" placeholder="0546 884 60 94" required style="width: 100%;">
+                </div>
+
+                <!-- Dynamic Fields Box -->
+                <div id="crmDynamicFieldsArea" style="margin-bottom: 16px;">
+                    <!-- Defaults to Daire Satisi -->
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>İLGİLENDİĞİ PROJE</label>
+                        <select id="addLeadProject" style="width: 100%;">
+                            <option value="">Proje Seçin (Opsiyonel)</option>
+                            ${projects.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>KAYNAK</label>
+                            <select id="addLeadSource" style="width: 100%;">
+                                <option value="Web Sitesi" selected>Web Sitesi</option>
+                                <option value="Sosyal Medya">Sosyal Medya</option>
+                                <option value="Tavsiye">Tavsiye</option>
+                                <option value="Doğrudan">Doğrudan</option>
+                                <option value="Diğer">Diğer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>BÜTÇE (₺)</label>
+                            <input type="text" id="addLeadBudget" placeholder="2.000.000" style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>İLK NOTLAR</label>
+                    <textarea id="addLeadNotes" rows="3" style="width: 100%;" placeholder="Görüşme hakkında ilk notlar..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" id="btnConfirmAddCrmLead" style="width: 100%; padding: 12px; font-weight: bold; background: #1e293b; border: none; color: white;">
+                    ➕ Adayı Kaydet
+                </button>
+            </div>
+        `;
+
+        window.BrenerApp.openModal('Yeni Aday Müşteri Ekle', modalHtml);
+
+        // Dynamic Switch of inputs based on Customer Type selection
+        const typeSelect = document.getElementById('addLeadType');
+        const dynamicArea = document.getElementById('crmDynamicFieldsArea');
+
+        typeSelect.onchange = () => {
+            const val = typeSelect.value;
+            if (val === 'Daire Satışı') {
+                dynamicArea.innerHTML = `
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>İLGİLENDİĞİ PROJE</label>
+                        <select id="addLeadProject" style="width: 100%;">
+                            <option value="">Proje Seçin (Opsiyonel)</option>
+                            ${projects.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>KAYNAK</label>
+                            <select id="addLeadSource" style="width: 100%;">
+                                <option value="Web Sitesi" selected>Web Sitesi</option>
+                                <option value="Sosyal Medya">Sosyal Medya</option>
+                                <option value="Tavsiye">Tavsiye</option>
+                                <option value="Doğrudan">Doğrudan</option>
+                                <option value="Diğer">Diğer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>BÜTÇE (₺)</label>
+                            <input type="text" id="addLeadBudget" placeholder="2.000.000" style="width: 100%;">
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Kentsel Dönüşüm
+                dynamicArea.innerHTML = `
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>BİNA ADRESİ *</label>
+                        <input type="text" id="addLeadAddress" placeholder="Bina adresi girin" required style="width: 100%;">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group">
+                            <label>ARSA PAYI (m²)</label>
+                            <input type="number" id="addLeadLandShare" placeholder="Arsa metrekaresi" style="width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label>KAYNAK</label>
+                            <select id="addLeadSource" style="width: 100%;">
+                                <option value="Web Sitesi" selected>Web Sitesi</option>
+                                <option value="Sosyal Medya">Sosyal Medya</option>
+                                <option value="Tavsiye">Tavsiye</option>
+                                <option value="Doğrudan">Doğrudan</option>
+                                <option value="Diğer">Diğer</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>KAT SAYISI</label>
+                            <input type="number" id="addLeadFloors" placeholder="Kat sayısı" style="width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label>DAİRE SAYISI</label>
+                            <input type="number" id="addLeadApartments" placeholder="Daire sayısı" style="width: 100%;">
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        // Submit Save Action
+        document.getElementById('btnConfirmAddCrmLead').onclick = () => {
+            const type = typeSelect.value;
+            const firstName = document.getElementById('addLeadName').value.trim();
+            const lastName = document.getElementById('addLeadSurname').value.trim();
+            const phone = document.getElementById('addLeadPhone').value.trim();
+            const notes = document.getElementById('addLeadNotes').value.trim();
+
+            if (!firstName || !lastName || !phone) {
+                alert('Lütfen Ad, Soyad ve Telefon alanlarını doldurun!');
+                return;
+            }
+
+            const newLead = {
+                id: 'lead_' + Date.now(),
+                firstName,
+                lastName,
+                phone,
+                notes,
+                stage: 'Yeni Aday',
+                type,
+                source: document.getElementById('addLeadSource').value
+            };
+
+            if (type === 'Daire Satışı') {
+                newLead.project = document.getElementById('addLeadProject').value;
+                newLead.budget = document.getElementById('addLeadBudget').value.trim();
+            } else {
+                const addr = document.getElementById('addLeadAddress').value.trim();
+                if (!addr) {
+                    alert('Lütfen Bina Adresini girin!');
+                    return;
+                }
+                newLead.address = addr;
+                newLead.landShare = document.getElementById('addLeadLandShare').value;
+                newLead.floors = document.getElementById('addLeadFloors').value;
+                newLead.apartments = document.getElementById('addLeadApartments').value;
+            }
+
+            // Save to state
+            window.BrenerApp.state.crmLeads.push(newLead);
+            window.BrenerApp.saveStateToStorage();
+            
+            window.BrenerApp.closeModal();
+            window.BrenerApp.showToast('success', `${firstName} ${lastName} isimli yeni aday CRM\'e kaydedildi.`);
+            window.BrenerApp.logActivity('proje-yonetimi', `Yeni CRM Adayı eklendi: ${firstName} ${lastName} (${type})`, 'success');
+
+            // Refresh Kanban list view
+            this.renderCrm(mainContainer);
+        };
+    },
 };

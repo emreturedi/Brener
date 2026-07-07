@@ -199,10 +199,11 @@ input, button, select, textarea {
     width: 100%;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border-color);
-    padding: 8px 12px 8px 36px;
+    padding: 8px 12px 8px 40px !important;
     border-radius: 8px;
     font-size: 0.85rem;
     transition: all 0.2s ease;
+    box-sizing: border-box;
 }
 
 body.light-mode .menu-search input {
@@ -216,7 +217,7 @@ body.light-mode .menu-search input {
 
 .menu-search .search-icon {
     position: absolute;
-    left: 32px;
+    left: 30px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
@@ -237,6 +238,7 @@ body.light-mode .menu-search input {
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
 .nav-group-title {
