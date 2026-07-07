@@ -23,17 +23,24 @@ async function initializeDatabase() {
             console.log("Database tables verified/created.");
         }
         
-        // 2. Check if companies is empty
-        const [compRows] = await connection.query("SELECT COUNT(*) as count FROM companies");
-        if (compRows[0].count === 0) {
+        // 2. Check if users is empty
+        const [userRows] = await connection.query("SELECT COUNT(*) as count FROM users");
+        if (userRows[0].count === 0) {
+            // Check if Brener Group company exists, else create it
+            const [compRows] = await connection.query("SELECT id FROM companies WHERE name = 'Brener Group'");
+            let companyId;
+            if (compRows.length > 0) {
+                companyId = compRows[0].id;
+            } else {
+                const [compResult] = await connection.query("INSERT INTO companies (name) VALUES ('Brener Group')");
+                companyId = compResult.insertId;
+            }
             console.log("Database is empty. Running automatic seed...");
-            // Create default company
-            const [compResult] = await connection.query("INSERT INTO companies (name) VALUES ('Brener Group')");
-            const companyId = compResult.insertId;
+
             
             // Create default users
             const defaultUsers = [
-                { name: 'Emre Türedi', email: 'admin@brener.com.tr', password: 'admin123', role: 'admin' },
+                { name: 'Emre Türedi', email: 'emre@brener.com.tr', password: 'Emre3wr3', role: 'admin' },
                 { name: 'Caner Şen', email: 'sefi@brener.com.tr', password: 'sefi123', role: 'sefi' },
                 { name: 'Zeynep Yurt', email: 'muhasebe@brener.com.tr', password: 'muh123', role: 'muhasebe' },
                 { name: 'Murat Kara', email: 'saha@brener.com.tr', password: 'saha123', role: 'saha' }
