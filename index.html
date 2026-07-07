@@ -640,28 +640,34 @@
         </div>
     </div>
 
-    <!-- Login Page Container Overlay -->
-    <div class="login-overlay" id="loginOverlay">
-        <div class="login-card">
-            <div class="login-logo">
-                <span class="login-logo-icon">B</span>
-                <div>
-                    <h2>BRENER GROUP</h2>
-                    <p>İnşaat Yönetim Portalı</p>
-                </div>
+    <!-- Login / Register Page Container Overlay -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-card">
+        <div class="login-logo">
+            <span class="login-logo-icon">B</span>
+            <div>
+                <h2>BRENER GROUP</h2>
+                <p>İnşaat Yönetim Portalı</p>
             </div>
+        </div>
 
-            <div style="margin-top: 24px;">
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label style="color: var(--text-main); font-weight: 600;">E-Posta Adresi</label>
-                    <input type="email" id="loginEmail" placeholder="isim@brener.com.tr" value="admin@brener.com.tr" style="width: 100%; padding: 12px; margin-top: 6px;">
-                </div>
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label style="color: var(--text-main); font-weight: 600;">Şifre</label>
-                    <input type="password" id="loginPassword" placeholder="••••••••" value="admin123" style="width: 100%; padding: 12px; margin-top: 6px;">
-                </div>
-                <button class="btn btn-primary" id="loginSubmitBtn" style="width: 100%; padding: 12px; font-weight: 700;">Giriş Yap</button>
+        <!-- Tabs -->
+        <div class="login-tabs" style="display: flex; border-bottom: 2px solid var(--border-color); margin-top: 20px; margin-bottom: 20px;">
+            <button id="tabLoginBtn" style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 3px solid var(--primary); color: var(--primary); font-weight: bold; cursor: pointer;">Giriş Yap</button>
+            <button id="tabRegisterBtn" style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-muted); font-weight: bold; cursor: pointer;">Firma Kayıt</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginFormContainer">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="color: var(--text-main); font-weight: 600;">E-Posta Adresi</label>
+                <input type="email" id="loginEmail" placeholder="isim@brener.com.tr" value="admin@brener.com.tr" style="width: 100%; padding: 12px; margin-top: 6px;">
             </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="color: var(--text-main); font-weight: 600;">Şifre</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" value="admin123" style="width: 100%; padding: 12px; margin-top: 6px;">
+            </div>
+            <button class="btn btn-primary" id="loginSubmitBtn" style="width: 100%; padding: 12px; font-weight: 700;">Giriş Yap</button>
 
             <div class="login-helper">
                 <h4>Hızlı Test Girişleri (Tıklayın):</h4>
@@ -673,9 +679,32 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="app.js" defer></script>
+        <!-- Register Form -->
+        <div id="registerFormContainer" style="display: none;">
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="color: var(--text-main); font-weight: 600;">Firma / Şirket Adı</label>
+                <input type="text" id="registerCompany" placeholder="Örn: Brener Group A.Ş." style="width: 100%; padding: 12px; margin-top: 6px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="color: var(--text-main); font-weight: 600;">Yönetici Adı Soyadı</label>
+                <input type="text" id="registerName" placeholder="Örn: Emre Türedi" style="width: 100%; padding: 12px; margin-top: 6px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="color: var(--text-main); font-weight: 600;">Yönetici E-Posta Adresi</label>
+                <input type="email" id="registerEmail" placeholder="admin@firmaniz.com" style="width: 100%; padding: 12px; margin-top: 6px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="color: var(--text-main); font-weight: 600;">Şifre</label>
+                <input type="password" id="registerPassword" placeholder="••••••••" style="width: 100%; padding: 12px; margin-top: 6px;">
+            </div>
+            <button class="btn btn-primary" id="registerSubmitBtn" style="width: 100%; padding: 12px; font-weight: 700;">Yeni Şirket ve Hesap Oluştur</button>
+        </div>
+
+    </div>
+</div>
+
+<script src="app.js" defer></script>
     <script src="modules/dashboard.js" defer></script>
     <script src="modules/santiye.js" defer></script>
     <script src="modules/hakedisData.js" defer></script>

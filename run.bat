@@ -1,9 +1,9 @@
 @echo off
-title Brener Group - Local Development Server
+title Brener Group - Local Node.js Server
 echo ==========================================================
-echo Starting local web server on http://localhost:8000 ...
+echo Starting Node.js server on http://localhost:8000 ...
 echo ==========================================================
 echo.
-start "" "http://localhost:8000/index_inline.html"
-"C:\Program Files\DVDFab\StreamFab\PYthon37\python.exe" -m http.server 8000
+start "" "http://localhost:8000/"
+node server.js
 pause

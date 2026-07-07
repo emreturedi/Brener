@@ -103,13 +103,6 @@ window.BrenerApp = {
         this.loadIcons();
         this.setupEventListeners();
         this.loadState();
-        this.checkAuthentication();
-        this.setupProjectSelector();
-        this.setupNotifications();
-        this.setupMenuSearch();
-
-        // Handle initial routing
-        this.router();
         window.addEventListener('hashchange', () => this.router());
     },
 
@@ -243,358 +236,89 @@ window.BrenerApp = {
     },
 
     // State Load with Rich Preloaded Mock Database
-    loadState() {
-        const localData = localStorage.getItem('brener_app_state');
-        if (localData) {
-            this.state = JSON.parse(localData);
-            // Upgrade check for users & permissions
-            if (!this.state.users) {
-                this.state.users = [
-                    { id: 1, name: 'Emre Türedi', email: 'admin@brener.com.tr', password: 'admin123', role: 'admin' },
-                    { id: 2, name: 'Caner Şen', email: 'sefi@brener.com.tr', password: 'sefi123', role: 'sefi' },
-                    { id: 3, name: 'Zeynep Yurt', email: 'muhasebe@brener.com.tr', password: 'muh123', role: 'muhasebe' },
-                    { id: 4, name: 'Murat Kara', email: 'saha@brener.com.tr', password: 'saha123', role: 'saha' }
-                ];
-            }
-            if (this.state.currentUser === undefined) {
-                this.state.currentUser = null;
-            }
-            if (!this.state.rolePermissions || Object.keys(this.state.rolePermissions).length === 0) {
-                this.state.rolePermissions = {
-                    sefi: { genel: true, santiye: true, seflik: true, finans: false, hesaplama: true, degerleme: false, ai: true, saha: false, ekip: true, belgeler: true },
-                    muhasebe: { genel: true, santiye: false, seflik: false, finans: true, hesaplama: false, degerleme: true, ai: false, saha: false, ekip: false, belgeler: true },
-                    saha: { genel: true, santiye: false, seflik: false, finans: false, hesaplama: false, degerleme: false, ai: false, saha: true, ekip: true, belgeler: true }
-                };
-                        }
-            
-                        if (!this.state.customerPresentations) {
-                            this.state.customerPresentations = {
-                                101: [
-                                    {
-                                        id: 'p1',
-                                        title: "3D Vaziyet Planı Render",
-                                        type: "image",
-                                        url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1000&q=80",
-                                        date: "2026-06-10",
-                                        size: "4.2 MB",
-                                        description: "Bodrum Port Konakları A ve B Blok dış cephe ve peyzaj 3D konsept görseli."
-                                    },
-                                    {
-                                        id: 'p2',
-                                        title: "Proje Tanıtım Filmi",
-                                        type: "video",
-                                        url: "https://assets.mixkit.co/videos/preview/mixkit-suburban-houses-aerial-view-40858-large.mp4",
-                                        thumbnail: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80",
-                                        date: "2026-06-12",
-                                        size: "24.8 MB",
-                                        description: "Drone ile havadan çekilmiş arsa konumu ve genel çevre tanıtım videosu."
-                                    },
-                                    {
-                                        id: 'p3',
-                                        title: "Detaylı Mimari Proje",
-                                        type: "pdf",
-                                        url: "https://storage.brener.com.tr/docs/mimari_proje_detaylari.pdf",
-                                        date: "2026-06-15",
-                                        size: "12.5 MB",
-                                        description: "Belediye onaylı 1/50 ölçekli kat planları, kesitler ve görünüşler."
-                                    },
-                                    {
-                                        id: 'p4',
-                                        title: "Dış Cephe Malzeme Mockup",
-                                        type: "image",
-                                        url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=80",
-                                        date: "2026-06-18",
-                                        size: "3.1 MB",
-                                        description: "Dış cephede kullanılacak doğal taş (Traverten) ve kompozit panel birleşim detayı."
-                                    }
-                                ]
-                                            };
-                                        }
-                            
-                                        if (!this.state.hakedisContracts) {
-                                            this.initHakedisState();
-                                        }
-                                    } else {
-            // Load Mock database
-            this.state.theme = 'dark';
-            this.state.users = [
-                { id: 1, name: 'Emre Türedi', email: 'admin@brener.com.tr', password: 'admin123', role: 'admin' },
-                { id: 2, name: 'Caner Şen', email: 'sefi@brener.com.tr', password: 'sefi123', role: 'sefi' },
-                { id: 3, name: 'Zeynep Yurt', email: 'muhasebe@brener.com.tr', password: 'muh123', role: 'muhasebe' },
-                { id: 4, name: 'Murat Kara', email: 'saha@brener.com.tr', password: 'saha123', role: 'saha' }
-            ];
+    async loadState() {
+        const token = localStorage.getItem('brener_jwt_token');
+        if (!token) {
             this.state.currentUser = null;
-                                    this.state.rolePermissions = {
-                                        sefi: { genel: true, santiye: true, 'proje-yonetimi': true, finans: false, hesaplama: true, degerleme: false, ai: true, saha: false, ekip: true, belgeler: true },
-                                        muhasebe: { genel: true, santiye: false, 'proje-yonetimi': true, finans: true, hesaplama: false, degerleme: true, ai: false, saha: false, ekip: false, belgeler: true },
-                                        saha: { genel: true, santiye: false, 'proje-yonetimi': false, finans: false, hesaplama: false, degerleme: false, ai: false, saha: true, ekip: true, belgeler: true                 }
-            }
-            if (!this.state.projectSpecs) {
-                this.state.projectSpecs = {};
-            };
-            this.state.theme = 'dark';
-                        this.state.projects = [
-                            { id: 101, name: 'Brener Port Konakları', location: 'Bodrum, Muğla', status: 'active', progress: 68, manager: 'Ahmet Şef', budget: 45000000, spent: 31000000 },
-                            { id: 102, name: 'Brener Plaza', location: 'Ataşehir, İstanbul', status: 'active', progress: 42, manager: 'Mehmet Yılmaz', budget: 120000000, spent: 50400000 },
-                            { id: 103, name: 'Brener Premium Villaları', location: 'Çeşme, İzmir', status: 'active', progress: 15, manager: 'Canan Demir', budget: 60000000, spent: 9000000 },
-                            { id: 104, name: 'Brener Loft Rezidans', location: 'Nilüfer, Bursa', status: 'completed', progress: 100, manager: 'Selin Kaya', budget: 85000000, spent: 83500000 },
-                            { id: 105, name: 'Brener Göztepe Hastane İnşaatı', location: 'Göztepe, İstanbul', status: 'active', progress: 98, manager: 'Emre Alüminyum', budget: 85391753, spent: 100946337 }
-                        ];
-            this.state.currentProjectId = 101;
+            this.checkAuthentication();
+            return;
+        }
 
-            this.state.employees = [
-                { id: 1, name: 'Hasan Demir', role: 'Kalıpçı Ustası', salary: 1500, status: 'active' },
-                { id: 2, name: 'Ali Yılmaz', role: 'Demirci Ustası', salary: 1500, status: 'active' },
-                { id: 3, name: 'Mustafa Kaya', role: 'Tuğla Duvar Ustası', salary: 1400, status: 'active' },
-                { id: 4, name: 'Kemal Ak', role: 'Sıvacı Ustası', salary: 1300, status: 'active' },
-                { id: 5, name: 'Zeynep Yurt', role: 'İSG Uzmanı', salary: 2500, status: 'active' },
-                { id: 6, name: 'Caner Şen', role: 'Şantiye Mühendisi', salary: 3000, status: 'active' },
-                { id: 7, name: 'Murat Kara', role: 'Elektrik Teknisyeni', salary: 1600, status: 'active' }
-            ];
+        // Show loading indicator
+        const contentWindow = document.getElementById('contentWindow');
+        if (contentWindow) {
+            contentWindow.innerHTML = `
+                <div class="loading-spinner-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px;">
+                    <div class="spinner" style="border: 4px solid rgba(255,255,255,0.1); width: 50px; height: 50px; border-radius: 50%; border-left-color: var(--primary); animation: spin 1s linear infinite;"></div>
+                    <p style="margin-top: 20px; font-weight: bold; color: var(--text-muted);">Veriler Yükleniyor...</p>
+                </div>
+            `;
+        }
 
-            this.state.materials = [
-                { id: 1, name: 'Çimento (Torba - 50kg)', unit: 'Adet', stock: 1250, minStock: 200, price: 165 },
-                { id: 2, name: 'İnşaat Demiri (Q12)', unit: 'Ton', stock: 45, minStock: 10, price: 24500 },
-                { id: 3, name: 'Hazır Beton (C30)', unit: 'm³', stock: 180, minStock: 50, price: 2150 },
-                { id: 4, name: 'Tuğla (13.5’luk)', unit: 'Bin Adet', stock: 18, minStock: 5, price: 8200 },
-                { id: 5, name: 'Kum (Elenecek)', unit: 'Ton', stock: 65, minStock: 15, price: 680 }
-            ];
-
-            this.state.reminders = [
-                { id: 1, title: 'C30 Beton Mukavemet Sonuçları Raporu', date: '2026-06-25', priority: 'high', done: false },
-                { id: 2, title: 'Bodrum Blok Kalıp Teslimi İSG Kontrolü', date: '2026-06-26', priority: 'medium', done: false },
-                { id: 3, title: 'Taşeron Hakediş İmza Toplantısı', date: '2026-06-28', priority: 'high', done: false },
-                { id: 4, title: 'Demir Siparişi Ödemesi', date: '2026-06-29', priority: 'low', done: false }
-            ];
-
-            this.state.workOrders = [
-                { id: 1, title: 'A Blok Temel Hafriyatı', desc: 'Hafriyat kamyonlarının sahaya koordineli alınması.', status: 'completed', assignedTo: 'Caner Şen', priority: 'high' },
-                { id: 2, title: 'B Blok Zemin Demir Bağlama', desc: 'Q12 demirlerin projeye uygun döşenmesi.', status: 'progress', assignedTo: 'Ali Yılmaz', priority: 'high' },
-                { id: 3, title: 'C Blok 1. Kat Kolon Kalıpları', desc: 'Kalıpların diklik kontrolü ve paspayları yerleşimi.', status: 'todo', assignedTo: 'Hasan Demir', priority: 'medium' },
-                { id: 4, title: 'Elektrik Kablolama Alt Yapı', desc: '1. ve 2. Kat tavan buat geçişleri borulama.', status: 'testing', assignedTo: 'Murat Kara', priority: 'low' }
-            ];
-
-            this.state.customers = [
-                { id: 1, name: 'Ertürk Holding A.Ş.', balance: 2500000, email: 'finance@erturk.com', phone: '0212 555 44 33' },
-                { id: 2, name: 'Levent Serbest', balance: -450000, email: 'levent@gmail.com', phone: '0532 999 88 77' },
-                { id: 3, name: 'Ayşe Karaca', balance: 0, email: 'ayse@outlook.com', phone: '0544 123 45 67' }
-            ];
-
-            this.state.concretePours = [
-                { id: 1, project: 'Brener Port Konakları', date: '2026-06-20', grade: 'C30', volume: 120, temp: '28°C', slump: 'S3 (12cm)', status: 'Onaylandı (28 Gün Bekleniyor)' },
-                { id: 2, project: 'Brener Plaza', date: '2026-06-22', grade: 'C35', volume: 240, temp: '26°C', slump: 'S4 (16cm)', status: 'Döküldü (Kürleniyor)' }
-            ];
-
-                        this.state.claims = [
-                            { id: 1, subcontractor: 'Öz Yapı Demir Ltd.', description: 'B Blok Zemin ve 1. Kat Demir İşleri', totalAmount: 480000, retention: 24000, netPaid: 456000, date: '2026-06-15', status: 'paid' },
-                            { id: 2, subcontractor: 'Yavuz Beton Kalıp', description: 'A Blok Komple Kaba İşçilik', totalAmount: 1250000, retention: 62500, netPaid: 1187500, date: '2026-06-23', status: 'pending' }
-                        ];
-            
-                        this.state.customerPresentations = {
-                            101: [
-                                {
-                                    id: 'p1',
-                                    title: "3D Vaziyet Planı Render",
-                                    type: "image",
-                                    url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1000&q=80",
-                                    date: "2026-06-10",
-                                    size: "4.2 MB",
-                                    description: "Bodrum Port Konakları A ve B Blok dış cephe ve peyzaj 3D konsept görseli."
-                                },
-                                {
-                                    id: 'p2',
-                                    title: "Proje Tanıtım Filmi",
-                                    type: "video",
-                                    url: "https://assets.mixkit.co/videos/preview/mixkit-suburban-houses-aerial-view-40858-large.mp4",
-                                    thumbnail: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80",
-                                    date: "2026-06-12",
-                                    size: "24.8 MB",
-                                    description: "Drone ile havadan çekilmiş arsa konumu ve genel çevre tanıtım videosu."
-                                },
-                                {
-                                    id: 'p3',
-                                    title: "Detaylı Mimari Proje",
-                                    type: "pdf",
-                                    url: "https://storage.brener.com.tr/docs/mimari_proje_detaylari.pdf",
-                                    date: "2026-06-15",
-                                    size: "12.5 MB",
-                                    description: "Belediye onaylı 1/50 ölçekli kat planları, kesitler ve görünüşler."
-                                },
-                                {
-                                    id: 'p4',
-                                    title: "Dış Cephe Malzeme Mockup",
-                                    type: "image",
-                                    url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=80",
-                                    date: "2026-06-18",
-                                    size: "3.1 MB",
-                                    description: "Dış cephede kullanılacak doğal taş (Traverten) ve kompozit panel birleşim detayı."
-                                }
-                            ]
-                        };
-            
-    this.state.notifications = [
-                            { id: 1, title: 'Yeni İş Emri Atandı', desc: 'Caner Şen size B Blok kalıp kontrol görevini atadı.', time: '10 dakika önce', unread: true },
-                            { id: 2, title: 'Kritik Stok Uyarısı', desc: 'Çimento stoğu minimum seviyenin altına düştü!', time: '1 saat önce', unread: true },
-                            { id: 3, title: 'Beton Döküm Uyarısı', desc: 'Yarın Bodrum Projesi için beton dökümü planlandı.', time: '4 saat önce', unread: false }
-                        ];
-            
-                                    this.state.logs = [
-                                        { id: 'seed1', timestamp: new Date(Date.now() - 500000).toISOString(), user: 'Zeynep Yurt', role: 'muhasebe', category: 'finans', action: 'Yavuz Beton Kalıp kaba işçilik hakediş faturası sisteme işlendi.', type: 'info', details: 'Hakediş No: 2, Tutar: 1.250.000 TL, Teminat Kesintisi: %5' },
-                                        { id: 'seed2', timestamp: new Date(Date.now() - 1000000).toISOString(), user: 'Caner Şen', role: 'sefi', category: 'santiye', action: 'Şantiye Günlüğü raporu kaydedildi.', type: 'success', details: 'Hava: Açık 30°C. Demir bağlama ve temel kalıp imalatları tamamlandı.' },
-                                        { id: 'seed3', timestamp: new Date(Date.now() - 3600000).toISOString(), user: 'Murat Kara', role: 'saha', category: 'saha', action: 'B Blok Zemin Demir Bağlama iş emri tamamlandı olarak işaretlendi.', type: 'success', details: 'Usta: Ali Yılmaz. Projeye uygun 12 ton demir döşendi.' },
-                                        { id: 'seed4', timestamp: new Date(Date.now() - 7200000).toISOString(), user: 'Emre Türedi', role: 'admin', category: 'proje', action: 'Aktif proje değiştirildi: Brener Port Konakları.', type: 'info', details: 'Proje ID: 101, Konum: Bodrum, Muğla' },
-                                        { id: 'seed5', timestamp: new Date(Date.now() - 86400000).toISOString(), user: 'Sistem', role: 'system', category: 'sistem', action: 'admin@brener.com.tr kullanıcısı sisteme başarılı giriş yaptı.', type: 'success', details: 'IP: 127.0.0.1, Tarayıcı: Chrome Windows' }
-                                    ];
-                        
-                                                this.state.projectContracts = {
-                                                    101: [
-                                                        {
-                                                            id: 'c_seed_1',
-                                                            apartman_ismi: "Port Apartmanı",
-                                                            adres: "Bodrum Marina Yolu No:45, Muğla",
-                                                            ada: "402",
-                                                            parsel: "12",
-                                                            arsa_m2: 1500,
-                                                            malik_sayisi: "24 Daire",
-                                                            oran: 45,
-                                                            yarisi_bizden: true,
-                                                            sozlesme_tarihi: "2025-06-03",
-                                                            sozlesme_tarihi_bitis: "2025-09-15",
-                                                            yikim_tarihi: "2025-10-10",
-                                                            ruhsat_donemi: "ŞUBAT",
-                                                            insaat_suresi: "18 AY",
-                                                            is_gecikmesi_cezasi: 20000,
-                                                            teminat_mektubu: "10.000.000 TL Tutarlı Teminat Mektubu Verildi",
-                                                            tasinma_yardimi: "Her Daire İçin 15.000 TL",
-                                                            kira_yardimi: "Aylık 7.500 TL",
-                                                            kira_baslangic_bitis: "Yıkım Tarihinden İtibaren Teslim Tarihine Kadar",
-                                                            emlak_vergileri: "Yüklenici",
-                                                            kapici_tazminat: "Yüklenici Tarafından Karşılanacaktır",
-                                                            mulkiyet_tapu_masrafi: "Kat Maliki",
-                                                            milestones: [
-                                                                { name: "Temel", percent: 20 },
-                                                                { name: "Su Basman + Zemin Kat Beton", percent: 20 },
-                                                                { name: "Kaba İnşaat", percent: 20 },
-                                                                { name: "Duvar + Sıva + Elektrik + Mekanik", percent: 10 },
-                                                                { name: "Doğrama + Cam", percent: 10 },
-                                                                { name: "Mobilya", percent: 10 },
-                                                                { name: "Fiili Teslim", percent: 10 }
-                                                            ],
-                                                            müteahhit_hakedisi: "11 Daire",
-                                                            temsil_heyeti: ["Gülendam Gürsan", "Nazik Ada", "Nermin Argan", "Fatma Tözman", "Mahmure Bozkurt"],
-                                                            karar_orani: "5 TE 3",
-                                                            ihtilaf_merkezi: "İSTAÇ",
-                                                            fesih_sarti: "4 AY İNŞAAT İLERLEMEZSE"
-                                                                            }
-                                                                        ]
-                                                                    };
-                                                                                this.state.specTemplates = [
-                                                                                    {
-                                                                                        name: "Standart Kentsel Dönüşüm Şartnamesi",
-                                                                                        clauses: [
-                                                                                            { id: 't1', title: "1. Projeler ve Kaba İnşaat", content: "Statik projeye göre C30/37 hazır beton ve B420C demir kullanılacaktır." },
-                                                                                            { id: 't2', title: "2. Bodrum Kat", content: "Bodrum katlarda perde beton izolasyonları mebran kaplama ile korunacaktır." },
-                                                                                            { id: 't3', title: "3. Binanın Dış Cephesi", content: "Dış cephe taşyünü yalıtım üzeri alüminyum kompozit panel kaplama olacaktır." },
-                                                                                            { id: 't4', title: "4. Zemin Kat ve Bina Girişi", content: "Bina girişi zemin kaplaması doğal mermer ve görüntülü diafon paneli olacaktır." },
-                                                                                            { id: 't5', title: "5. Duvar ve Sıvalar", content: "Daire bölücü duvarlarda çift sıra gazbeton arası ses yalıtımı yapılacaktır." },
-                                                                                            { id: 't6', title: "6. Isı Sistemi", content: "Dairelerde Rehau marka yerden ısıtma sistemi kurulacaktır." },
-                                                                                            { id: 't7', title: "7. Sıhhi ve Pis Su Sistemleri", content: "Pis su boruları Fıratpen sessiz boru serisi olacaktır." },
-                                                                                            { id: 't8', title: "8. Elektrik - Klima Tesisatı", content: "Klima tesisatı her odaya bakır borulama şeklinde çekilecektir." },
-                                                                                            { id: 't9', title: "9. Televizyon Tesisat Sistemi", content: "Her daireye 3 adet bağımsız uydu hattı çekilecektir." },
-                                                                                            { id: 't10', title: "10. Telefon ve Görüntülü Diafon Sistemi", content: "Audio marka 7 inç görüntülü interkom ekranı kurulacaktır." },
-                                                                                            { id: 't11', title: "11. Doğalgaz Tesisatı", content: "Gaz tesisatı kapı önüne kadar çekilip sayaç vanası bırakılacaktır." },
-                                                                                            { id: 't12', title: "12. Çatı", content: "Çatı çelik konstrüksiyon üzeri ısı yalıtımı ve arduazlı mebran kaplama olacaktır." },
-                                                                                            { id: 't13', title: "13. Bahçe ve Dış Duvarlar", content: "Bahçe duvarları betonarme üzeri şık aydınlatmalı ve peyzajlı yapılacaktır." },
-                                                                                            { id: 't14', title: "14. Asansörler", content: "Kone veya Schindler marka 10 kişilik çift hızlı asansör kurulacaktır." },
-                                                                                            { id: 't15', title: "15. Merdiven ve Sahanlıklar", content: "Merdiven basamakları bej mermer, korkuluklar alüminyum profil olacaktır." },
-                                                                                            { id: 't16', title: "16. Doğramalar", content: "Rehau veya pimapen marka çift camlı konfor serisi pencereler." },
-                                                                                            { id: 't17', title: "17. Kapalı Garaj", content: "Her daire için 1 araçlık kapalı otopark alanı tahsis edilecektir." },
-                                                                                            { id: 't18', title: "18. Daire Dış ve İç Kapıları", content: "Daire dış kapısı Kale çelik kapı, iç kapılar Dortek lake kapı olacaktır." },
-                                                                                            { id: 't19', title: "19. Mutfaklar", content: "Mutfak dolapları Lineadecor, tezgah kuvars Belenco olacaktır." },
-                                                                                            { id: 't20', title: "20. Banyo ve WC", content: "Gömme rezervuar Vitra marka, seramikler Kütahya Seramik olacaktır." },
-                                                                                            { id: 't21', title: "21. Antre ve Koridorlar", content: "Girişte lake kapaklı portmanto dolabı hazır teslim edilecektir." },
-                                                                                            { id: 't22', title: "22. Salon ve Odalar", content: "Zeminler 1. sınıf derzli lamine parke olacaktır." },
-                                                                                            { id: 't23', title: "23. İşçilik ve Garanti Koşulları", content: "İmalat hatalarına karşı 5 yıl boyunca yüklenici garantisi kapsamındadır." }
-                                                                                        ]
-                                                                                    }
-                                                                                ];
-                                                                    
-                                                                                this.state.projectSpecs = {
-                                                                                    101: {
-                                                                                        metadata: {
-                                                                                            ilce_semt: "KADIKÖY – GÖZTEPE",
-                                                                                            bina_adi: "ÇAVLI APARTMANI",
-                                                                                            ada_no: "391",
-                                                                                            parsel_no: "5",
-                                                                                            sartname_tarihi: "2026-04-17"
-                                                                                        },
-                                                                                        clauses: [
-                                                                                            { id: 'c1', title: "1. Projeler ve Kaba İnşaat", content: "Statik projeye uygun C30/37 Hazır Beton (TS EN 206) ve B420C Nervürlü İnşaat Demiri kullanılacaktır." },
-                                                                                            { id: 'c2', title: "2. Bodrum Kat", content: "Bodrum kat perdeleri mebran bohçalama yöntemiyle su yalıtımı yapılacak ve XPS levhalarla korunacaktır." },
-                                                                                            { id: 'c3', title: "3. Binanın Dış Cephesi", content: "150 yoğunluklu Taşyünü Cephe Yalıtımı (5cm) üzerine Alüminyum Kompozit Panel ve Doğal Taş (Traverten) kaplama yapılacaktır." },
-                                                                                            { id: 'c4', title: "4. Zemin Kat ve Bina Girişi", content: "Bina giriş holü zeminleri traverten mermer, duvarlar kısmi ahşap kaplama ve paslanmaz posta kutulu olacaktır." },
-                                                                                            { id: 'c5', title: "5. Duvar ve Sıvalar", content: "Dış duvarlar 25cm kalınlığında Ytong gazbeton, iç duvarlar alçı sıva üzeri Dyo silinebilir boya olacaktır." },
-                                                                                            { id: 'c6', title: "6. Isı Sistemi", content: "Merkezi sistem pay ölçerli Rehau marka yerden ısıtma borulaması tesis edilecektir." },
-                                                                                            { id: 'c7', title: "7. Sıhhi ve Pis Su Sistemleri", content: "Sıhhi tesisat boruları PPRC cam elyaf takviyeli, pis su boruları sessiz boru serisi olacaktır." },
-                                                                                            { id: 'c8', title: "8. Elektrik - Klima Tesisatı", content: "Klima tesisatı her odaya bakır borulama şeklinde çekilecektir (Siemens sigortalar)." },
-                                                                                            { id: 'c9', title: "9. Televizyon Tesisat Sistemi", content: "Merkezi uydu santrali kurulacak, her odada TV prizi bulunacaktır." },
-                                                                                            { id: 'c10', title: "10. Telefon ve Görüntülü Diafon Sistemi", content: "Bina girişine Audio marka kameralı zil paneli, dairelere 7 inç renkli interkom ekranı kurulacaktır." },
-                                                                                            { id: 'c11', title: "11. Doğalgaz Tesisatı", content: "Mutfak ocağı ve banyo sıcak su kullanımı için kolon doğalgaz hattı çekilecektir." },
-                                                                                            { id: 'c12', title: "12. Çatı", content: "Çelik konstrüksiyon çatı, taşyünü ısı yalıtımı üzeri antrasit renkli çelik kiremit kaplama olacaktır." },
-                                                                                            { id: 'c13', title: "13. Bahçe ve Dış Duvarlar", content: "Bahçe sınır duvarları brüt betonarme üstü panel çit, bahçe peyzajı otomatik sulamalı olacaktır." },
-                                                                                            { id: 'c14', title: "14. Asansörler", content: "Kone 10 Kişilik Sedye Uyumlu VVVF frekans kontrollü lüks kabinli asansör tesis edilecektir." },
-                                                                                            { id: 'c15', title: "15. Merdiven ve Sahanlıklar", content: "Merdiven basamakları Muğla beyazı mermer, korkuluklar temperli camlı alüminyum olacaktır." },
-                                                                                            { id: 'c16', title: "16. Doğramalar", content: "Rehau PVC Doğrama - Isıcam Sinerji (4+16+4) çift açılımlı konfor pencereler." },
-                                                                                            { id: 'c17', title: "17. Kapalı Garaj", content: "Kapalı otopark zeminleri helikopter perdahlı beton ve epoksi çizgilendirmeli olacaktır." },
-                                                                                            { id: 'c18', title: "18. Daire Dış ve İç Kapıları", content: "Daire dış kapıları Dortek çelik kapı, iç kapıları Dortek lake panel ahşap kapı." },
-                                                                                            { id: 'c19', title: "19. Mutfaklar", content: "Mutfak dolapları Lineadecor, tezgah kuvars Belenco marka, ankastre cihazlar Siemens." },
-                                                                                            { id: 'c20', title: "20. Banyo ve WC", content: "Seramikler Kütahya Seramik 60x120 rektifiyeli granit, vitrifiyeler Vitra, bataryalar Artema." },
-                                                                                            { id: 'c21', title: "21. Antre ve Koridorlar", content: "Giriş holüne asma tavan led ışık bandı ve gömme portmanto dolabı yapılacaktır." },
-                                                                                            { id: 'c22', title: "22. Salon ve Odalar", content: "Şerifoğlu Lamine Parke (14mm Meşe) zemin kaplaması ve lüks ahşap süpürgelikler." },
-                                                                                            { id: 'c23', title: "23. İşçilik ve Garanti Koşulları", content: "Brener Group kalitesiyle tüm ince ve kaba işçilikler 5 Yıl Boyunca firma garantimiz altındadır." }
-                                                                                        ],
-                                                                                        notes: "Yarısı bizden hibe/kredi kampanyası desteklidir. Residence Konsepti tasarımdır.",
-                                                                                        sartname_durumu: "İmzalandı",
-                                                                                        signed_file_url: "https://storage.brener.com.tr/docs/cavli_sartname_signed.pdf",
-                                                                                        kat_malikleri_sayisi: 38,
-                                                                                        signed_files: [
-                                                                                            { name: "cavli_sartname_signed.pdf", size: "2.4 MB", date: "2026-04-20", url: "#"                 }
-        ]
-    }
-};
-
-            if (!this.state.projectContracts) {
-                this.state.projectContracts = {};
-            } else {
-                for (let projId in this.state.projectContracts) {
-                    const data = this.state.projectContracts[projId];
-                    if (data && !Array.isArray(data)) {
-                        this.state.projectContracts[projId] = [ { id: 'c_' + Date.now(), ...data } ];
-                    }
+        try {
+            const response = await fetch('/api/state', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
                 }
-            };
-                        
-                                    this.saveStateToStorage();
-                    }
+            });
+            
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('brener_jwt_token');
+                    localStorage.removeItem('brener_current_user');
+                    window.location.reload();
+                    return;
+                }
+                throw new Error("Failed to load state");
+            }
 
-        // Apply theme
-        if (this.state.theme === 'light') {
-            document.body.classList.remove('dark-mode');
-            document.body.classList.add('light-mode');
-            this.updateThemeUI('light');
-        } else {
-            document.body.classList.add('dark-mode');
-            document.body.classList.remove('light-mode');
-            this.updateThemeUI('dark');
+            const stateData = await response.json();
+            this.state = stateData;
+            
+            // Set current user from local storage token
+            this.state.currentUser = JSON.parse(localStorage.getItem('brener_current_user'));
+            
+            // Initialize App
+            this.initAppSession();
+            this.setupProjectSelector();
+            this.setupNotifications();
+            this.setupMenuSearch();
+            this.loadIcons();
+            this.router();
+            
+            // Apply theme
+            if (this.state.theme === 'light') {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.add('light-mode');
+                this.updateThemeUI('light');
+            } else {
+                document.body.classList.add('dark-mode');
+                document.body.classList.remove('light-mode');
+                this.updateThemeUI('dark');
+            }
+        } catch (err) {
+            console.error("Load state error:", err);
+            this.showToast('danger', 'Veriler sunucudan yüklenemedi. Lütfen internet bağlantınızı kontrol edin.');
         }
     },
-
-        // Save State
-        saveStateToStorage() {
-            localStorage.setItem('brener_app_state', JSON.stringify(this.state));
-        },
     
-        // Activity Logger
+    // Save State
+    saveStateToStorage() {
+        localStorage.setItem('brener_app_state', JSON.stringify(this.state));
+        const token = localStorage.getItem('brener_jwt_token');
+        if (token) {
+            fetch('/api/state', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(this.state)
+            }).catch(err => console.error("Sync state error:", err));
+        }
+    },
+    
+    // Activity Logger
         logActivity(category, action, type = 'info', details = '') {
             if (!this.state.logs) {
                 this.state.logs = [];
@@ -1334,42 +1058,121 @@ window.BrenerApp = {
 
     checkAuthentication() {
         const overlay = document.getElementById('loginOverlay');
-
-        if (!this.state.currentUser) {
-            document.body.classList.add('auth-mode');
-
-            // Setup submit listener
-            const submitBtn = document.getElementById('loginSubmitBtn');
-            submitBtn.onclick = () => {
+        if (!overlay) return;
+        
+        document.body.classList.add('auth-mode');
+        
+        // Tab switching logic
+        const tabLogin = document.getElementById('tabLoginBtn');
+        const tabRegister = document.getElementById('tabRegisterBtn');
+        const loginForm = document.getElementById('loginFormContainer');
+        const registerForm = document.getElementById('registerFormContainer');
+        
+        if (tabLogin && tabRegister && loginForm && registerForm) {
+            tabLogin.onclick = () => {
+                tabLogin.style.borderBottomColor = 'var(--primary)';
+                tabLogin.style.color = 'var(--primary)';
+                tabRegister.style.borderBottomColor = 'transparent';
+                tabRegister.style.color = 'var(--text-muted)';
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            };
+            
+            tabRegister.onclick = () => {
+                tabRegister.style.borderBottomColor = 'var(--primary)';
+                tabRegister.style.color = 'var(--primary)';
+                tabLogin.style.borderBottomColor = 'transparent';
+                tabLogin.style.color = 'var(--text-muted)';
+                registerForm.style.display = 'block';
+                loginForm.style.display = 'none';
+            };
+        }
+        
+        // Login Submit
+        const submitBtn = document.getElementById('loginSubmitBtn');
+        if (submitBtn) {
+            submitBtn.onclick = async () => {
                 const email = document.getElementById('loginEmail').value.trim();
                 const pass = document.getElementById('loginPassword').value.trim();
-
-                const user = this.state.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === pass);
-                                if (user) {
-                                    this.state.currentUser = user;
-                                    this.saveStateToStorage();
-                                    this.logActivity('sistem', `Başarılı giriş yapıldı: ${user.name} (${user.email})`, 'success', `Rol: ${user.role}`);
-                                    this.showToast('success', `Başarıyla giriş yapıldı. Hoş geldiniz, ${user.name}!`);
-                                    document.body.classList.remove('auth-mode');
-                                    this.initAppSession();
-                                    window.location.hash = '#panel';
-                                    this.router();
-                } else {
-                    this.showToast('danger', 'Hatalı e-posta adresi veya şifre!');
+                
+                if (!email || !pass) {
+                    this.showToast('danger', 'E-posta ve şifre gereklidir!');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password: pass })
+                    });
+                    
+                    const result = await response.json();
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Giriş başarısız');
+                    }
+                    
+                    localStorage.setItem('brener_jwt_token', result.token);
+                    localStorage.setItem('brener_current_user', JSON.stringify(result.user));
+                    this.state.currentUser = result.user;
+                    
+                    this.showToast('success', `Hoş geldiniz, ${result.user.name}!`);
+                    document.body.classList.remove('auth-mode');
+                    
+                    // Reload state to fetch this company's data
+                    await this.loadState();
+                } catch (err) {
+                    console.error("Login failed:", err);
+                    this.showToast('danger', err.message);
                 }
             };
-        } else {
-            document.body.classList.remove('auth-mode');
-            this.initAppSession();
+        }
+        
+        // Register Submit
+        const registerBtn = document.getElementById('registerSubmitBtn');
+        if (registerBtn) {
+            registerBtn.onclick = async () => {
+                const companyName = document.getElementById('registerCompany').value.trim();
+                const userName = document.getElementById('registerName').value.trim();
+                const email = document.getElementById('registerEmail').value.trim();
+                const password = document.getElementById('registerPassword').value.trim();
+                
+                if (!companyName || !userName || !email || !password) {
+                    this.showToast('danger', 'Tüm alanları doldurmanız gerekmektedir!');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ companyName, userName, email, password })
+                    });
+                    
+                    const result = await response.json();
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Kayıt başarısız');
+                    }
+                    
+                    this.showToast('success', 'Şirket kaydı başarıyla oluşturuldu! Şimdi giriş yapabilirsiniz.');
+                    // Switch to login tab and fill email
+                    if (tabLogin) tabLogin.click();
+                    document.getElementById('loginEmail').value = email;
+                    document.getElementById('loginPassword').value = '';
+                } catch (err) {
+                    console.error("Registration failed:", err);
+                    this.showToast('danger', err.message);
+                }
+            };
         }
     },
-
+    
     fillLogin(email, password) {
         document.getElementById('loginEmail').value = email;
         document.getElementById('loginPassword').value = password;
         document.getElementById('loginSubmitBtn').click();
     },
-
+    
     initAppSession() {
         const user = this.state.currentUser;
         if (!user) return;

@@ -1,7 +1,0 @@
---- MISSING ICONS ---
-
---- UNIMPLEMENTED/UNMAPPED ROUTES IN APP.JS ---
-
---- MISSING PAGE VIEWS IN MODULES ---
-View: hatirlaticilar | Label: Hatırlatıcılar
-View: talepler | Label: Talepler
