@@ -3,7 +3,87 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const fs = require('fs');
 const pool = require('./database');
+// Automatic database tables initialization and seeding check
+async function initializeDatabase() {
+    console.log("Checking database tables...");
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        
+        // 1. Create tables if they don't exist by executing schema.sql
+        const schemaPath = path.join(__dirname, 'schema.sql');
+        if (fs.existsSync(schemaPath)) {
+            const schema = fs.readFileSync(schemaPath, 'utf8');
+            const statements = schema.split(';').map(s => s.trim()).filter(s => s.length > 0);
+            for (let statement of statements) {
+                await connection.query(statement);
+            }
+            console.log("Database tables verified/created.");
+        }
+        
+        // 2. Check if companies is empty
+        const [compRows] = await connection.query("SELECT COUNT(*) as count FROM companies");
+        if (compRows[0].count === 0) {
+            console.log("Database is empty. Running automatic seed...");
+            // Create default company
+            const [compResult] = await connection.query("INSERT INTO companies (name) VALUES ('Brener Group')");
+            const companyId = compResult.insertId;
+            
+            // Create default users
+            const defaultUsers = [
+                { name: 'Emre Türedi', email: 'admin@brener.com.tr', password: 'admin123', role: 'admin' },
+                { name: 'Caner Şen', email: 'sefi@brener.com.tr', password: 'sefi123', role: 'sefi' },
+                { name: 'Zeynep Yurt', email: 'muhasebe@brener.com.tr', password: 'muh123', role: 'muhasebe' },
+                { name: 'Murat Kara', email: 'saha@brener.com.tr', password: 'saha123', role: 'saha' }
+            ];
+            
+            for (let user of defaultUsers) {
+                const salt = await bcrypt.genSalt(10);
+                const passwordHash = await bcrypt.hash(user.password, salt);
+                await connection.query(
+                    "INSERT INTO users (company_id, name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)",
+                    [companyId, user.name, user.email, passwordHash, user.role]
+                );
+            }
+            console.log("Default users created.");
+            
+            // Load and save state
+            const appJsPath = path.join(__dirname, 'app.js');
+            if (fs.existsSync(appJsPath)) {
+                // Mock globals to extract state
+                global.window = { location: { hash: '' }, addEventListener: () => {} };
+                global.document = { addEventListener: () => {}, querySelectorAll: () => [], getElementById: () => null };
+                global.localStorage = { getItem: () => null, setItem: () => {} };
+                global.window.BrenerApp = {};
+                
+                const appJsCode = fs.readFileSync(appJsPath, 'utf8');
+                const sanitizedCode = appJsCode
+                    .replace("document.addEventListener('DOMContentLoaded'", "function initApp()")
+                    .replace("window.BrenerApp.init();\\n});", "window.BrenerApp.init();\\n}");
+                
+                eval(sanitizedCode);
+                window.BrenerApp.init();
+                
+                const state = window.BrenerApp.state;
+                state.currentUser = null;
+                state.currentProjectId = null;
+                
+                await connection.query(
+                    "INSERT INTO tenant_data (company_id, state_data) VALUES (?, ?)",
+                    [companyId, JSON.stringify(state)]
+                );
+                console.log("Default company state seeded successfully.");
+            }
+        }
+    } catch (err) {
+        console.error("Database initialization failed:", err);
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
 require('dotenv').config();
 
 const app = express();
@@ -311,6 +391,8 @@ app.get('*', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`Brener Group backend running on http://localhost:${PORT}`);
+initializeDatabase().then(() => {
+    app.listen(PORT, () => {
+        console.log(`Brener Group backend running on http://localhost:${PORT}`);
+    });
 });
