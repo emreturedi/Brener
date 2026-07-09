@@ -73,6 +73,37 @@ async function initializeDatabase() {
                 eval(sanitizedCode);
                 window.BrenerApp.init();
                 
+                // Force seed all missing states into database state_data
+                window.BrenerApp.initHakedisState();
+                if (!window.BrenerApp.state.tasks) {
+                    window.BrenerApp.state.tasks = [
+                        { id: 'TSK-001', title: 'Haftalık şantiye raporlarını gözden geçir.', category: 'Şantiye', priority: 'Yüksek', completed: false, date: '2026-07-10' },
+                        { id: 'TSK-002', title: 'Taşeron hakediş onaylarını tamamla.', category: 'Finans', priority: 'Yüksek', completed: true, date: '2026-07-05' },
+                        { id: 'TSK-003', title: 'Bodrum belediye ruhsat yazısını takip et.', category: 'Ruhsat', priority: 'Orta', completed: false, date: '2026-07-12' },
+                        { id: 'TSK-004', title: 'Mimari detay çizim revizyonlarını kontrol et.', category: 'Tasarım', priority: 'Düşük', completed: false, date: '2026-07-15' }
+                    ];
+                }
+                if (!window.BrenerApp.state.crmLeads) {
+                    window.BrenerApp.state.crmLeads = [
+                        { id: 'lead_1', firstName: 'Mustafa', lastName: 'Kaya', phone: '05329998877', email: 'mustafa@kaya.com', type: 'Daire Satışı', stage: 'Yeni Giriş', details: 'A Blok 4 No\'lu daire ile ilgileniyor.' }
+                    ];
+                }
+                if (!window.BrenerApp.state.budgetTransactions) {
+                    window.BrenerApp.state.budgetTransactions = [];
+                }
+                if (!window.BrenerApp.state.claims) {
+                    window.BrenerApp.state.claims = [
+                        { id: 1001, subcontractor: "Kuzey Kalıp Ltd. Şti.", description: "Kaba inşaat işçilik hakedişi", totalAmount: 75000, retention: 3750, netPaid: 86250, date: "2026-06-25", status: "paid" }
+                    ];
+                }
+                if (!window.BrenerApp.state.rolePermissions || Object.keys(window.BrenerApp.state.rolePermissions).length === 0) {
+                    window.BrenerApp.state.rolePermissions = {
+                        sefi: { genel: true, santiye: true, seflik: true, finans: false, hesaplama: true, degerleme: false, ai: true, saha: false, ekip: true, belgeler: true },
+                        muhasebe: { genel: true, santiye: false, seflik: false, finans: true, hesaplama: false, degerleme: true, ai: false, saha: false, ekip: false, belgeler: true },
+                        saha: { genel: true, santiye: false, seflik: false, finans: false, hesaplama: false, degerleme: false, ai: false, saha: true, ekip: true, belgeler: true }
+                    };
+                }
+                
                 const state = window.BrenerApp.state;
                 state.currentUser = null;
                 state.currentProjectId = null;
@@ -173,6 +204,15 @@ app.post('/api/auth/register', async (req, res) => {
             periodItemEntries: [],
             progressPayments: [],
             siteRecords: [],
+            budgetTransactions: [],
+            crmLeads: [],
+            tasks: [],
+            requests: [],
+            rolePermissions: {
+                sefi: { genel: true, santiye: true, seflik: true, finans: false, hesaplama: true, degerleme: false, ai: true, saha: false, ekip: true, belgeler: true },
+                muhasebe: { genel: true, santiye: false, seflik: false, finans: true, hesaplama: false, degerleme: true, ai: false, saha: false, ekip: false, belgeler: true },
+                saha: { genel: true, santiye: false, seflik: false, finans: false, hesaplama: false, degerleme: false, ai: false, saha: true, ekip: true, belgeler: true }
+            },
             theme: 'dark'
         };
         
@@ -400,6 +440,7 @@ app.get('/api/health', async (req, res) => {
         database: 'Checking...',
         userCount: 0,
         companyCount: 0,
+        stateKeys: [],
         envKeys: Object.keys(process.env).filter(k => k.startsWith('DB_') || k === 'JWT_SECRET' || k === 'PORT')
     };
     
@@ -410,6 +451,18 @@ app.get('/api/health', async (req, res) => {
         
         const [compRows] = await pool.query('SELECT COUNT(*) as count FROM companies');
         status.companyCount = compRows[0].count;
+        
+        const [stateRows] = await pool.query('SELECT state_data FROM tenant_data WHERE company_id = 1');
+        if (stateRows.length > 0) {
+            try {
+                const state = JSON.parse(stateRows[0].state_data);
+                status.stateKeys = Object.keys(state);
+            } catch(e) {
+                status.stateKeys = 'JSON Parse Error: ' + e.message;
+            }
+        } else {
+            status.stateKeys = 'No state found for company 1';
+        }
         
         res.json(status);
     } catch (err) {

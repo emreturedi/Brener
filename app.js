@@ -275,6 +275,28 @@ window.BrenerApp = {
             const stateData = await response.json();
             this.state = stateData;
             
+            // Ensure all required state keys exist (upgrade/migration check)
+            if (!this.state.hakedisContracts) {
+                this.initHakedisState();
+            }
+            if (!this.state.tasks) this.state.tasks = [];
+            if (!this.state.crmLeads) this.state.crmLeads = [];
+            if (!this.state.budgetTransactions) this.state.budgetTransactions = [];
+            if (!this.state.claims) this.state.claims = [];
+            if (!this.state.theme) this.state.theme = 'dark';
+            if (!this.state.rolePermissions || Object.keys(this.state.rolePermissions).length === 0) {
+                this.state.rolePermissions = {
+                    sefi: { genel: true, santiye: true, seflik: true, finans: false, hesaplama: true, degerleme: false, ai: true, saha: false, ekip: true, belgeler: true },
+                    muhasebe: { genel: true, santiye: false, seflik: false, finans: true, hesaplama: false, degerleme: true, ai: false, saha: false, ekip: false, belgeler: true },
+                    saha: { genel: true, santiye: false, seflik: false, finans: false, hesaplama: false, degerleme: false, ai: false, saha: true, ekip: true, belgeler: true }
+                };
+            }
+            if (!this.state.logs) this.state.logs = [];
+            if (!this.state.projectContracts) this.state.projectContracts = {};
+            if (!this.state.projectSpecs) this.state.projectSpecs = {};
+            if (!this.state.specTemplates) this.state.specTemplates = [];
+            if (!this.state.customerPresentations) this.state.customerPresentations = [];
+            
             // Set current user from local storage token
             this.state.currentUser = JSON.parse(localStorage.getItem('brener_current_user'));
             
