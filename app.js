@@ -19,13 +19,15 @@ window.BrenerApp = {
             customers: [],
             users: [],
             currentUser: null,
-                    rolePermissions: {},
-                            logs: [], // Activity logs
-                                    projectContracts: {}, // Project contract summaries
-                                    projectSpecs: {}, // Project technical specifications
-                                    specTemplates: [], // Global specification templates
-                                    theme: 'dark' // default
-                                },
+            rolePermissions: {},
+            logs: [], // Activity logs
+            projectContracts: {}, // Project contract summaries
+            projectSpecs: {}, // Project technical specifications
+            specTemplates: [], // Global specification templates
+            customerPresentations: [],
+            notifications: [],
+            theme: 'dark' // default
+        },
 
     // Global SVG Icons utility (for crisp, zero-dependency inline SVGs)
     icons: {
@@ -296,6 +298,8 @@ window.BrenerApp = {
             if (!this.state.projectSpecs) this.state.projectSpecs = {};
             if (!this.state.specTemplates) this.state.specTemplates = [];
             if (!this.state.customerPresentations) this.state.customerPresentations = [];
+            if (!this.state.notifications) this.state.notifications = [];
+            if (!this.state.reminders) this.state.reminders = [];
             
             // Set current user from local storage token
             this.state.currentUser = JSON.parse(localStorage.getItem('brener_current_user'));

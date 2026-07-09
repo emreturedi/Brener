@@ -118,6 +118,16 @@ async function seed() {
             };
         }
         
+        if (!window.BrenerApp.state.notifications) {
+            window.BrenerApp.state.notifications = [];
+        }
+        if (!window.BrenerApp.state.reminders) {
+            window.BrenerApp.state.reminders = [];
+        }
+        if (!window.BrenerApp.state.customerPresentations) {
+            window.BrenerApp.state.customerPresentations = [];
+        }
+        
         // Extract the generated state
         const state = window.BrenerApp.state;
         
