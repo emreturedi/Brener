@@ -227,11 +227,16 @@ window.BrenerApp = {
                 document.getElementById('logoutBtn').addEventListener('click', () => {
                     const userName = this.state.currentUser ? this.state.currentUser.name : '';
                     this.logActivity('sistem', `Çıkış yapıldı: ${userName}`, 'info');
+                    
+                    // Clear credentials from localStorage
+                    localStorage.removeItem('brener_jwt_token');
+                    localStorage.removeItem('brener_current_user');
+                    localStorage.removeItem('brener_app_state');
+                    
                     this.state.currentUser = null;
-                    this.saveStateToStorage();
                     this.showToast('danger', 'Sistemden çıkış yapılıyor...');
                     setTimeout(() => {
-                        window.location.hash = '#panel';
+                        window.location.hash = '';
                         window.location.reload();
                     }, 1000);
                 });

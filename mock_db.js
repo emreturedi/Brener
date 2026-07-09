@@ -13,10 +13,7 @@ function loadLocalDb() {
         const defaultDb = {
             companies: [{ id: 1, name: "Brener Group" }],
             users: [
-                { id: 1, company_id: 1, name: "Emre Türedi", email: "emre@brener.com.tr", password_hash: hash, role: "admin" },
-                { id: 2, company_id: 1, name: "Şantiye Şefi", email: "sefi@brener.com.tr", password_hash: hash, role: "sefi" },
-                { id: 3, company_id: 1, name: "Muhasebe Müdürü", email: "muhasebe@brener.com.tr", password_hash: hash, role: "muhasebe" },
-                { id: 4, company_id: 1, name: "Saha Elemanı", email: "saha@brener.com.tr", password_hash: hash, role: "saha" }
+                { id: 1, company_id: 1, name: "Emre Türedi", email: "emre@brener.com.tr", password_hash: hash, role: "admin" }
             ],
             tenant_data: []
         };

@@ -51,12 +51,12 @@ async function seed() {
         }
         console.log(`Default company 'Brener Group' verified with ID: ${companyId}`);
 
+        // Clean up other test accounts in seed mode too
+        await connection.query("DELETE FROM users WHERE email != 'emre@brener.com.tr'");
+
         // 3. Insert Default Users with hashed passwords
         const defaultUsers = [
-            { name: 'Emre Türedi', email: 'emre@brener.com.tr', password: 'Emre3wr3', role: 'admin' },
-            { name: 'Caner Şen', email: 'sefi@brener.com.tr', password: 'sefi123', role: 'sefi' },
-            { name: 'Zeynep Yurt', email: 'muhasebe@brener.com.tr', password: 'muh123', role: 'muhasebe' },
-            { name: 'Murat Kara', email: 'saha@brener.com.tr', password: 'saha123', role: 'saha' }
+            { name: 'Emre Türedi', email: 'emre@brener.com.tr', password: 'Emre3wr3', role: 'admin' }
         ];
 
         for (let user of defaultUsers) {

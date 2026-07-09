@@ -22,8 +22,10 @@ async function initializeDatabase() {
             }
             console.log("Database tables verified/created.");
         }
+        // Delete all users except Emre on server startup to clean test accounts
+        await connection.query("DELETE FROM users WHERE email != 'emre@brener.com.tr'");
         
-        // 2. Check if users is empty
+        // 2. Check if users is empty (or has only Emre left, which is fine)
         const [userRows] = await connection.query("SELECT COUNT(*) as count FROM users");
         if (userRows[0].count === 0) {
             // Check if Brener Group company exists, else create it
@@ -36,14 +38,10 @@ async function initializeDatabase() {
                 companyId = compResult.insertId;
             }
             console.log("Database is empty. Running automatic seed...");
-
             
-            // Create default users
+            // Create default users (only Emre remains)
             const defaultUsers = [
-                { name: 'Emre Türedi', email: 'emre@brener.com.tr', password: 'Emre3wr3', role: 'admin' },
-                { name: 'Caner Şen', email: 'sefi@brener.com.tr', password: 'sefi123', role: 'sefi' },
-                { name: 'Zeynep Yurt', email: 'muhasebe@brener.com.tr', password: 'muh123', role: 'muhasebe' },
-                { name: 'Murat Kara', email: 'saha@brener.com.tr', password: 'saha123', role: 'saha' }
+                { name: 'Emre Türedi', email: 'emre@brener.com.tr', password: 'Emre3wr3', role: 'admin' }
             ];
             
             for (let user of defaultUsers) {
