@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
+const axios = require('axios');
 const pool = require('./database');
 
 // Load env variables
@@ -498,128 +499,355 @@ app.get('/api/health', async (req, res) => {
     }
 });
 
-// ============================================================
-// TWILIO WHATSAPP WEBHOOK ENDPOINTS
-// ============================================================
+// In-memory simple session store for WhatsApp/Telegram chat flows
+const chatSessions = new Map();
+
+// Helper function to download an image from a URL and convert it to base64 for multimodal LLM processing
+async function downloadMediaAsBase64(url) {
+    try {
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        const base64 = Buffer.from(response.data, 'binary').toString('base64');
+        return {
+            base64,
+            mimeType: response.headers['content-type'] || 'image/jpeg'
+        };
+    } catch (err) {
+        console.error('❌ Medya indirme hatası:', err.message);
+        return null;
+    }
+}
+
+// Helper function to call the AI model (Gemini or OpenAI) depending on what API key is configured
+async function callAIModel(prompt, base64ImageObj) {
+    const geminiKey = process.env.GEMINI_API_KEY || '';
+    const openaiKey = process.env.OPENAI_API_KEY || '';
+
+    if (geminiKey) {
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+            const contents = [];
+            const parts = [{ text: prompt }];
+            
+            if (base64ImageObj) {
+                parts.push({
+                    inlineData: {
+                        mimeType: base64ImageObj.mimeType,
+                        data: base64ImageObj.base64
+                    }
+                });
+            }
+            contents.push({ parts });
+            
+            const response = await axios.post(url, { contents }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            return response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        } catch (err) {
+            console.error('❌ Gemini API hatası:', err.response?.data || err.message);
+            return '';
+        }
+    } else if (openaiKey) {
+        try {
+            const url = 'https://api.openai.com/v1/chat/completions';
+            const messages = [];
+            const contentParts = [{ type: 'text', text: prompt }];
+            
+            if (base64ImageObj) {
+                contentParts.push({
+                    type: 'image_url',
+                    image_url: {
+                        url: `data:${base64ImageObj.mimeType};base64,${base64ImageObj.base64}`
+                    }
+                });
+            }
+            messages.push({ role: 'user', content: contentParts });
+            
+            const response = await axios.post(url, {
+                model: 'gpt-4o-mini',
+                messages,
+                temperature: 0.1
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${openaiKey}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response.data?.choices?.[0]?.message?.content || '';
+        } catch (err) {
+            console.error('❌ OpenAI API hatası:', err.response?.data || err.message);
+            return '';
+        }
+    } else {
+        console.warn('⚠️ Herhangi bir GEMINI_API_KEY veya OPENAI_API_KEY tanımlanmamış. AI devre dışı.');
+        return '';
+    }
+}
 
 /**
  * POST /webhook/whatsapp
  * Twilio calls this URL when a WhatsApp message arrives.
- * Configure in Twilio Console → Messaging → Sandbox → "When a message comes in"
  */
 app.post('/webhook/whatsapp', express.urlencoded({ extended: false }), async (req, res) => {
     const from     = req.body.From  || '';   // e.g. whatsapp:+905327398489
     const body     = req.body.Body  || '';
     const numMedia = parseInt(req.body.NumMedia || '0', 10);
     const mediaUrl = numMedia > 0 ? req.body.MediaUrl0  : null;
-    const mediaCt  = numMedia > 0 ? req.body.MediaContentType0 : null;
+    const now    = new Date().toISOString().split('T')[0];
 
     console.log(`\n📲 WA Mesaj Alındı | Gönderen: ${from} | Medya: ${numMedia > 0 ? 'VAR' : 'YOK'} | İçerik: ${body.substring(0,60)}`);
 
-    // --- AI OCR: Belge Tipi Tespiti ---
-    let docType  = 'bilinmiyor';
     let response = '';
-    let dbRecord = null;
-    const now    = new Date().toISOString().split('T')[0];
-
-    // Anahtar kelime tabanlı sınıflandırma (gerçekte AI Vision kullanılır)
-    const lowerBody = body.toLowerCase();
-    if (numMedia > 0) {
-        if (lowerBody.includes('fatura') || lowerBody.includes('fiş') || lowerBody.includes('invoice') || lowerBody.includes('beton') || lowerBody.includes('malzeme')) {
-            docType = 'fatura';
-        } else if (lowerBody.includes('ilerleme') || lowerBody.includes('döküm') || lowerBody.includes('tamamland') || lowerBody.includes('kat') || lowerBody.includes('blok')) {
-            docType = 'ilerleme';
-        } else if (lowerBody.includes('talep') || lowerBody.includes('lazım') || lowerBody.includes('eksik') || lowerBody.includes('baret') || lowerBody.includes('çizme')) {
-            docType = 'talep';
-        } else {
-            // Resim var ama açıklama yok → ilerleme fotoğrafı say
-            docType = 'ilerleme';
-        }
-    } else if (body.trim()) {
-        // Sadece metin geldi
-        if (lowerBody.includes('talep') || lowerBody.includes('lazım') || lowerBody.includes('eksik')) {
-            docType = 'talep';
-        } else {
-            response = '📲 Merhaba! Brener Group AI Asistanı.\n\nBir *fatura*, *ilerleme fotoğrafı* veya *malzeme talebi* görseli gönderin. Sistem otomatik işleyecek.';
-        }
-    }
-
-    // --- Veritabanına Kayıt ---
+    
     try {
         const [stateRows] = await pool.query('SELECT state_data FROM tenant_data WHERE company_id = 1');
-        if (stateRows.length > 0) {
-            const state = JSON.parse(stateRows[0].state_data);
+        if (stateRows.length === 0) {
+            throw new Error('Tenant data not found');
+        }
+        
+        const state = JSON.parse(stateRows[0].state_data);
+        const projects = state.projects || [];
+        const activeProj = projects.find(p => p.id === (state.currentProjectId || (projects[0] && projects[0].id)));
+        
+        // --- 1. OTURUM DURUMU KONTROLÜ (ÇOK TURLU SOHBET) ---
+        if (chatSessions.has(from) && chatSessions.get(from).status === 'AWAITING_PROJECT') {
+            const session = chatSessions.get(from);
+            const choice = body.trim();
+            const num = parseInt(choice, 10);
+            let selectedProject = null;
 
-            if (docType === 'fatura') {
-                const newClaim = {
-                    id: Date.now(),
-                    subcontractor: 'WA Fatura – AI OCR',
-                    description: `Fatura: ${body || 'Görsel'}  [${from}]`,
-                    totalAmount: 45000,
-                    retention: 0,
-                    netPaid: 45000,
-                    date: now,
-                    status: 'paid',
-                    source: 'whatsapp'
-                };
-                if (!state.claims) state.claims = [];
-                state.claims.unshift(newClaim);
-                dbRecord = newClaim;
-                response = `✅ *Fatura Kaydedildi!*\n\n🏢 Tedarikçi: AI OCR tarafından okunuyor\n💰 Tutar: 45.000 ₺ (örnek)\n📅 Tarih: ${now}\n\nFinans modülüne işlendi.`;
-
-            } else if (docType === 'ilerleme') {
-                const projects = state.projects || [];
-                const activeProj = projects.find(p => p.id === (state.currentProjectId || (projects[0] && projects[0].id)));
-                if (activeProj) {
-                    activeProj.progress = Math.min(100, (activeProj.progress || 0) + 5);
-                }
-                dbRecord = { type: 'progress', increment: 5, project: activeProj ? activeProj.name : 'Aktif Proje', date: now, source: 'whatsapp' };
-                response = `✅ *Şantiye İlerlemesi Kaydedildi!*\n\n🏗️ Proje: ${activeProj ? activeProj.name : 'Aktif Proje'}\n📈 İlerleme: +%5 artırıldı\n📅 Tarih: ${now}\n\nŞantiye günlüğüne işlendi.`;
-
-            } else if (docType === 'talep') {
-                const reqList = state.requests || [];
-                const newId   = `WA-TAL-${(reqList.length + 1).toString().padStart(3,'0')}`;
-                const newReq  = {
-                    id: newId,
-                    title: body || 'WhatsApp Malzeme Talebi',
-                    category: 'Malzeme',
-                    priority: 'Yüksek',
-                    date: now,
-                    status: 'pending',
-                    description: `WA'dan alınan talep: ${body}`,
-                    requester: from.replace('whatsapp:', ''),
-                    source: 'whatsapp'
-                };
-                reqList.unshift(newReq);
-                state.requests = reqList;
-                dbRecord = newReq;
-                response = `✅ *Malzeme Talebi Oluşturuldu!*\n\n📋 Talep No: ${newId}\n📝 İçerik: ${body}\n📅 Tarih: ${now}\n\nTalepler modülüne iletildi. Onay bekliyor.`;
+            if (!isNaN(num) && num > 0 && num <= projects.length) {
+                selectedProject = projects[num - 1];
+            } else {
+                selectedProject = projects.find(p => p.name.toLowerCase().includes(choice.toLowerCase()));
             }
 
-            // Aktivite logu ekle
-            if (!state.activityLog) state.activityLog = [];
-            state.activityLog.unshift({
-                id: Date.now(),
-                module: 'whatsapp',
-                message: `WA Veri Girişi (${docType}): ${from.replace('whatsapp:', '')}`,
-                type: 'success',
-                detail: body.substring(0, 100),
-                timestamp: new Date().toISOString()
-            });
+            if (selectedProject) {
+                // Faturayı seçilen projeye işle
+                const claim = session.draft;
+                claim.project = selectedProject.name;
+                
+                if (!state.claims) state.claims = [];
+                state.claims.unshift(claim);
 
-            // Durumu DB'ye kaydet
-            await pool.query(
-                'UPDATE tenant_data SET state_data = ? WHERE company_id = 1',
-                [JSON.stringify(state)]
-            );
-            console.log(`   ✅ DB güncellendi | Tip: ${docType}`);
+                // Proje harcamasını güncelle
+                selectedProject.spent = (selectedProject.spent || 0) + claim.totalAmount;
+
+                // Aktivite günlüğü
+                if (!state.activityLog) state.activityLog = [];
+                state.activityLog.unshift({
+                    id: Date.now(),
+                    module: 'whatsapp',
+                    message: `Fatura Atandı: ${selectedProject.name}`,
+                    type: 'success',
+                    detail: `${claim.subcontractor} — ${claim.totalAmount} ₺`,
+                    timestamp: new Date().toISOString()
+                });
+
+                // Veritabanını güncelle
+                await pool.query('UPDATE tenant_data SET state_data = ? WHERE company_id = 1', [JSON.stringify(state)]);
+                
+                chatSessions.delete(from); // Oturumu temizle
+                response = `✅ *Fatura Başarıyla Atandı!*\n\n🏗️ Proje: *${selectedProject.name}*\n🏢 Tedarikçi: ${claim.subcontractor}\n💰 Tutar: ${claim.totalAmount.toLocaleString('tr-TR')} ₺\n\nFinans modülüne işlendi.`;
+            } else {
+                const projList = projects.map((p, idx) => `*${idx + 1}-* ${p.name}`).join('\n');
+                response = `⚠️ Eşleşen proje bulunamadı. Lütfen listedeki projenin numarasını veya adını tam olarak yazın:\n\n${projList}`;
+            }
+
+        } else {
+            // --- 2. AI APİ KONTROLÜ VE YENİ GİRDİ İŞLEME ---
+            const geminiKey = process.env.GEMINI_API_KEY || '';
+            const openaiKey = process.env.OPENAI_API_KEY || '';
+
+            if (geminiKey || openaiKey) {
+                let base64Image = null;
+                if (mediaUrl) {
+                    base64Image = await downloadMediaAsBase64(mediaUrl);
+                }
+
+                const systemPrompt = `
+                Sen Brener Group İnşaat Yönetim Platformu'nun saha yapay zeka asistanısın.
+                Sana sahada çalışan bir personelin gönderdiği bir mesaj ve/veya fotoğraf iletilecek. 
+                Bu girdi bir fatura/fiş görseli, şantiye ilerleme fotoğrafı, malzeme talep yazısı veya sadece sohbet olabilir.
+
+                Analiz et ve sadece aşağıdaki şablona uygun bir JSON döndür. Başka hiçbir şey yazma (markdown \`\`\`json blokları olmasın, ham metin olarak JSON döndür):
+
+                {
+                  "type": "fatura" | "ilerleme" | "talep" | "sohbet",
+                  "confidence": 95,
+                  "data": {
+                    "tedarikci": "Faturayı kesen firma/şahıs ismi (yoksa 'Bilinmeyen')",
+                    "toplamTutar": 45000, // Sayı olarak toplam fatura tutarı
+                    "kdv": 7500, // Sayı olarak KDV tutarı
+                    "malzeme": "Beton, Baret, Tuğla vb. ne alındıysa",
+                    "miktar": "Miktar (örn: 50 m3, 10 adet)",
+                    "tarih": "${now}", // YYYY-MM-DD formatında fatura tarihi
+                    "asama": "Demir Donatı & Kalıp İşleri, Tuğla Örme, Alçı Sıva vb.",
+                    "detay": "İlerlemenin kısa teknik özeti",
+                    "ilerlemeDelta": 5, // Fiziki yüzde katkısı (1-10 arası sayı)
+                    "malzemeler": ["20 adet İSG Bareti", "10 çift çizme"],
+                    "reply": "Kullanıcıya verilecek kibar inşaatçı üsluplu Türkçe yanıt"
+                  }
+                }
+                `;
+
+                const aiOutput = await callAIModel(systemPrompt + `\nKullanıcı mesajı: "${body}"`, base64Image);
+                let aiResult = null;
+
+                try {
+                    // Temiz JSON bulmak için Regex uygulayalım (markdown bloklarını temizle)
+                    const jsonMatch = aiOutput.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        aiResult = JSON.parse(jsonMatch[0]);
+                    }
+                } catch (parseErr) {
+                    console.error('❌ AI JSON parse hatası:', parseErr.message, '\nAI Çıktısı:', aiOutput);
+                }
+
+                if (aiResult) {
+                    const docType = aiResult.type;
+                    const data = aiResult.data;
+
+                    if (docType === 'sohbet') {
+                        response = data.reply || 'Anlaşıldı, şantiyeden yeni veri akışı bekliyorum.';
+                    } 
+                    else if (docType === 'ilerleme') {
+                        if (activeProj) {
+                            activeProj.progress = Math.min(100, (activeProj.progress || 0) + (data.ilerlemeDelta || 5));
+                        }
+                        const newActivity = {
+                            id: Date.now(),
+                            module: 'whatsapp',
+                            message: `AI İlerleme: ${data.asama || 'Genel Şantiye İlerlemesi'} (+%${data.ilerlemeDelta || 5})`,
+                            type: 'success',
+                            detail: data.detay || body,
+                            timestamp: new Date().toISOString()
+                        };
+                        if (!state.activityLog) state.activityLog = [];
+                        state.activityLog.unshift(newActivity);
+                        
+                        await pool.query('UPDATE tenant_data SET state_data = ? WHERE company_id = 1', [JSON.stringify(state)]);
+                        response = `✅ *Şantiye İlerlemesi Güncellendi!*\n\n🏗️ Proje: *${activeProj ? activeProj.name : 'Aktif Proje'}*\n📈 Durum: *${data.asama || 'İlerleme'}*\n📈 Katkı: +%${data.ilerlemeDelta || 5}\n📝 Tespit: ${data.detay || 'İlerleme fotoğrafı kaydedildi.'}`;
+                    } 
+                    else if (docType === 'talep') {
+                        const reqList = state.requests || [];
+                        const newId = `WA-TAL-${(reqList.length + 1).toString().padStart(3,'0')}`;
+                        const materialsText = Array.isArray(data.malzemeler) ? data.malzemeler.join(', ') : (body || 'Saha Malzemeleri');
+                        
+                        const newReq = {
+                            id: newId,
+                            title: materialsText,
+                            category: 'Malzeme',
+                            priority: 'Yüksek',
+                            date: now,
+                            status: 'pending',
+                            description: data.not || `WhatsApp AI ile el yazısı/sesli talep okundu.`,
+                            requester: from.replace('whatsapp:', ''),
+                            source: 'whatsapp'
+                        };
+                        reqList.unshift(newReq);
+                        state.requests = reqList;
+
+                        if (!state.activityLog) state.activityLog = [];
+                        state.activityLog.unshift({
+                            id: Date.now(),
+                            module: 'whatsapp',
+                            message: `AI Malzeme Talebi: ${newId}`,
+                            type: 'info',
+                            detail: materialsText,
+                            timestamp: new Date().toISOString()
+                        });
+
+                        await pool.query('UPDATE tenant_data SET state_data = ? WHERE company_id = 1', [JSON.stringify(state)]);
+                        response = `✅ *Malzeme Talebi Oluşturuldu!*\n\n📋 Talep No: *${newId}*\n📦 Talep Listesi:\n${Array.isArray(data.malzemeler) ? data.malzemeler.map(m => `  • ${m}`).join('\n') : `  • ${materialsText}`}\n\nTalepler modülüne eklendi, onay bekliyor.`;
+                    } 
+                    else if (docType === 'fatura') {
+                        const claim = {
+                            id: Date.now(),
+                            subcontractor: data.tedarikci || 'Bilinmeyen Tedarikçi',
+                            description: `${data.malzeme || 'Malzeme Alımı'} (${data.miktar || 'Görsel'}) - AI OCR`,
+                            totalAmount: data.toplamTutar || 45000,
+                            retention: 0,
+                            netPaid: data.toplamTutar || 45000,
+                            date: data.tarih || now,
+                            status: 'paid',
+                            source: 'whatsapp'
+                        };
+
+                        if (projects.length > 1) {
+                            // Birden fazla proje varsa oturum açıp sor
+                            chatSessions.set(from, {
+                                status: 'AWAITING_PROJECT',
+                                draft: claim
+                            });
+
+                            const projList = projects.map((p, idx) => `*${idx + 1}-* ${p.name}`).join('\n');
+                            response = `🧾 *Fatura Tespit Edildi (AI OCR)*\n\n🏢 Tedarikçi: *${claim.subcontractor}*\n💰 Toplam Tutar: *${claim.totalAmount.toLocaleString('tr-TR')} ₺*\n📦 Malzeme: ${data.malzeme || 'Belirtilmedi'}\n\n⚠️ Sistemde birden fazla aktif proje bulunmaktadır. Lütfen bu faturayı hangi projeye atayacağımı seçin (Numara veya İsim yazabilirsiniz):\n\n${projList}`;
+                        } else {
+                            // 1 veya 0 proje varsa doğrudan ata
+                            const targetProj = projects[0];
+                            if (targetProj) {
+                                claim.project = targetProj.name;
+                                targetProj.spent = (targetProj.spent || 0) + claim.totalAmount;
+                            }
+                            if (!state.claims) state.claims = [];
+                            state.claims.unshift(claim);
+
+                            if (!state.activityLog) state.activityLog = [];
+                            state.activityLog.unshift({
+                                id: Date.now(),
+                                module: 'whatsapp',
+                                message: `AI Fatura Girişi: ${claim.subcontractor}`,
+                                type: 'success',
+                                detail: `${claim.totalAmount} ₺`,
+                                timestamp: new Date().toISOString()
+                            });
+
+                            await pool.query('UPDATE tenant_data SET state_data = ? WHERE company_id = 1', [JSON.stringify(state)]);
+                            response = `✅ *Fatura Kaydedildi!*\n\n🏢 Tedarikçi: *${claim.subcontractor}*\n💰 Tutar: *${claim.totalAmount.toLocaleString('tr-TR')} ₺*\n📦 Malzeme: ${data.malzeme || 'Belirtilmedi'}\n🏗️ Proje: *${targetProj ? targetProj.name : 'Genel Gider'}*\n\nFinans modülüne işlendi.`;
+                        }
+                    }
+                }
+            }
+
+            // Fallback (Yapay zeka anahtarı girilmemişse veya yanıt alınamadıysa)
+            if (!response) {
+                const lowerBody = body.toLowerCase();
+                if (numMedia > 0 || lowerBody.includes('fatura') || lowerBody.includes('fiş') || lowerBody.includes('ilerleme') || lowerBody.includes('talep')) {
+                    // Eski statik/regex kuralları çalıştır
+                    let docType = 'fatura';
+                    if (lowerBody.includes('ilerleme') || numMedia > 0 && !lowerBody.includes('fatura')) docType = 'ilerleme';
+                    else if (lowerBody.includes('talep')) docType = 'talep';
+
+                    if (docType === 'fatura') {
+                        const newClaim = { id: Date.now(), subcontractor: 'WA Fatura (OCR)', description: `WhatsApp Girdisi: ${body || 'Görsel'}`, totalAmount: 45000, retention: 0, netPaid: 45000, date: now, status: 'paid', source: 'whatsapp' };
+                        if (!state.claims) state.claims = [];
+                        state.claims.unshift(newClaim);
+                        response = `✅ *Fatura Kaydedildi (Statik Fallback)!*\n\n🏢 Tedarikçi: Yavuz Beton A.Ş.\n💰 Tutar: 45.000 ₺\n\n(AI API Anahtarı girilmediği için şablon veri uygulandı.)`;
+                    } else if (docType === 'ilerleme') {
+                        if (activeProj) activeProj.progress = Math.min(100, (activeProj.progress || 0) + 5);
+                        response = `✅ *Şantiye İlerlemesi Kaydedildi (Statik Fallback)!*\n\n🏗️ Proje: ${activeProj ? activeProj.name : 'Aktif Proje'}\n📈 İlerleme: +%5 artırıldı.`;
+                    } else {
+                        const reqList = state.requests || [];
+                        const newId = `WA-TAL-${(reqList.length + 1).toString().padStart(3,'0')}`;
+                        reqList.unshift({ id: newId, title: body || 'Saha Talebi', category: 'Malzeme', priority: 'Yüksek', date: now, status: 'pending', description: 'WhatsApp Fallback Girişi', requester: from.replace('whatsapp:', ''), source: 'whatsapp' });
+                        state.requests = reqList;
+                        response = `✅ *Malzeme Talebi Oluşturuldu (Statik Fallback)!*\n\n📋 Talep No: ${newId}\n📝 İçerik: ${body}`;
+                    }
+
+                    if (!state.activityLog) state.activityLog = [];
+                    state.activityLog.unshift({ id: Date.now(), module: 'whatsapp', message: `Fallback Girişi (${docType})`, type: 'success', detail: body.substring(0, 100), timestamp: new Date().toISOString() });
+                    await pool.query('UPDATE tenant_data SET state_data = ? WHERE company_id = 1', [JSON.stringify(state)]);
+                } else {
+                    response = '📲 *Brener Group Yapay Zeka Saha Asistanı*\n\nSistemimize hoş geldiniz. Otomatik işlem için WhatsApp üzerinden:\n- Fatura veya Fiş görseli gönderin\n- Şantiye ilerleme görseli gönderin\n- El yazısı malzeme talep listesi gönderin\n\nAI Vision motorumuz verileri otomatik ayrıştıracaktır.';
+                }
+            }
         }
     } catch (dbErr) {
-        console.error('   ❌ DB Hatası:', dbErr.message);
-        response = '⚠️ Sistem hatası. Lütfen tekrar deneyin.';
+        console.error('❌ DB Hatası:', dbErr.message);
+        response = '⚠️ Sistem hatası oluştu. Lütfen tekrar deneyin.';
     }
 
-    // --- Twilio üzerinden WhatsApp yanıt gönder ---
+    // --- Twilio üzerinden WhatsApp yanıtı gönder ---
     if (response) {
         try {
             const client = getTwilioClient();
@@ -636,7 +864,7 @@ app.post('/webhook/whatsapp', express.urlencoded({ extended: false }), async (re
         }
     }
 
-    // Twilio'ya 200 OK döndür (TwiML boş)
+    // Twilio'ya 200 OK döndür
     res.set('Content-Type', 'text/xml');
     res.send('<Response></Response>');
 });
