@@ -56,18 +56,14 @@
     <!-- Main Style Sheet -->
     <link rel="stylesheet" href="app.css">
 </head>
-<body class="dark-mode"> <!-- Default to Dark Mode for premium aesthetics -->
+<body class="dark-mode auth-mode"> <!-- Default to Dark Mode & Auth Mode to avoid layout flashing -->
 
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="logo-area">
-                    <span class="logo-icon">B</span>
-                    <div class="logo-text">
-                        <span class="logo-brand">BRENER</span>
-                        <span class="logo-sub">GROUP</span>
-                    </div>
+                <div class="logo-area" style="display: flex; align-items: center; justify-content: flex-start; padding: 4px 0;">
+                    <img id="sidebarLogoImg" src="logo.png" alt="Brener Group" style="height: 38px; max-width: 170px; object-fit: contain;">
                 </div>
                 <button class="mobile-close-btn" id="mobileCloseBtn">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -643,12 +639,8 @@
     <!-- Login / Register Page Container Overlay -->
 <div class="login-overlay" id="loginOverlay">
     <div class="login-card">
-        <div class="login-logo">
-            <span class="login-logo-icon">B</span>
-            <div>
-                <h2>BRENER GROUP</h2>
-                <p>İnşaat Yönetim Portalı</p>
-            </div>
+        <div class="login-logo" style="justify-content: center; margin-bottom: 24px;">
+            <img id="loginLogoImg" src="logo.png" alt="Brener Group Logo" style="height: 65px; max-width: 100%; object-fit: contain;">
         </div>
 
         <!-- Login Form -->

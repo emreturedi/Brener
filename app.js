@@ -1144,6 +1144,9 @@ window.BrenerApp = {
         const user = this.state.currentUser;
         if (!user) return;
 
+        // Hide login overlay and show dashboard container
+        document.body.classList.remove('auth-mode');
+
         // Render initials in top bar avatar
         const avatar = document.querySelector('.profile-avatar');
         if (avatar) {
@@ -1161,7 +1164,16 @@ window.BrenerApp = {
             profileRole.textContent = roleLabels[user.role] || user.role;
         }
 
+        this.updateLogoImages();
         this.applyRolePermissions();
+    },
+
+    updateLogoImages() {
+        const logoSrc = this.state.companyLogo || 'logo.png';
+        const loginLogo = document.getElementById('loginLogoImg');
+        const sidebarLogo = document.getElementById('sidebarLogoImg');
+        if (loginLogo) loginLogo.src = logoSrc;
+        if (sidebarLogo) sidebarLogo.src = logoSrc;
     },
 
     applyRolePermissions() {

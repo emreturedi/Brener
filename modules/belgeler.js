@@ -1186,6 +1186,32 @@ Gereğini arz ederiz.</textarea>
                     <button class="btn btn-primary" style="width: 100%;" onclick="window.BrenerApp.Belgeler.changePasswordAction()">Şifreyi Güncelle</button>
                 </div>
 
+                <!-- Şirket Logosu Yönetimi Card -->
+                <div class="card" style="padding: 32px; grid-column: 1 / -1;">
+                    <div class="card-header" style="margin-bottom: 20px;">
+                        <h2>🏢 Şirket Logosu</h2>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-top: 4px;">
+                            Giriş ekranı ve sol menüde gösterilecek kurumsal logonuzu güncelleyin.
+                        </span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+                        <div style="background: var(--bg-dark); padding: 16px; border-radius: 8px; border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; width: 220px; height: 110px;">
+                            <img id="profileLogoPreview" src="${window.BrenerApp.state.companyLogo || 'logo.png'}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 250px;">
+                            <label class="btn btn-secondary" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-align: center; max-width: 200px;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                                Yeni Logo Seç
+                                <input type="file" id="companyLogoInput" accept="image/*" style="display: none;" onchange="window.BrenerApp.Belgeler.handleLogoUpload(event)">
+                            </label>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-primary" onclick="window.BrenerApp.Belgeler.saveLogo()">Logoyu Kaydet</button>
+                                ${window.BrenerApp.state.companyLogo ? `<button class="btn btn-danger" onclick="window.BrenerApp.Belgeler.resetLogo()">Varsayılana Dön</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         `;
         container.innerHTML = html;
@@ -1295,6 +1321,46 @@ Gereğini arz ederiz.</textarea>
         document.getElementById('changePassCurrent').value = '';
         document.getElementById('changePassNew').value = '';
         document.getElementById('changePassNewConfirm').value = '';
+    },
+
+    handleLogoUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const preview = document.getElementById('profileLogoPreview');
+            if (preview) preview.src = e.target.result;
+            this.tempLogoDataUrl = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    },
+
+    saveLogo() {
+        if (!this.tempLogoDataUrl) {
+            window.BrenerApp.showToast('info', 'Lütfen önce yeni bir logo seçin!');
+            return;
+        }
+
+        window.BrenerApp.state.companyLogo = this.tempLogoDataUrl;
+        this.tempLogoDataUrl = null;
+
+        window.BrenerApp.saveStateToStorage();
+        window.BrenerApp.updateLogoImages();
+        window.BrenerApp.showToast('success', 'Şirket logosu başarıyla güncellendi!');
+        this.renderProfile(document.getElementById('contentWindow'));
+    },
+
+    resetLogo() {
+        if (confirm('Şirket logosunu varsayılana sıfırlamak istediğinize emin misiniz?')) {
+            delete window.BrenerApp.state.companyLogo;
+            this.tempLogoDataUrl = null;
+
+            window.BrenerApp.saveStateToStorage();
+            window.BrenerApp.updateLogoImages();
+            window.BrenerApp.showToast('success', 'Logo varsayılana sıfırlandı.');
+            this.renderProfile(document.getElementById('contentWindow'));
+        }
     },
 
     renderUserManagement(container) {

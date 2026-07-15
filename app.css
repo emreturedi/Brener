@@ -1370,7 +1370,10 @@ body.light-mode .message.ai {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle at center, #1e293b 0%, #0a0d14 100%);
+    /* Premium colorful gold-blue mesh background */
+    background: radial-gradient(circle at 10% 20%, rgba(235, 209, 151, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(235, 209, 151, 0.08) 0%, transparent 50%),
+                linear-gradient(135deg, #162235 0%, #0c1322 100%);
     display: none;
     align-items: center;
     justify-content: center;
@@ -1390,15 +1393,16 @@ body.auth-mode .floating-ai-widget {
 }
 
 .login-card {
-    background: rgba(30, 41, 59, 0.85); /* Increased background opacity to 0.85 for contrast */
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15); /* More visible border */
+    background: rgba(15, 23, 42, 0.65); /* Elegant translucent slate-900 */
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(235, 209, 151, 0.25); /* Gold brand border */
     border-radius: var(--border-radius-lg);
     width: 100%;
     max-width: 440px;
     padding: 40px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(235, 209, 151, 0.04); /* Soft gold glow */
     animation: fadeIn 0.4s ease;
 }
 
