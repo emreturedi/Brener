@@ -1093,32 +1093,6 @@ window.BrenerApp = {
         
         document.body.classList.add('auth-mode');
         
-        // Tab switching logic
-        const tabLogin = document.getElementById('tabLoginBtn');
-        const tabRegister = document.getElementById('tabRegisterBtn');
-        const loginForm = document.getElementById('loginFormContainer');
-        const registerForm = document.getElementById('registerFormContainer');
-        
-        if (tabLogin && tabRegister && loginForm && registerForm) {
-            tabLogin.onclick = () => {
-                tabLogin.style.borderBottomColor = 'var(--primary)';
-                tabLogin.style.color = 'var(--primary)';
-                tabRegister.style.borderBottomColor = 'transparent';
-                tabRegister.style.color = 'var(--text-muted)';
-                loginForm.style.display = 'block';
-                registerForm.style.display = 'none';
-            };
-            
-            tabRegister.onclick = () => {
-                tabRegister.style.borderBottomColor = 'var(--primary)';
-                tabRegister.style.color = 'var(--primary)';
-                tabLogin.style.borderBottomColor = 'transparent';
-                tabLogin.style.color = 'var(--text-muted)';
-                registerForm.style.display = 'block';
-                loginForm.style.display = 'none';
-            };
-        }
-        
         // Login Submit
         const submitBtn = document.getElementById('loginSubmitBtn');
         if (submitBtn) {
@@ -1154,44 +1128,6 @@ window.BrenerApp = {
                     await this.loadState();
                 } catch (err) {
                     console.error("Login failed:", err);
-                    this.showToast('danger', err.message);
-                }
-            };
-        }
-        
-        // Register Submit
-        const registerBtn = document.getElementById('registerSubmitBtn');
-        if (registerBtn) {
-            registerBtn.onclick = async () => {
-                const companyName = document.getElementById('registerCompany').value.trim();
-                const userName = document.getElementById('registerName').value.trim();
-                const email = document.getElementById('registerEmail').value.trim();
-                const password = document.getElementById('registerPassword').value.trim();
-                
-                if (!companyName || !userName || !email || !password) {
-                    this.showToast('danger', 'Tüm alanları doldurmanız gerekmektedir!');
-                    return;
-                }
-                
-                try {
-                    const response = await fetch('/api/auth/register', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ companyName, userName, email, password })
-                    });
-                    
-                    const result = await response.json();
-                    if (!response.ok) {
-                        throw new Error(result.error || 'Kayıt başarısız');
-                    }
-                    
-                    this.showToast('success', 'Şirket kaydı başarıyla oluşturuldu! Şimdi giriş yapabilirsiniz.');
-                    // Switch to login tab and fill email
-                    if (tabLogin) tabLogin.click();
-                    document.getElementById('loginEmail').value = email;
-                    document.getElementById('loginPassword').value = '';
-                } catch (err) {
-                    console.error("Registration failed:", err);
                     this.showToast('danger', err.message);
                 }
             };
