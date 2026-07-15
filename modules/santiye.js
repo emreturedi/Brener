@@ -7892,4 +7892,269 @@ renderMalikRaporu(container) {
         };
 
     },
-    };
+
+    openProjectEditModal(project, onSave) {
+        const formHtml = `
+            <div style="font-family: inherit; color: var(--text-main); max-height: 70vh; overflow-y: auto; padding-right: 8px;">
+                <!-- Section 1: Temel Bilgiler -->
+                <div style="font-weight: 700; font-size: 0.95rem; margin-top: 16px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--text-main);">Temel Bilgiler</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label>Proje Adı *</label>
+                        <input type="text" id="editProjName" value="${project.name || ''}" placeholder="Örn: Güneş Evleri Konut Projesi" required style="width:100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Proje Tipi *</label>
+                        <select id="editProjType" style="width:100%; padding:10px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:8px; color:var(--text-main);" required>
+                            <option value="" disabled>Proje tipi seçin</option>
+                            <option value="Konut" ${project.type === 'Konut' ? 'selected' : ''}>Konut</option>
+                            <option value="Ticari" ${project.type === 'Ticari' ? 'selected' : ''}>Ticari</option>
+                            <option value="Karma" ${project.type === 'Karma' ? 'selected' : ''}>Karma Kullanım</option>
+                            <option value="Altyapı" ${project.type === 'Altyapı' ? 'selected' : ''}>Altyapı / Yol</option>
+                            <option value="Sanayi" ${project.type === 'Sanayi' ? 'selected' : ''}>Sanayi Yapısı</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label>Adres</label>
+                    <input type="text" id="editProjAddress" value="${project.location || ''}" placeholder="Proje adresi" style="width:100%;">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label>Açıklama</label>
+                    <textarea id="editProjDesc" placeholder="Proje hakkında detaylı açıklama..." rows="3" style="width:100%; padding:10px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:8px; color:var(--text-main); font-family:inherit; resize:vertical;">${project.description || ''}</textarea>
+                </div>
+
+                <!-- Section 2: Özellikler & Tipler -->
+                <div style="font-weight: 700; font-size: 0.95rem; margin-top: 20px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--text-main);">Özellikler & Tipler</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="form-group">
+                        <label>Proje Özellikleri</label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <select id="editProjFeatureSelect" style="flex:1; padding:8px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main);">
+                                <option value="" disabled selected>Özellik Ekle...</option>
+                                <option value="Sosyal Tesis">Sosyal Tesis</option>
+                                <option value="Kapalı Otopark">Kapalı Otopark</option>
+                                <option value="Yeşil Alan">Yeşil Alan</option>
+                                <option value="7/24 Güvenlik">7/24 Güvenlik</option>
+                                <option value="Akıllı Ev">Akıllı Ev Sistemi</option>
+                                <option value="Yüzme Havuzu">Yüzme Havuzu</option>
+                            </select>
+                            <button type="button" class="btn btn-secondary" id="btnEditAddFeatureChip" style="padding:6px 12px;">Ekle</button>
+                        </div>
+                        <div id="editProjFeaturesContainer" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 38px; padding: 8px; background:rgba(0,0,0,0.1); border-radius:6px; border:1px solid var(--border-color); font-size: 0.8rem; align-items:center;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Daire / Birim Tipleri</label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <select id="editProjUnitTypeSelect" style="flex:1; padding:8px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main);">
+                                <option value="" disabled selected>Tip Ekle...</option>
+                                <option value="1+1">1+1</option>
+                                <option value="2+1">2+1</option>
+                                <option value="3+1">3+1</option>
+                                <option value="4+1">4+1</option>
+                                <option value="Ticari Dükkan">Ticari Dükkan</option>
+                            </select>
+                            <button type="button" class="btn btn-secondary" id="btnEditAddUnitTypeChip" style="padding:6px 12px;">Ekle</button>
+                        </div>
+                        <div id="editProjUnitTypesContainer" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 38px; padding: 8px; background:rgba(0,0,0,0.1); border-radius:6px; border:1px solid var(--border-color); font-size: 0.8rem; align-items:center;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Teknik & Bloklar -->
+                <div style="font-weight: 700; font-size: 0.95rem; margin-top: 20px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--text-main);">Teknik & Bloklar</div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label>Toplam Alan (m²)</label>
+                    <input type="number" step="0.01" id="editProjArea" value="${project.area || project.totalArea || ''}" placeholder="Örn: 1500.50" style="width:100%;">
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <label style="font-weight: 600; margin: 0;">Blok ve Kat Bilgileri</label>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btnEditAddNewBlockRow" style="padding: 4px 10px; font-size: 0.78rem; display: flex; align-items: center; gap: 4px;">
+                        ➕ Blok Ekle
+                    </button>
+                </div>
+                <div id="editProjBlocksList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
+                </div>
+                <div style="font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-bottom: 20px;" id="editProjTotalFloorsLabel">
+                    Toplam Kat: 0
+                </div>
+
+                <!-- Section 4: Zaman & Bütçe -->
+                <div style="font-weight: 700; font-size: 0.95rem; margin-top: 20px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--text-main);">Zaman & Bütçe</div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label>Bütçe (₺)</label>
+                    <input type="number" id="editProjBudget" value="${project.budget || 5000000}" placeholder="5000000" style="width:100%;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div class="form-group">
+                        <label>Başlangıç</label>
+                        <input type="date" id="editProjStartDate" value="${project.startDate || ''}" style="width:100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Bitiş</label>
+                        <input type="date" id="editProjEndDate" value="${project.endDate || ''}" style="width:100%;">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="saveEditProjectBtn" style="width: 100%; font-weight: 700; padding: 12px; font-size: 1rem; border-radius: 8px;">Değişiklikleri Kaydet</button>
+            </div>
+        `;
+        window.BrenerApp.openModal('Proje Düzenle', formHtml);
+
+        const selectedFeatures = [...(project.features || [])];
+        const selectedUnitTypes = [...(project.unitTypes || [])];
+
+        const renderFeatures = () => {
+            const container = document.getElementById('editProjFeaturesContainer');
+            if (selectedFeatures.length === 0) {
+                container.innerHTML = `<span style="color:var(--text-muted); font-style:italic;">Henüz özellik seçilmedi</span>`;
+                return;
+            }
+            container.innerHTML = selectedFeatures.map((f, i) => `
+                <span class="badge badge-info" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; background: rgba(var(--primary-rgb), 0.15); border: 1px solid var(--primary); color: var(--primary); margin: 2px;">
+                    ${f}
+                    <span class="remove-edit-feature-btn" data-idx="${i}" style="cursor:pointer; font-weight:700; margin-left:4px;">&times;</span>
+                </span>
+            `).join('');
+
+            document.querySelectorAll('.remove-edit-feature-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const idx = parseInt(btn.getAttribute('data-idx'));
+                    selectedFeatures.splice(idx, 1);
+                    renderFeatures();
+                };
+            });
+        };
+
+        const renderUnitTypes = () => {
+            const container = document.getElementById('editProjUnitTypesContainer');
+            if (selectedUnitTypes.length === 0) {
+                container.innerHTML = `<span style="color:var(--text-muted); font-style:italic;">Tip seçilmedi</span>`;
+                return;
+            }
+            container.innerHTML = selectedUnitTypes.map((t, i) => `
+                <span class="badge badge-primary" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; background: rgba(59, 130, 246, 0.15); border: 1px solid #3b82f6; color: #3b82f6; margin: 2px;">
+                    ${t}
+                    <span class="remove-edit-unit-btn" data-idx="${i}" style="cursor:pointer; font-weight:700; margin-left:4px;">&times;</span>
+                </span>
+            `).join('');
+
+            document.querySelectorAll('.remove-edit-unit-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const idx = parseInt(btn.getAttribute('data-idx'));
+                    selectedUnitTypes.splice(idx, 1);
+                    renderUnitTypes();
+                };
+            });
+        };
+
+        document.getElementById('btnEditAddFeatureChip').onclick = () => {
+            const val = document.getElementById('editProjFeatureSelect').value;
+            if (val && !selectedFeatures.includes(val)) {
+                selectedFeatures.push(val);
+                renderFeatures();
+            }
+        };
+
+        document.getElementById('btnEditAddUnitTypeChip').onclick = () => {
+            const val = document.getElementById('editProjUnitTypeSelect').value;
+            if (val && !selectedUnitTypes.includes(val)) {
+                selectedUnitTypes.push(val);
+                renderUnitTypes();
+            }
+        };
+
+        const updateFloors = () => {
+            let total = 0;
+            document.querySelectorAll('.edit-block-floors').forEach(input => {
+                total += parseInt(input.value) || 0;
+            });
+            document.getElementById('editProjTotalFloorsLabel').textContent = 'Toplam Kat: ' + total;
+        };
+
+        const addBlockRow = (blockName = '', floors = '') => {
+            const list = document.getElementById('editProjBlocksList');
+            const row = document.createElement('div');
+            row.className = 'edit-block-row';
+            row.style.display = 'grid';
+            row.style.gridTemplateColumns = '2fr 1fr auto';
+            row.style.gap = '10px';
+            row.style.alignItems = 'center';
+            row.style.marginBottom = '6px';
+            row.innerHTML = `
+                <input type="text" class="edit-block-name" value="${blockName}" placeholder="Blok adı (A Blok)" style="margin:0; padding:8px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main);">
+                <input type="number" class="edit-block-floors" value="${floors}" placeholder="Kat" min="0" style="margin:0; padding:8px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main);">
+                <button type="button" class="btn btn-danger btn-sm btn-delete-edit-block" style="padding: 8px 12px; display:flex; align-items:center; justify-content:center;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            `;
+            list.appendChild(row);
+
+            row.querySelector('.edit-block-floors').oninput = updateFloors;
+            row.querySelector('.btn-delete-edit-block').onclick = () => {
+                row.remove();
+                updateFloors();
+            };
+
+            updateFloors();
+        };
+
+        document.getElementById('btnEditAddNewBlockRow').onclick = () => addBlockRow();
+
+        // Populate initial chips and blocks
+        renderFeatures();
+        renderUnitTypes();
+        if (project.blocks && project.blocks.length > 0) {
+            project.blocks.forEach(b => addBlockRow(b.name, b.floors));
+        } else {
+            addBlockRow('A Blok', 1);
+        }
+
+        document.getElementById('saveEditProjectBtn').onclick = () => {
+            const name = document.getElementById('editProjName').value.trim();
+            const type = document.getElementById('editProjType').value;
+            const address = document.getElementById('editProjAddress').value.trim();
+            const desc = document.getElementById('editProjDesc').value.trim();
+            const area = parseFloat(document.getElementById('editProjArea').value) || 0;
+            const budget = parseFloat(document.getElementById('editProjBudget').value) || 5000000;
+            const startDateStr = document.getElementById('editProjStartDate').value;
+            const endDateStr = document.getElementById('editProjEndDate').value;
+
+            if (!name || !type) {
+                alert('Lütfen zorunlu alanları (Proje Adı ve Proje Tipi) doldurun!');
+                return;
+            }
+
+            const blocks = [];
+            document.querySelectorAll('.edit-block-row').forEach(row => {
+                const bName = row.querySelector('.edit-block-name').value.trim();
+                const bFloors = parseInt(row.querySelector('.edit-block-floors').value) || 0;
+                if (bName) {
+                    blocks.push({ name: bName, floors: bFloors });
+                }
+            });
+
+            // Update in-place
+            project.name = name;
+            project.type = type;
+            project.location = address || 'Belirtilmedi';
+            project.description = desc;
+            project.area = area;
+            project.totalArea = area;
+            project.budget = budget;
+            project.startDate = startDateStr || null;
+            project.endDate = endDateStr || null;
+            project.features = [...selectedFeatures];
+            project.unitTypes = [...selectedUnitTypes];
+            project.blocks = blocks;
+
+            window.BrenerApp.saveStateToStorage();
+            window.BrenerApp.setupProjectSelector();
+            window.BrenerApp.showToast('success', 'Proje bilgileri başarıyla güncellendi!');
+            window.BrenerApp.closeModal();
+            if (onSave) onSave();
+        };
+    },
+};
