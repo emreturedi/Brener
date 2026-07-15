@@ -301,151 +301,324 @@ window.BrenerApp.AI = {
         renderContent();
     },
 
-    // 2b. AI Kanal Veri Girişi (Telegram / WhatsApp / E-Posta) - Standalone page
+    // 2b. AI Kanal Veri Girişi - Full interactive web test panel
     renderChannelIntegration(container) {
         window.BrenerApp.updateTopbarTitle('📲 AI Kanal Veri Girişi', 'Telegram, WhatsApp ve E-Posta üzerinden resim/evrak göndererek sisteme otomatik veri girişi yapın');
 
+        const channelColors = { whatsapp: '#25d366', telegram: '#0088cc', email: '#ef4444' };
+        const channelIcons  = { whatsapp: '💬', telegram: '✈️', email: '📧' };
+        const channelNames  = { whatsapp: 'WhatsApp', telegram: 'Telegram', email: 'E-Posta' };
+        const channelAddrs  = { whatsapp: '+90 555 000 00 00', telegram: '@BrenerGroupBot', email: 'saha@brenergroup.com' };
+
+        const scenarios = {
+            fatura: {
+                label: '🧾 Malzeme Alım Faturası',
+                senderName: 'Emre Şantiye Şefi',
+                caption: 'fatura geldi, 45bin TL hazır beton',
+                imageEmoji: '🧾',
+                imageDesc: 'Yavuz_Hazır_Beton_Fatura.jpg',
+                botReply: '✅ *Fatura Kaydedildi!*\n\n🏢 Tedarikçi: Yavuz Hazır Beton A.Ş.\n💰 Tutar: 45.000 ₺\n📦 Malzeme: C30 Hazır Beton (50 m³)\n📅 Tarih: TARIH\n\nFinans modülüne işlendi. ✔️',
+            },
+            ilerleme: {
+                label: '🏗️ Şantiye İlerleme Fotoğrafı',
+                senderName: 'Murat Ustabaşı',
+                caption: 'A blok 4. kat tabliye demirleri döşendi',
+                imageEmoji: '🏗️',
+                imageDesc: 'Saha_A_Blok_4Kat_Foto.jpg',
+                botReply: '✅ *Şantiye İlerlemesi Güncellendi!*\n\n🏗️ Proje: PROJE_ADI\n📈 Fiziksel İlerleme: +%5 artırıldı\n🔍 Tespit: Demir Donatı & Kalıp İşleri\n📅 Tarih: TARIH\n\nŞantiye günlüğüne işlendi. ✔️',
+            },
+            talep: {
+                label: '📝 Malzeme Talep Fişi (El Yazısı)',
+                senderName: 'Ahmet Depo Sorumlusu',
+                caption: 'acil lazım 20 baret 10 cift cizme',
+                imageEmoji: '📝',
+                imageDesc: 'El_Yazisi_Malzeme_Fisi.jpg',
+                botReply: '✅ *Malzeme Talebi Oluşturuldu!*\n\n📋 Talep No: WA-TAL-001\n📝 İçerik:\n  • 20 Adet İSG Bareti (Sarı)\n  • 10 Adet Koruyucu İş Çizmesi\n📅 Tarih: TARIH\n\nTalepler modülüne iletildi. Onay bekliyor. ✔️',
+            },
+        };
+
         container.innerHTML = `
-            <!-- Row 0: Info Banner -->
-            <div style="background: linear-gradient(135deg, rgba(var(--primary-rgb),0.15) 0%, rgba(var(--primary-rgb),0.05) 100%); border: 1px solid rgba(var(--primary-rgb),0.3); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
-                <div style="font-size: 2rem;">🤖</div>
-                <div>
-                    <strong style="color: var(--primary); font-size: 1rem;">Yapay Zeka Destekli Otomatik Veri Girişi</strong>
-                    <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-muted);">Saha personeli, şantiyeden <strong>fatura fotoğrafı</strong>, <strong>ilerleme görseli</strong> veya <strong>el yazısı malzeme fişi</strong> göndererek sisteme otomatik kayıt yapabilir. AI Vision & OCR motoru görseli okur, verileri ayrıştırır ve ilgili modüle (Finans, Talepler, Günlük) anında işler.</p>
-                </div>
+            <!-- Top Status Bar -->
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px;">
+                ${['whatsapp','telegram','email'].map(ch => `
+                <div class="card" style="border-left:4px solid ${channelColors[ch]}; padding:14px 16px; display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:1.6rem;">${channelIcons[ch]}</span>
+                    <div style="flex:1; min-width:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong style="font-size:0.88rem; color:var(--text-main);">${channelNames[ch]}</strong>
+                            <span class="badge badge-success" style="font-size:0.7rem;">Bağlı</span>
+                        </div>
+                        <code style="font-size:0.72rem; color:${channelColors[ch]}; display:block; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${channelAddrs[ch]}</code>
+                    </div>
+                </div>`).join('')}
             </div>
 
-            <!-- Row 1: Integration Status Cards -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
-                <div class="card" style="border-left: 4px solid #0088cc; padding: 20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:1.5rem;">✈️</span>
-                            <strong style="color:var(--text-main); font-size:0.95rem;">Telegram</strong>
-                        </div>
-                        <span class="badge badge-success">Aktif</span>
+            <!-- Main 3-Column Layout -->
+            <div style="display:grid; grid-template-columns:280px 1fr 300px; gap:16px; min-height:520px;">
+
+                <!-- COL 1: Senaryo Seçici -->
+                <div class="card" style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Kanal Seçin</div>
+                    <div id="channelBtns" style="display:flex; flex-direction:column; gap:8px;">
+                        ${['whatsapp','telegram','email'].map((ch,i) => `
+                        <button class="channel-btn" data-ch="${ch}" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; border:2px solid ${i===0?channelColors[ch]:'var(--border-color)'}; background:${i===0?'rgba(37,211,102,0.08)':'transparent'}; color:var(--text-main); cursor:pointer; font-size:0.85rem; transition:all 0.2s; text-align:left;">
+                            <span style="font-size:1.2rem;">${channelIcons[ch]}</span>
+                            <span>${channelNames[ch]}</span>
+                        </button>`).join('')}
                     </div>
-                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px 0;">Saha fişleri ve saha günlük fotoğrafları @BrenerGroupBot üzerinden işlenir.</p>
-                    <code style="font-size:0.78rem; color:#0088cc; background:rgba(0,136,204,0.08); padding:5px 10px; border-radius:6px; display:block; text-align:center;">@BrenerGroupBot</code>
+
+                    <div style="height:1px; background:var(--border-color); margin:4px 0;"></div>
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Evrak Tipi Seçin</div>
+                    <div id="docTypeBtns" style="display:flex; flex-direction:column; gap:8px;">
+                        ${Object.entries(scenarios).map(([k,s],i) => `
+                        <button class="doctype-btn" data-dt="${k}" style="padding:10px 12px; border-radius:8px; border:2px solid ${i===0?'var(--primary)':'var(--border-color)'}; background:${i===0?'rgba(var(--primary-rgb),0.08)':'transparent'}; color:var(--text-main); cursor:pointer; font-size:0.82rem; text-align:left; transition:all 0.2s; line-height:1.4;">
+                            ${s.label}
+                        </button>`).join('')}
+                    </div>
+
+                    <div style="margin-top:auto;">
+                        <button id="btnSendTest" style="width:100%; padding:13px; border-radius:10px; border:none; background:linear-gradient(135deg,var(--primary),var(--primary-dark,#3b5bdb)); color:#fff; font-weight:700; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:transform 0.1s, box-shadow 0.2s; box-shadow:0 4px 15px rgba(var(--primary-rgb),0.4);">
+                            📤 Gönder &amp; Test Et
+                        </button>
+                    </div>
                 </div>
 
-                <div class="card" style="border-left: 4px solid #25d366; padding: 20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:1.5rem;">💬</span>
-                            <strong style="color:var(--text-main); font-size:0.95rem;">WhatsApp Business</strong>
+                <!-- COL 2: Chat Arayüzü -->
+                <div class="card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
+                    <!-- Chat Header -->
+                    <div id="chatHeader" style="padding:14px 16px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; gap:10px; background:rgba(37,211,102,0.05);">
+                        <div style="width:36px; height:36px; border-radius:50%; background:#25d366; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">💬</div>
+                        <div>
+                            <div style="font-weight:700; font-size:0.9rem; color:var(--text-main);">WhatsApp Business</div>
+                            <div style="font-size:0.75rem; color:#25d366;">● Bağlı — Sandbox Test</div>
                         </div>
-                        <span class="badge badge-success">Aktif</span>
+                        <div style="margin-left:auto; font-size:0.72rem; color:var(--text-muted);">+90 555 000 00 00</div>
                     </div>
-                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px 0;">+90 555 000 00 00 numaralı WhatsApp hattından fatura ve talep girişi yapılır.</p>
-                    <code style="font-size:0.78rem; color:#25d366; background:rgba(37,211,102,0.08); padding:5px 10px; border-radius:6px; display:block; text-align:center;">+90 555 000 00 00</code>
+
+                    <!-- Messages -->
+                    <div id="chatMessages" style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; background:var(--bg-dark,#0f172a);">
+                        <!-- System message -->
+                        <div style="text-align:center; font-size:0.72rem; color:var(--text-muted); background:rgba(255,255,255,0.04); padding:5px 12px; border-radius:20px; align-self:center;">
+                            🔒 Uçtan uca şifreli • Brener Group Sandbox
+                        </div>
+                        <div style="text-align:center; font-size:0.72rem; color:var(--text-muted);">Bir senaryo seçip "Gönder & Test Et" butonuna basın</div>
+                    </div>
+
+                    <!-- Input Bar (decorative) -->
+                    <div style="padding:10px 14px; border-top:1px solid var(--border-color); display:flex; gap:8px; align-items:center; background:rgba(255,255,255,0.02);">
+                        <div style="flex:1; background:var(--bg-card,#1e293b); border-radius:24px; padding:8px 14px; font-size:0.82rem; color:var(--text-muted);">
+                            Mesaj yazın veya resim gönderin...
+                        </div>
+                        <button style="width:36px; height:36px; border-radius:50%; background:#25d366; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:1rem; flex-shrink:0;">➤</button>
+                    </div>
                 </div>
 
-                <div class="card" style="border-left: 4px solid var(--danger); padding: 20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:1.5rem;">📧</span>
-                            <strong style="color:var(--text-main); font-size:0.95rem;">E-Posta (IMAP)</strong>
-                        </div>
-                        <span class="badge badge-success">Aktif</span>
+                <!-- COL 3: İşlem Günlüğü -->
+                <div class="card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
+                    <div style="padding:12px 16px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between;">
+                        <strong style="font-size:0.85rem;">🔄 Canlı İşlem Günlüğü</strong>
+                        <span id="logBadge" class="badge" style="font-size:0.7rem; background:rgba(255,255,255,0.08); color:var(--text-muted);">Beklemede</span>
                     </div>
-                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px 0;">Gelen faturalar ve ekler AI tarafından okunarak muhasebeye otomatik işlenir.</p>
-                    <code style="font-size:0.78rem; color:var(--danger); background:rgba(239,68,68,0.08); padding:5px 10px; border-radius:6px; display:block; text-align:center;">saha@brenergroup.com</code>
-                </div>
-            </div>
-
-            <!-- Row 2: Chat & File Entry Simulator Sandbox -->
-            <div class="grid-2col">
-                <!-- Left Card: Simulator Input -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2>🧪 AI Kanal Veri Giriş Simülatörü</h2>
-                    </div>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
-                        Telegram, WhatsApp veya E-Posta üzerinden gönderilen bir görselin sisteme nasıl otomatik veri girişi sağladığını simüle edin:
-                    </p>
-
-                    <div class="form-group" style="margin-bottom:16px;">
-                        <label>1. Gönderim Kanalı Seçin</label>
-                        <select id="simChannelSelect2" style="width:100%; padding:10px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:8px; color:var(--text-main);">
-                            <option value="whatsapp">💬 WhatsApp (+90 555 000 00 00)</option>
-                            <option value="telegram">✈️ Telegram (@BrenerGroupBot)</option>
-                            <option value="email">📧 E-Posta (saha@brenergroup.com)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:24px;">
-                        <label>2. Gönderilecek Evrak / Görsel Tipi</label>
-                        <div style="display:flex; flex-direction:column; gap:10px;">
-                            <label style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--border-color); border-radius:8px; background:rgba(255,255,255,0.01); cursor:pointer;">
-                                <input type="radio" name="simDocType2" value="fatura" checked style="margin:0;">
-                                <div>
-                                    <strong style="font-size:0.85rem; display:block;">🧾 Malzeme Alım Faturası / Fişi</strong>
-                                    <span style="font-size:0.75rem; color:var(--text-muted);">Örn: "Yavuz Çimento A.Ş. - 45.000 ₺ Hazır Beton Faturası" → Gider kaydı açılır</span>
-                                </div>
-                            </label>
-
-                            <label style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--border-color); border-radius:8px; background:rgba(255,255,255,0.01); cursor:pointer;">
-                                <input type="radio" name="simDocType2" value="ilerleme" style="margin:0;">
-                                <div>
-                                    <strong style="font-size:0.85rem; display:block;">🏗️ Şantiye Günlük İlerleme Fotoğrafı</strong>
-                                    <span style="font-size:0.75rem; color:var(--text-muted);">Örn: "A Blok 4. Kat demir donatı döşeme fotoğrafı" → Fiziksel ilerleme +%5</span>
-                                </div>
-                            </label>
-
-                            <label style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--border-color); border-radius:8px; background:rgba(255,255,255,0.01); cursor:pointer;">
-                                <input type="radio" name="simDocType2" value="talep" style="margin:0;">
-                                <div>
-                                    <strong style="font-size:0.85rem; display:block;">📝 Saha Malzeme Talep Fişi (El Yazısı)</strong>
-                                    <span style="font-size:0.75rem; color:var(--text-muted);">Örn: "20 Baret, 10 Çift Çizme" el yazısı fişi → Saha Talebi oluşturur</span>
-                                </div>
-                            </label>
+                    <div id="processLog" style="flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px;">
+                        <div style="text-align:center; padding:40px 20px; color:var(--text-muted); font-size:0.8rem; opacity:0.6;">
+                            İşlem başlatıldığında<br>adımlar burada görünür
                         </div>
                     </div>
-
-                    <button class="btn btn-primary" id="btnSimulateChannelSend2" style="width:100%; font-weight:700; padding:14px; font-size:1rem;">
-                        📤 Evrak Görselini Gönder &amp; AI ile İşle
-                    </button>
-                </div>
-
-                <!-- Right Card: Simulation Output -->
-                <div class="card" id="channelSimResultCard2">
-                    <div class="card-header">
-                        <h2>📡 Webhook Alıcı &amp; AI Ayrıştırma Günlüğü</h2>
-                    </div>
-                    <div style="text-align: center; padding: 80px 40px; color: var(--text-muted); font-size: 0.88rem;">
-                        <div style="font-size: 3rem; margin-bottom: 16px; opacity: 0.4;">📲</div>
-                        <p>Simülasyonu başlatmak için soldan kanal ve evrak tipini seçip<br><strong>"Evrak Görselini Gönder"</strong> butonuna basın.</p>
-                        <p style="margin-top:12px; font-size:0.78rem; opacity:0.6;">AI Vision OCR motoru görseli okuyacak, veriyi ayrıştıracak ve sisteme kaydedecek.</p>
+                    <div style="padding:10px 14px; border-top:1px solid var(--border-color); font-size:0.72rem; color:var(--text-muted); text-align:center;">
+                        Son kaydedilen işlemler Finans / Talepler sayfasında görünür
                     </div>
                 </div>
             </div>
         `;
 
-        document.getElementById('btnSimulateChannelSend2').onclick = () => {
-            const channel = document.getElementById('simChannelSelect2').value;
-            const docType = document.querySelector('input[name="simDocType2"]:checked').value;
-            this.simulateChannelInput2(channel, docType);
+        // State
+        let selectedChannel = 'whatsapp';
+        let selectedDocType = 'fatura';
+
+        // Channel button selection
+        container.querySelectorAll('.channel-btn').forEach(btn => {
+            btn.onclick = () => {
+                selectedChannel = btn.dataset.ch;
+                container.querySelectorAll('.channel-btn').forEach(b => {
+                    b.style.border = '2px solid var(--border-color)';
+                    b.style.background = 'transparent';
+                });
+                btn.style.border = `2px solid ${channelColors[selectedChannel]}`;
+                btn.style.background = `rgba(${selectedChannel==='whatsapp'?'37,211,102':selectedChannel==='telegram'?'0,136,204':'239,68,68'},0.08)`;
+
+                // Update chat header
+                const hdr = document.getElementById('chatHeader');
+                hdr.style.background = `rgba(${selectedChannel==='whatsapp'?'37,211,102,0.05':selectedChannel==='telegram'?'0,136,204,0.05':'239,68,68,0.05'})`;
+                hdr.querySelector('div:first-child').style.background = channelColors[selectedChannel];
+                hdr.querySelector('div:first-child').textContent = channelIcons[selectedChannel];
+                hdr.querySelectorAll('div')[1].children[0].textContent = `${channelNames[selectedChannel]} Business`;
+                hdr.querySelectorAll('div')[1].children[1].style.color = channelColors[selectedChannel];
+                hdr.querySelectorAll('div')[1].children[1].textContent = `● Bağlı — Sandbox Test`;
+                hdr.lastElementChild.textContent = channelAddrs[selectedChannel];
+            };
+        });
+
+        // DocType button selection
+        container.querySelectorAll('.doctype-btn').forEach(btn => {
+            btn.onclick = () => {
+                selectedDocType = btn.dataset.dt;
+                container.querySelectorAll('.doctype-btn').forEach(b => {
+                    b.style.border = '2px solid var(--border-color)';
+                    b.style.background = 'transparent';
+                });
+                btn.style.border = '2px solid var(--primary)';
+                btn.style.background = 'rgba(var(--primary-rgb),0.08)';
+            };
+        });
+
+        // Send button
+        document.getElementById('btnSendTest').onclick = () => {
+            this.runChannelTest(selectedChannel, selectedDocType, scenarios, channelColors, channelIcons, channelNames, channelAddrs);
         };
     },
 
-    simulateChannelInput2(channel, docType) {
-        const resultCard = document.getElementById('channelSimResultCard2');
-        const channelLabels = { whatsapp: '💬 WhatsApp', telegram: '✈️ Telegram', email: '📧 E-Posta' };
-
-        resultCard.innerHTML = `
-            <div class="card-header"><h2>📡 Webhook Alıcı &amp; AI Ayrıştırma Günlüğü</h2></div>
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; text-align: center;">
-                <div style="border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--primary); border-radius: 50%; width: 48px; height: 48px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
-                <strong style="color:var(--text-main); font-size:1rem;">${channelLabels[channel]} üzerinden görsel alındı</strong>
-                <span style="font-size:0.82rem; color:var(--text-muted); margin-top:10px;">AI Vision OCR Modülü çalıştırılıyor...<br>Görsel indiriliyor, gürültü azaltma uygulanıyor ve metin katmanları taranıyor.</span>
-            </div>
-        `;
-
-        setTimeout(() => {
-            this.simulateChannelInput(channel, docType, true);
-        }, 2000);
+    // Helper: add a log step with icon and animated entry
+    _addLogStep(container, icon, text, color, delay) {
+        return new Promise(resolve => setTimeout(() => {
+            const el = document.createElement('div');
+            el.style.cssText = `display:flex; align-items:flex-start; gap:8px; padding:8px 10px; border-radius:8px; background:rgba(255,255,255,0.03); border-left:3px solid ${color}; animation:fadeInUp 0.3s ease; font-size:0.78rem;`;
+            el.innerHTML = `<span style="font-size:1rem; line-height:1.4; flex-shrink:0;">${icon}</span><span style="color:var(--text-main); line-height:1.5;">${text}</span>`;
+            // Remove placeholder if present
+            if (container.children.length === 1 && container.firstChild.tagName !== 'DIV'.repeat(0) && container.firstChild.style.textAlign === 'center') {
+                container.innerHTML = '';
+            }
+            container.appendChild(el);
+            container.scrollTop = container.scrollHeight;
+            resolve();
+        }, delay));
     },
+
+    // Helper: add a chat bubble
+    _addChatBubble(msgs, side, content, color, delay) {
+        return new Promise(resolve => setTimeout(() => {
+            const el = document.createElement('div');
+            el.style.cssText = `display:flex; justify-content:${side==='right'?'flex-end':'flex-start'}; animation:fadeInUp 0.3s ease;`;
+            const bubble = document.createElement('div');
+            bubble.style.cssText = `max-width:80%; padding:10px 14px; border-radius:${side==='right'?'18px 18px 4px 18px':'18px 18px 18px 4px'}; background:${side==='right'?color:'rgba(255,255,255,0.08)'}; color:${side==='right'?'#fff':'var(--text-main)'}; font-size:0.82rem; line-height:1.5; white-space:pre-wrap; word-break:break-word; box-shadow:0 2px 8px rgba(0,0,0,0.2);`;
+            bubble.textContent = content;
+            el.appendChild(bubble);
+            msgs.appendChild(el);
+            msgs.scrollTop = msgs.scrollHeight;
+            resolve();
+        }, delay));
+    },
+
+    async runChannelTest(channel, docType, scenarios, channelColors, channelIcons, channelNames, channelAddrs) {
+        const sc      = scenarios[docType];
+        const color   = channelColors[channel];
+        const msgs    = document.getElementById('chatMessages');
+        const logEl   = document.getElementById('processLog');
+        const badge   = document.getElementById('logBadge');
+        const btn     = document.getElementById('btnSendTest');
+        const now     = new Date().toISOString().split('T')[0];
+        const timeStr = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+
+        // Disable button
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.textContent = '⏳ İşleniyor...';
+        badge.style.background = 'rgba(var(--warning-rgb,234,179,8),0.15)';
+        badge.style.color = 'var(--warning,#eab308)';
+        badge.textContent = 'Çalışıyor';
+
+        // Clear log
+        logEl.innerHTML = '';
+
+        // --- STEP 1: Senderın mesajı gönderdiğini göster ---
+        await this._addChatBubble(msgs, 'right', `${sc.imageEmoji} ${sc.imageDesc}\n${sc.caption}`, color, 100);
+
+        // Timestamp
+        const tsEl = document.createElement('div');
+        tsEl.style.cssText = 'text-align:right; font-size:0.7rem; color:var(--text-muted); padding-right:4px; margin-top:-6px;';
+        tsEl.textContent = `${sc.senderName} • ${timeStr}`;
+        msgs.appendChild(tsEl);
+
+        await this._addLogStep(logEl, '📡', `<strong>${channelNames[channel]}</strong> webhook tetiklendi<br><span style="color:var(--text-muted)">Gönderen: ${sc.senderName}</span>`, color, 300);
+
+        // --- STEP 2: Typing indicator ---
+        const typing = document.createElement('div');
+        typing.style.cssText = 'display:flex; align-items:center; gap:6px; padding:4px 0;';
+        typing.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:rgba(var(--primary-rgb),0.2);display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;">🤖</div><div style="background:rgba(255,255,255,0.08);border-radius:18px 18px 18px 4px;padding:10px 14px;"><div style="display:flex;gap:4px;align-items:center;height:14px;"><span style="width:6px;height:6px;background:var(--text-muted);border-radius:50%;animation:bounce 1s infinite;display:inline-block;"></span><span style="width:6px;height:6px;background:var(--text-muted);border-radius:50%;animation:bounce 1s 0.2s infinite;display:inline-block;"></span><span style="width:6px;height:6px;background:var(--text-muted);border-radius:50%;animation:bounce 1s 0.4s infinite;display:inline-block;"></span></div></div>`;
+        msgs.appendChild(typing);
+        msgs.scrollTop = msgs.scrollHeight;
+
+        // --- STEP 3: OCR Steps ---
+        await this._addLogStep(logEl, '⬇️', 'Görsel indirildi — 512KB JPEG', '#64748b', 600);
+        await this._addLogStep(logEl, '🔍', 'Görüntü ön işleme: kontrast artırma, gürültü azaltma...', '#64748b', 1000);
+        await this._addLogStep(logEl, '🧠', 'AI Vision OCR motoru çalışıyor...', color, 1500);
+        await this._addLogStep(logEl, '📄', `Metin katmanı tespit edildi • Belge tipi: <strong>${sc.label}</strong>`, color, 2200);
+
+        // --- STEP 4: Parse result & DB write ---
+        let extractedData = {};
+        let dbMessage = '';
+
+        if (docType === 'fatura') {
+            extractedData = { tedarikci: 'Yavuz Hazır Beton A.Ş.', tarih: now, malzeme: 'C30 Hazır Beton', miktar: '50 m³', netTutar: 37500, kdv: 7500, toplamTutar: 45000 };
+            // Write to state
+            const claims = window.BrenerApp.state.claims || [];
+            claims.unshift({ id: Date.now(), subcontractor: extractedData.tedarikci, description: `${extractedData.malzeme} (${extractedData.miktar}) — ${channel} AI`, totalAmount: 45000, retention: 0, netPaid: 45000, date: now, status: 'paid', source: channel });
+            window.BrenerApp.state.claims = claims;
+            const proj = window.BrenerApp.getActiveProject();
+            if (proj) proj.spent = (proj.spent || 0) + 45000;
+            dbMessage = 'Finans / Hakediş modülüne <strong>gider kaydı</strong> oluşturuldu';
+
+        } else if (docType === 'ilerleme') {
+            const proj = window.BrenerApp.getActiveProject();
+            extractedData = { proje: proj ? proj.name : 'Aktif Proje', asama: 'Demir Donatı & Kalıp', ilerlemeDelta: 5, isgDurum: 'Güvenli' };
+            if (proj) proj.progress = Math.min(100, (proj.progress || 0) + 5);
+            dbMessage = 'Şantiye günlüğüne <strong>ilerleme kaydı</strong> oluşturuldu (+%5)';
+
+        } else {
+            const reqs = window.BrenerApp.state.requests || [];
+            const newId = `WA-TAL-${(reqs.length+1).toString().padStart(3,'0')}`;
+            extractedData = { talepNo: newId, malzemeler: ['20 Adet İSG Bareti (Sarı)', '10 Adet İş Çizmesi (Çelik Burunlu)'], aciklama: sc.caption };
+            reqs.unshift({ id: newId, title: sc.caption, category: 'Malzeme', priority: 'Yüksek', date: now, status: 'pending', description: `${channel} AI tarafından oluşturuldu`, requester: sc.senderName, source: channel });
+            window.BrenerApp.state.requests = reqs;
+            dbMessage = `Talepler modülüne <strong>${newId}</strong> talebi oluşturuldu`;
+        }
+        window.BrenerApp.saveStateToStorage();
+
+        await this._addLogStep(logEl, '✅', `JSON ayrıştırma tamamlandı:<br><code style="font-size:0.72rem;color:var(--primary);display:block;margin-top:4px;">${JSON.stringify(extractedData).substring(0,120)}...</code>`, 'var(--success,#22c55e)', 2800);
+        await this._addLogStep(logEl, '💾', dbMessage, 'var(--success,#22c55e)', 3400);
+
+        // Activity log
+        if (!window.BrenerApp.state.activityLog) window.BrenerApp.state.activityLog = [];
+        window.BrenerApp.state.activityLog.unshift({ id: Date.now(), module: channel, message: `${channelNames[channel]} Veri Girişi (${docType})`, type: 'success', detail: sc.caption, timestamp: new Date().toISOString() });
+        window.BrenerApp.saveStateToStorage();
+        window.BrenerApp.logActivity && window.BrenerApp.logActivity(channel, `${channelNames[channel]} AI: ${sc.label}`, 'success', sc.caption);
+
+        // --- STEP 5: Bot reply in chat ---
+        msgs.removeChild(typing);
+        const replyText = sc.botReply.replace('TARIH', now).replace('PROJE_ADI', (window.BrenerApp.getActiveProject()||{name:'Aktif Proje'}).name);
+        await this._addChatBubble(msgs, 'left', replyText, color, 100);
+
+        const botTs = document.createElement('div');
+        botTs.style.cssText = 'text-align:left; font-size:0.7rem; color:var(--text-muted); padding-left:4px; margin-top:-6px;';
+        botTs.textContent = `Brener AI Bot • ${timeStr}`;
+        msgs.appendChild(botTs);
+
+        await this._addLogStep(logEl, '📤', `${channelNames[channel]} yanıtı gönderildi → ${sc.senderName}`, color, 3800);
+
+        // Update badge
+        badge.style.background = 'rgba(34,197,94,0.15)';
+        badge.style.color = 'var(--success,#22c55e)';
+        badge.textContent = '✅ Tamamlandı';
+
+        // Re-enable button
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.innerHTML = '📤 Gönder &amp; Test Et';
+        }, 500);
+
+        window.BrenerApp.showToast('success', `${channelNames[channel]} testi başarılı! Veri sisteme kaydedildi.`);
+    },
+
 
     inspectImage(type) {
         const resultCard = document.getElementById('imageInspectResultCard');
