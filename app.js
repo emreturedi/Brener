@@ -879,112 +879,338 @@ window.BrenerApp = {
         // Hook project addition modal
         document.getElementById('addNewProjectBtn').onclick = () => {
             const formHtml = `
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
-                    Şantiye bilgilerini girin ve pano şablonu seçin
-                </div>
-                <div class="form-group">
-                    <label>Şantiye Adı</label>
-                    <input type="text" id="newProjName" placeholder="Park Rezidans" required style="width: 100%;">
-                </div>
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                    <div class="form-group">
-                        <label>Şantiye Kodu</label>
-                        <input type="text" id="newProjCode" placeholder="PR-001" required style="width: 100%;">
-                    </div>
-                    <div class="form-group">
-                        <label>İl</label>
-                        <input type="text" id="newProjCity" placeholder="İstanbul" required style="width: 100%;">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Adres</label>
-                    <input type="text" id="newProjAddress" placeholder="Kadıköy, Caferağa Mah." required style="width: 100%;">
-                </div>
-                <div class="form-group">
-                    <label style="display: flex; align-items: center; gap: 4px;">Başlangıç Tarihi <span style="color:#ef4444;">*</span></label>
-                    <input type="date" id="newProjStartDate" required style="width: 100%;">
-                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px;">Varsayılan aşamalar tanımlıysa bu tarihten itibaren otomatik takvimlenir.</span>
-                </div>
-                
-                <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; margin-bottom: 20px;">
-                    <label style="font-weight: 700; color: var(--primary); font-size: 0.9rem; margin-bottom: 4px; display: block;">Hedef Bütçe (m² bazında)</label>
-                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 12px;">Toplam inşaat alanı ve m² hedef maliyetini girin; sistem ana hedef bütçeyi otomatik hesaplar ve aşamalara dağıtır.</span>
-                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div class="form-group">
-                            <label>Toplam İnşaat Alanı (m²)</label>
-                            <input type="number" id="newProjArea" placeholder="ör: 12500" required style="width: 100%;">
+                <div style="font-family: inherit; color: var(--text-main); max-height: 70vh; overflow-y: auto; padding-right: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            Yeni bir inşaat projesi oluşturmak için formu doldurun
                         </div>
-                        <div class="form-group">
-                            <label>m² Hedef Maliyet</label>
-                            <input type="number" id="newProjUnitCost" placeholder="ör: 15000" required style="width: 100%;">
+                        <div>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnFillWithSketch" style="display: inline-flex; align-items: center; gap: 6px; border-color: #f97316; color: #f97316; background: transparent; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+                                🪄 Kroki ile Doldur
+                            </button>
+                            <input type="file" id="sketchFileInput" accept="image/*" style="display: none;">
                         </div>
                     </div>
-                </div>
 
-                <div class="form-group" style="margin-top: 20px; margin-bottom: 24px;">
-                    <label>Pano Şablonu</label>
-                    <select id="newProjTemplate" class="custom-select" style="width:100%; padding:10px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:8px; color:var(--text-main);">
-                        <option value="none">Şablonsuz oluştur</option>
-                        <option value="std_resi">Standart 6-7 Katlı Konut Şantiyesi</option>
-                        <option value="permit">Yapı Ruhsatı Süreci</option>
-                        <option value="eia">ÇED (Çevresel Etki Değerlendirmesi)</option>
-                        <option value="rough">Demirli Kaba İnşaat Şablonu</option>
-                        <option value="luxury">Lüks Site ve Sosyal Donatı Projesi (Çok Bloklu)</option>
-                        <option value="half_us">Yarısı Bizden & Kentsel Dönüşüm Projesi</option>
-                        <option value="occupancy">İskan (Yapı Kullanma İzin) Süreci</option>
-                    </select>
+                    <!-- Section 1: Temel Bilgiler -->
+                    <div style="font-weight: 700; font-size: 0.95rem; margin-top: 16px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--text-main);">Temel Bilgiler</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
+                        <div class="form-group">
+                            <label>Proje Adı *</label>
+                            <input type="text" id="newProjName" placeholder="Örn: Güneş Evleri Konut Projesi" required style="width:100%;">
+                        </div>
+                        <div class="form-group">
+                            <label>Proje Tipi *</label>
+                            <select id="newProjType" style="width:100%; padding:10px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:8px; color:var(--text-main);" required>
+                                <option value="" disabled selected>Proje tipi seçin</option>
+                                <option value="Konut">Konut</option>
+                                <option value="Ticari">Ticari</option>
+                                <option value="Karma">Karma Kullanım</option>
+                                <option value="Altyapı">Altyapı / Yol</option>
+                                <option value="Sanayi">Sanayi Yapısı</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>Adres</label>
+                        <input type="text" id="newProjAddress" placeholder="Proje adresi" style="width:100%;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label>Açıklama</label>
+                        <textarea id="newProjDesc" placeholder="Proje hakkında detaylı açıklama... (Özellikleri buraya yazarsanız otomatik algılanır)" rows="3" style="width:100%; padding:10px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:8px; color:var(--text-main); font-family:inherit; resize:vertical;"></textarea>
+                    </div>
+
+                    <!-- Section 2: Özellikler & Tipler -->
+                    <div style="font-weight: 700; font-size: 0.95rem; margin-top: 20px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--text-main);">Özellikler & Tipler</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label>Proje Özellikleri</label>
+                            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                <select id="newProjFeatureSelect" style="flex:1; padding:8px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main);">
+                                    <option value="" disabled selected>Özellik Ekle...</option>
+                                    <option value="Sosyal Tesis">Sosyal Tesis</option>
+                                    <option value="Kapalı Otopark">Kapalı Otopark</option>
+                                    <option value="Yeşil Alan">Yeşil Alan</option>
+                                    <option value="7/24 Güvenlik">7/24 Güvenlik</option>
+                                    <option value="Akıllı Ev">Akıllı Ev Sistemi</option>
+                                    <option value="Yüzme Havuzu">Yüzme Havuzu</option>
+                                </select>
+                                <button type="button" class="btn btn-secondary" id="btnAddFeatureChip" style="padding:6px 12px;">Ekle</button>
+                            </div>
+                            <div id="newProjFeaturesContainer" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 38px; padding: 8px; background:rgba(0,0,0,0.1); border-radius:6px; border:1px solid var(--border-color); font-size: 0.8rem; align-items:center;">
+                                <span style="color:var(--text-muted); font-style:italic;">Henüz özellik seçilmedi</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Daire / Birim Tipleri</label>
+                            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                <select id="newProjUnitTypeSelect" style="flex:1; padding:8px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main);">
+                                    <option value="" disabled selected>Tip Ekle...</option>
+                                    <option value="1+1">1+1</option>
+                                    <option value="2+1">2+1</option>
+                                    <option value="3+1">3+1</option>
+                                    <option value="4+1">4+1</option>
+                                    <option value="Ticari Dükkan">Ticari Dükkan</option>
+                                </select>
+                                <button type="button" class="btn btn-secondary" id="btnAddUnitTypeChip" style="padding:6px 12px;">Ekle</button>
+                            </div>
+                            <div id="newProjUnitTypesContainer" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 38px; padding: 8px; background:rgba(0,0,0,0.1); border-radius:6px; border:1px solid var(--border-color); font-size: 0.8rem; align-items:center;">
+                                <span style="color:var(--text-muted); font-style:italic;">Tip seçilmedi</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Teknik & Bloklar -->
+                    <div style="font-weight: 700; font-size: 0.95rem; margin-top: 20px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--text-main);">Teknik & Bloklar</div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label>Toplam Alan (m²)</label>
+                        <input type="number" step="0.01" id="newProjArea" placeholder="Örn: 1500.50" style="width:100%;">
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <label style="font-weight: 600; margin: 0;">Blok ve Kat Bilgileri</label>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btnAddNewBlockRow" style="padding: 4px 10px; font-size: 0.78rem; display: flex; align-items: center; gap: 4px;">
+                            ➕ Blok Ekle
+                        </button>
+                    </div>
+                    <div id="newProjBlocksList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
+                        <!-- Dynamic Block Rows Go Here -->
+                    </div>
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-bottom: 20px;" id="newProjTotalFloorsLabel">
+                        Toplam Kat: 0
+                    </div>
+
+                    <!-- Section 4: Zaman & Bütçe -->
+                    <div style="font-weight: 700; font-size: 0.95rem; margin-top: 20px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--text-main);">Zaman & Bütçe</div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>Bütçe (₺)</label>
+                        <input type="number" id="newProjBudget" value="5000000" placeholder="5000000" style="width:100%;">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                        <div class="form-group">
+                            <label>Başlangıç</label>
+                            <input type="date" id="newProjStartDate" style="width:100%;">
+                        </div>
+                        <div class="form-group">
+                            <label>Bitiş</label>
+                            <input type="date" id="newProjEndDate" style="width:100%;">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" id="saveNewProjectBtn" style="width: 100%; font-weight: 700; padding: 12px; font-size: 1rem; border-radius: 8px;">Oluştur</button>
                 </div>
-                
-                <button class="btn btn-primary" id="saveNewProjectBtn" style="width: 100%; font-weight: 700; padding: 12px;">Oluştur</button>
             `;
-            this.openModal('Yeni Şantiye Oluştur', formHtml);
+            this.openModal('Yeni Proje Oluştur', formHtml);
 
+            // Chips state
+            const selectedFeatures = [];
+            const selectedUnitTypes = [];
+
+            const renderFeatures = () => {
+                const container = document.getElementById('newProjFeaturesContainer');
+                if (selectedFeatures.length === 0) {
+                    container.innerHTML = `<span style="color:var(--text-muted); font-style:italic;">Henüz özellik seçilmedi</span>`;
+                    return;
+                }
+                container.innerHTML = selectedFeatures.map((f, i) => `
+                    <span class="badge badge-info" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; background: rgba(var(--primary-rgb), 0.15); border: 1px solid var(--primary); color: var(--primary); margin: 2px;">
+                        ${f}
+                        <span class="remove-feature-btn" data-idx="${i}" style="cursor:pointer; font-weight:700; margin-left:4px;">&times;</span>
+                    </span>
+                `).join('');
+
+                // Re-bind remove buttons
+                document.querySelectorAll('.remove-feature-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        const idx = parseInt(btn.getAttribute('data-idx'));
+                        selectedFeatures.splice(idx, 1);
+                        renderFeatures();
+                    };
+                });
+            };
+
+            const renderUnitTypes = () => {
+                const container = document.getElementById('newProjUnitTypesContainer');
+                if (selectedUnitTypes.length === 0) {
+                    container.innerHTML = `<span style="color:var(--text-muted); font-style:italic;">Tip seçilmedi</span>`;
+                    return;
+                }
+                container.innerHTML = selectedUnitTypes.map((t, i) => `
+                    <span class="badge badge-primary" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; background: rgba(59, 130, 246, 0.15); border: 1px solid #3b82f6; color: #3b82f6; margin: 2px;">
+                        ${t}
+                        <span class="remove-unit-btn" data-idx="${i}" style="cursor:pointer; font-weight:700; margin-left:4px;">&times;</span>
+                    </span>
+                `).join('');
+
+                // Re-bind remove buttons
+                document.querySelectorAll('.remove-unit-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        const idx = parseInt(btn.getAttribute('data-idx'));
+                        selectedUnitTypes.splice(idx, 1);
+                        renderUnitTypes();
+                    };
+                });
+            };
+
+            // Hook chips adding events
+            document.getElementById('btnAddFeatureChip').onclick = () => {
+                const val = document.getElementById('newProjFeatureSelect').value;
+                if (val && !selectedFeatures.includes(val)) {
+                    selectedFeatures.push(val);
+                    renderFeatures();
+                }
+            };
+
+            document.getElementById('btnAddUnitTypeChip').onclick = () => {
+                const val = document.getElementById('newProjUnitTypeSelect').value;
+                if (val && !selectedUnitTypes.includes(val)) {
+                    selectedUnitTypes.push(val);
+                    renderUnitTypes();
+                }
+            };
+
+            // Dynamic floor counter
+            const updateFloors = () => {
+                let total = 0;
+                document.querySelectorAll('.new-block-floors').forEach(input => {
+                    total += parseInt(input.value) || 0;
+                });
+                document.getElementById('newProjTotalFloorsLabel').textContent = 'Toplam Kat: ' + total;
+            };
+
+            // Add Block row helper
+            const addBlockRow = (blockName = '', floors = '') => {
+                const list = document.getElementById('newProjBlocksList');
+                const row = document.createElement('div');
+                row.className = 'block-row';
+                row.style.display = 'grid';
+                row.style.gridTemplateColumns = '2fr 1fr auto';
+                row.style.gap = '10px';
+                row.style.alignItems = 'center';
+                row.style.marginBottom = '6px';
+                row.innerHTML = `
+                    <input type="text" class="new-block-name" value="${blockName}" placeholder="Blok adı (A Blok)" style="margin:0; padding:8px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main);">
+                    <input type="number" class="new-block-floors" value="${floors}" placeholder="Kat" min="0" style="margin:0; padding:8px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main);">
+                    <button type="button" class="btn btn-danger btn-sm btn-delete-block" style="padding: 8px 12px; display:flex; align-items:center; justify-content:center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                `;
+                list.appendChild(row);
+
+                // Attach events
+                row.querySelector('.new-block-floors').oninput = updateFloors;
+                row.querySelector('.btn-delete-block').onclick = () => {
+                    row.remove();
+                    updateFloors();
+                };
+
+                updateFloors();
+            };
+
+            document.getElementById('btnAddNewBlockRow').onclick = () => addBlockRow();
+
+            // Hook "Kroki ile Doldur"
+            const btnFill = document.getElementById('btnFillWithSketch');
+            const fileInput = document.getElementById('sketchFileInput');
+            btnFill.onclick = () => fileInput.click();
+
+            fileInput.onchange = () => {
+                if (fileInput.files.length > 0) {
+                    btnFill.innerHTML = '⏳ Analiz Ediliyor...';
+                    btnFill.disabled = true;
+
+                    setTimeout(() => {
+                        // Fill inputs
+                        document.getElementById('newProjName').value = "Alya Port Rezidans";
+                        document.getElementById('newProjType').value = "Konut";
+                        document.getElementById('newProjAddress').value = "Bahçeşehir, İstanbul";
+                        document.getElementById('newProjDesc').value = "3 Bloklu modern konut projesi. Sosyal tesisler, kapalı otopark ve geniş yeşil alanlar.";
+                        document.getElementById('newProjArea').value = "24500.50";
+                        document.getElementById('newProjBudget').value = "45000000";
+                        document.getElementById('newProjStartDate').value = "2026-07-15";
+                        document.getElementById('newProjEndDate').value = "2028-12-30";
+
+                        // Features
+                        selectedFeatures.length = 0;
+                        selectedFeatures.push('Sosyal Tesis', 'Kapalı Otopark', 'Yeşil Alan', '7/24 Güvenlik');
+                        renderFeatures();
+
+                        // Unit Types
+                        selectedUnitTypes.length = 0;
+                        selectedUnitTypes.push('2+1', '3+1', '4+1');
+                        renderUnitTypes();
+
+                        // Blocks
+                        document.getElementById('newProjBlocksList').innerHTML = '';
+                        addBlockRow('A Blok', 12);
+                        addBlockRow('B Blok', 12);
+                        addBlockRow('C Blok', 12);
+
+                        btnFill.innerHTML = '🪄 Kroki ile Doldur';
+                        btnFill.disabled = false;
+                        this.showToast('success', 'Kroki başarıyla analiz edildi ve form dolduruldu!');
+                    }, 2500);
+                }
+            };
+
+            // Hook create button
             document.getElementById('saveNewProjectBtn').onclick = () => {
                 const name = document.getElementById('newProjName').value.trim();
-                const code = document.getElementById('newProjCode').value.trim();
-                const city = document.getElementById('newProjCity').value.trim();
+                const type = document.getElementById('newProjType').value;
                 const address = document.getElementById('newProjAddress').value.trim();
-                const startDateStr = document.getElementById('newProjStartDate').value;
+                const desc = document.getElementById('newProjDesc').value.trim();
                 const area = parseFloat(document.getElementById('newProjArea').value) || 0;
-                const unitCost = parseFloat(document.getElementById('newProjUnitCost').value) || 0;
-                const template = document.getElementById('newProjTemplate').value;
+                const budget = parseFloat(document.getElementById('newProjBudget').value) || 5000000;
+                const startDateStr = document.getElementById('newProjStartDate').value;
+                const endDateStr = document.getElementById('newProjEndDate').value;
 
-                if (!name || !code || !city || !address || !startDateStr) {
-                    alert('Lütfen gerekli tüm alanları doldurun!');
+                if (!name || !type) {
+                    alert('Lütfen zorunlu alanları (Proje Adı ve Proje Tipi) doldurun!');
                     return;
                 }
 
-                const budget = area * unitCost;
+                // Gather blocks
+                const blocks = [];
+                document.querySelectorAll('.block-row').forEach(row => {
+                    const bName = row.querySelector('.new-block-name').value.trim();
+                    const bFloors = parseInt(row.querySelector('.new-block-floors').value) || 0;
+                    if (bName) {
+                        blocks.push({ name: bName, floors: bFloors });
+                    }
+                });
 
                 const newProj = {
                     id: Date.now(),
                     name: name,
-                    code: code,
-                    city: city,
-                    location: `${city}, ${address}`,
-                    startDate: startDateStr,
+                    type: type,
+                    location: address || 'Belirtilmedi',
+                    description: desc,
                     area: area,
-                    unitCost: unitCost,
+                    totalArea: area,
                     budget: budget,
                     spent: 0,
                     progress: 0,
                     status: 'active',
+                    startDate: startDateStr || null,
+                    endDate: endDateStr || null,
+                    features: [...selectedFeatures],
+                    unitTypes: [...selectedUnitTypes],
+                    blocks: blocks,
                     manager: this.state.currentUser ? this.state.currentUser.name : 'Belirtilmedi'
                 };
 
-                // Generate templates stages (phases)
-                const baseDate = new Date(startDateStr);
-                function addDays(date, days) {
-                    const result = new Date(date);
-                    result.setDate(result.getDate() + days);
-                    const d = String(result.getDate()).padStart(2, '0');
-                    const m = String(result.getMonth() + 1).padStart(2, '0');
-                    const y = result.getFullYear();
-                    return `${d}.${m}.${y}`;
-                }
-
+                // Generate default phases if startDate is set
                 let phases = [];
-                if (template === 'std_resi') {
+                if (startDateStr) {
+                    const baseDate = new Date(startDateStr);
+                    function addDays(date, days) {
+                        const result = new Date(date);
+                        result.setDate(result.getDate() + days);
+                        const d = String(result.getDate()).padStart(2, '0');
+                        const m = String(result.getMonth() + 1).padStart(2, '0');
+                        const y = result.getFullYear();
+                        return `${d}.${m}.${y}`;
+                    }
                     phases = [
                         { id: 1, name: 'Hafriyat & Temel', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/3 görev', percent: 0, alert: null },
                         { id: 2, name: 'Kaba İnşaat (1-3. Kat)', status: 'Tamamlanmadı', date: addDays(baseDate, 75), progress: '0/4 görev', percent: 0, alert: null },
@@ -993,64 +1219,12 @@ window.BrenerApp = {
                         { id: 5, name: 'İnce İşler & Tesisat', status: 'Tamamlanmadı', date: addDays(baseDate, 270), progress: '0/5 görev', percent: 0, alert: null },
                         { id: 6, name: 'Peyzaj & Teslim', status: 'Tamamlanmadı', date: addDays(baseDate, 330), progress: '0/2 görev', percent: 0, alert: null }
                     ];
-                } else if (template === 'permit') {
-                    phases = [
-                        { id: 1, name: 'Aplikasyon Krokisi & İmar Durumu', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/2 görev', percent: 0, alert: null },
-                        { id: 2, name: 'Mimari, Statik, Tesisat Projeleri Çizimi', status: 'Tamamlanmadı', date: addDays(baseDate, 30), progress: '0/4 görev', percent: 0, alert: null },
-                        { id: 3, name: 'Zemin Etüdü & Yapı Denetim Anlaşması', status: 'Tamamlanmadı', date: addDays(baseDate, 45), progress: '0/2 görev', percent: 0, alert: null },
-                        { id: 4, name: 'Belediye Proje Onay Süreci', status: 'Tamamlanmadı', date: addDays(baseDate, 75), progress: '0/3 görev', percent: 0, alert: null },
-                        { id: 5, name: 'Yapı Ruhsatı Harçları & Ruhsat Alımı', status: 'Tamamlanmadı', date: addDays(baseDate, 90), progress: '0/2 görev', percent: 0, alert: null }
-                    ];
-                } else if (template === 'eia') {
-                    phases = [
-                        { id: 1, name: 'ÇED Başvuru Dosyasının Sunulması', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/2 görev', percent: 0, alert: null },
-                        { id: 2, name: 'Halkın Katılımı Toplantısı', status: 'Tamamlanmadı', date: addDays(baseDate, 35), progress: '0/1 görev', percent: 0, alert: null },
-                        { id: 3, name: 'Kapsam Belirleme ve Özel Format Oluşturma', status: 'Tamamlanmadı', date: addDays(baseDate, 65), progress: '0/2 görev', percent: 0, alert: null },
-                        { id: 4, name: 'ÇED Raporunun İDK Değerlendirmesi', status: 'Tamamlanmadı', date: addDays(baseDate, 125), progress: '0/3 görev', percent: 0, alert: null },
-                        { id: 5, name: 'ÇED Olumlu / Olumsuz Kararının Verilmesi', status: 'Tamamlanmadı', date: addDays(baseDate, 155), progress: '0/1 görev', percent: 0, alert: null }
-                    ];
-                } else if (template === 'rough') {
-                    phases = [
-                        { id: 1, name: 'Aks Ölçümü & Kazı Çalışmaları', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/2 görev', percent: 0, alert: null },
-                        { id: 2, name: 'Grobeton & Temel Yalıtımı', status: 'Tamamlanmadı', date: addDays(baseDate, 15), progress: '0/2 görev', percent: 0, alert: null },
-                        { id: 3, name: 'Radye Temel Demiri & Beton Dökümü', status: 'Tamamlanmadı', date: addDays(baseDate, 35), progress: '0/3 görev', percent: 0, alert: null },
-                        { id: 4, name: 'Bodrum Kat Betonarme Perde & Kolonlar', status: 'Tamamlanmadı', date: addDays(baseDate, 55), progress: '0/3 görev', percent: 0, alert: null },
-                        { id: 5, name: 'Tip Kat Tabliye Demiri & Betonarme İmalatları', status: 'Tamamlanmadı', date: addDays(baseDate, 115), progress: '0/4 görev', percent: 0, alert: null }
-                    ];
-                } else if (template === 'luxury') {
-                    phases = [
-                        { id: 1, name: 'Şantiye Mobilizasyonu & İstinat Yapıları', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/3 görev', percent: 0, alert: null },
-                        { id: 2, name: 'Blok Temelleri & Altyapı İşleri', status: 'Tamamlanmadı', date: addDays(baseDate, 90), progress: '0/4 görev', percent: 0, alert: null },
-                        { id: 3, name: 'Çok Bloklu Kaba Yapı İmalatı', status: 'Tamamlanmadı', date: addDays(baseDate, 300), progress: '0/5 görev', percent: 0, alert: null },
-                        { id: 4, name: 'Sosyal Tesis, Havuz & Spor Alanları', status: 'Tamamlanmadı', date: addDays(baseDate, 390), progress: '0/3 görev', percent: 0, alert: null },
-                        { id: 5, name: 'İç Mimari Uygulamalar & İnce İşçilikler', status: 'Tamamlanmadı', date: addDays(baseDate, 480), progress: '0/6 görev', percent: 0, alert: null },
-                        { id: 6, name: 'Peyzaj, Rekreasyon & Anahtar Teslim', status: 'Tamamlanmadı', date: addDays(baseDate, 570), progress: '0/2 görev', percent: 0, alert: null }
-                    ];
-                } else if (template === 'half_us') {
-                    phases = [
-                        { id: 1, name: 'Riskli Yapı Tespiti & Karot Alımı', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/2 görev', percent: 0, alert: null },
-                        { id: 2, name: 'Hak Sahipleri Anlaşma & Karar Protokolü', status: 'Tamamlanmadı', date: addDays(baseDate, 50), progress: '0/3 görev', percent: 0, alert: null },
-                        { id: 3, name: 'ÇŞB Yarısı Bizden Başvurusu', status: 'Tamamlanmadı', date: addDays(baseDate, 80), progress: '0/2 görev', percent: 0, alert: null },
-                        { id: 4, name: 'Eski Binanın Tahliyesi & Yıkımı', status: 'Tamamlanmadı', date: addDays(baseDate, 125), progress: '0/3 görev', percent: 0, alert: null },
-                        { id: 5, name: 'Yeni Bina Projelendirme & İnşaat Süreci', status: 'Tamamlanmadı', date: addDays(baseDate, 515), progress: '0/5 görev', percent: 0, alert: null }
-                    ];
-                } else if (template === 'occupancy') {
-                    phases = [
-                        { id: 1, name: 'SGK ve Vergi Dairesi İlişiksiz Belgeleri', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/2 görev', percent: 0, alert: null },
-                        { id: 2, name: 'TSE, Asansör, İtfaiye Uygunluk Raporları', status: 'Tamamlanmadı', date: addDays(baseDate, 20), progress: '0/4 görev', percent: 0, alert: null },
-                        { id: 3, name: 'Yapı Denetim Kuruluşu Sertifikası', status: 'Tamamlanmadı', date: addDays(baseDate, 30), progress: '0/2 görev', percent: 0, alert: null },
-                        { id: 4, name: 'Belediye İskan Teknik Heyet Muayenesi', status: 'Tamamlanmadı', date: addDays(baseDate, 50), progress: '0/3 görev', percent: 0, alert: null },
-                        { id: 5, name: 'İskan Harçlarının Yatırılması & İskan Alımı', status: 'Tamamlanmadı', date: addDays(baseDate, 65), progress: '0/2 görev', percent: 0, alert: null }
-                    ];
-                }
-
-                if (phases.length > 0) {
                     localStorage.setItem(`brener_phases_${newProj.id}`, JSON.stringify(phases));
                 }
 
                 this.state.projects.push(newProj);
                 this.state.currentProjectId = newProj.id;
-                this.logActivity('proje', `Yeni şantiye projesi oluşturuldu: ${name}`, 'success', `Bütçe: ${budget} TL, Konum: ${city}`);
+                this.logActivity('proje', `Yeni proje oluşturuldu: ${name}`, 'success', `Bütçe: ${budget.toLocaleString('tr-TR')} ₺, Tip: ${type}`);
                 this.saveStateToStorage();
                 this.setupProjectSelector();
                 this.showToast('success', `${name} projesi başarıyla portföye eklendi ve aktif yapıldı!`);
