@@ -879,63 +879,183 @@ window.BrenerApp = {
         // Hook project addition modal
         document.getElementById('addNewProjectBtn').onclick = () => {
             const formHtml = `
-                <div class="form-group">
-                    <label>Proje Adı</label>
-                    <input type="text" id="newProjName" placeholder="Örn: Brener Garden" required>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                    Şantiye bilgilerini girin ve pano şablonu seçin
                 </div>
                 <div class="form-group">
-                    <label>Konum</label>
-                    <input type="text" id="newProjLoc" placeholder="Örn: Kadıköy, İstanbul" required>
+                    <label>Şantiye Adı</label>
+                    <input type="text" id="newProjName" placeholder="Park Rezidans" required style="width: 100%;">
                 </div>
-                <div class="form-group">
-                    <label>Şantiye Şefi</label>
-                    <input type="text" id="newProjManager" placeholder="Örn: Hasan Yılmaz" required>
-                </div>
-                <div class="form-row">
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div class="form-group">
-                        <label>Toplam Bütçe (TL)</label>
-                        <input type="number" id="newProjBudget" value="10000000" required>
+                        <label>Şantiye Kodu</label>
+                        <input type="text" id="newProjCode" placeholder="PR-001" required style="width: 100%;">
                     </div>
                     <div class="form-group">
-                        <label>Başlangıç İlerlemesi (%)</label>
-                        <input type="number" id="newProjProgress" value="0" min="0" max="100" required>
+                        <label>İl</label>
+                        <input type="text" id="newProjCity" placeholder="İstanbul" required style="width: 100%;">
                     </div>
                 </div>
-                <button class="btn btn-primary" id="saveNewProjectBtn" style="width: 100%; margin-top: 10px;">Projeyi Kaydet</button>
+                <div class="form-group">
+                    <label>Adres</label>
+                    <input type="text" id="newProjAddress" placeholder="Kadıköy, Caferağa Mah." required style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 4px;">Başlangıç Tarihi <span style="color:#ef4444;">*</span></label>
+                    <input type="date" id="newProjStartDate" required style="width: 100%;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px;">Varsayılan aşamalar tanımlıysa bu tarihten itibaren otomatik takvimlenir.</span>
+                </div>
+                
+                <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; margin-bottom: 20px;">
+                    <label style="font-weight: 700; color: var(--primary); font-size: 0.9rem; margin-bottom: 4px; display: block;">Hedef Bütçe (m² bazında)</label>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 12px;">Toplam inşaat alanı ve m² hedef maliyetini girin; sistem ana hedef bütçeyi otomatik hesaplar ve aşamalara dağıtır.</span>
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label>Toplam İnşaat Alanı (m²)</label>
+                            <input type="number" id="newProjArea" placeholder="ör: 12500" required style="width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label>m² Hedef Maliyet</label>
+                            <input type="number" id="newProjUnitCost" placeholder="ör: 15000" required style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 20px; margin-bottom: 24px;">
+                    <label>Pano Şablonu</label>
+                    <select id="newProjTemplate" class="custom-select" style="width:100%; padding:10px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:8px; color:var(--text-main);">
+                        <option value="none">Şablonsuz oluştur</option>
+                        <option value="std_resi">Standart 6-7 Katlı Konut Şantiyesi</option>
+                        <option value="permit">Yapı Ruhsatı Süreci</option>
+                        <option value="eia">ÇED (Çevresel Etki Değerlendirmesi)</option>
+                        <option value="rough">Demirli Kaba İnşaat Şablonu</option>
+                        <option value="luxury">Lüks Site ve Sosyal Donatı Projesi (Çok Bloklu)</option>
+                        <option value="half_us">Yarısı Bizden & Kentsel Dönüşüm Projesi</option>
+                        <option value="occupancy">İskan (Yapı Kullanma İzin) Süreci</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary" id="saveNewProjectBtn" style="width: 100%; font-weight: 700; padding: 12px;">Oluştur</button>
             `;
-            this.openModal('Yeni Şantiye Projesi Ekle', formHtml);
+            this.openModal('Yeni Şantiye Oluştur', formHtml);
 
             document.getElementById('saveNewProjectBtn').onclick = () => {
                 const name = document.getElementById('newProjName').value.trim();
-                const location = document.getElementById('newProjLoc').value.trim();
-                const manager = document.getElementById('newProjManager').value.trim();
-                const budget = parseFloat(document.getElementById('newProjBudget').value);
-                const progress = parseInt(document.getElementById('newProjProgress').value);
+                const code = document.getElementById('newProjCode').value.trim();
+                const city = document.getElementById('newProjCity').value.trim();
+                const address = document.getElementById('newProjAddress').value.trim();
+                const startDateStr = document.getElementById('newProjStartDate').value;
+                const area = parseFloat(document.getElementById('newProjArea').value) || 0;
+                const unitCost = parseFloat(document.getElementById('newProjUnitCost').value) || 0;
+                const template = document.getElementById('newProjTemplate').value;
 
-                if (!name || !location || !manager) {
+                if (!name || !code || !city || !address || !startDateStr) {
                     alert('Lütfen gerekli tüm alanları doldurun!');
                     return;
                 }
 
+                const budget = area * unitCost;
+
                 const newProj = {
                     id: Date.now(),
-                    name,
-                    location,
+                    name: name,
+                    code: code,
+                    city: city,
+                    location: `${city}, ${address}`,
+                    startDate: startDateStr,
+                    area: area,
+                    unitCost: unitCost,
+                    budget: budget,
+                    spent: 0,
+                    progress: 0,
                     status: 'active',
-                    progress,
-                    manager,
-                    budget,
-                    spent: 0
+                    manager: this.state.currentUser ? this.state.currentUser.name : 'Belirtilmedi'
                 };
 
-                                this.state.projects.push(newProj);
-                                this.state.currentProjectId = newProj.id;
-                                this.logActivity('proje', `Yeni şantiye projesi oluşturuldu: ${name}`, 'success', `Bütçe: ${budget} TL, Konum: ${location}`);
-                                this.saveStateToStorage();
-                                this.setupProjectSelector();
-                                this.showToast('success', `${name} projesi başarıyla portföye eklendi ve aktif yapıldı!`);
-                                document.getElementById('modalCloseBtn').click();
-                                this.router();
+                // Generate templates stages (phases)
+                const baseDate = new Date(startDateStr);
+                function addDays(date, days) {
+                    const result = new Date(date);
+                    result.setDate(result.getDate() + days);
+                    const d = String(result.getDate()).padStart(2, '0');
+                    const m = String(result.getMonth() + 1).padStart(2, '0');
+                    const y = result.getFullYear();
+                    return `${d}.${m}.${y}`;
+                }
+
+                let phases = [];
+                if (template === 'std_resi') {
+                    phases = [
+                        { id: 1, name: 'Hafriyat & Temel', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/3 görev', percent: 0, alert: null },
+                        { id: 2, name: 'Kaba İnşaat (1-3. Kat)', status: 'Tamamlanmadı', date: addDays(baseDate, 75), progress: '0/4 görev', percent: 0, alert: null },
+                        { id: 3, name: 'Kaba İnşaat (4-7. Kat)', status: 'Tamamlanmadı', date: addDays(baseDate, 150), progress: '0/4 görev', percent: 0, alert: null },
+                        { id: 4, name: 'Çatı & Dış Cephe', status: 'Tamamlanmadı', date: addDays(baseDate, 195), progress: '0/3 görev', percent: 0, alert: null },
+                        { id: 5, name: 'İnce İşler & Tesisat', status: 'Tamamlanmadı', date: addDays(baseDate, 270), progress: '0/5 görev', percent: 0, alert: null },
+                        { id: 6, name: 'Peyzaj & Teslim', status: 'Tamamlanmadı', date: addDays(baseDate, 330), progress: '0/2 görev', percent: 0, alert: null }
+                    ];
+                } else if (template === 'permit') {
+                    phases = [
+                        { id: 1, name: 'Aplikasyon Krokisi & İmar Durumu', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/2 görev', percent: 0, alert: null },
+                        { id: 2, name: 'Mimari, Statik, Tesisat Projeleri Çizimi', status: 'Tamamlanmadı', date: addDays(baseDate, 30), progress: '0/4 görev', percent: 0, alert: null },
+                        { id: 3, name: 'Zemin Etüdü & Yapı Denetim Anlaşması', status: 'Tamamlanmadı', date: addDays(baseDate, 45), progress: '0/2 görev', percent: 0, alert: null },
+                        { id: 4, name: 'Belediye Proje Onay Süreci', status: 'Tamamlanmadı', date: addDays(baseDate, 75), progress: '0/3 görev', percent: 0, alert: null },
+                        { id: 5, name: 'Yapı Ruhsatı Harçları & Ruhsat Alımı', status: 'Tamamlanmadı', date: addDays(baseDate, 90), progress: '0/2 görev', percent: 0, alert: null }
+                    ];
+                } else if (template === 'eia') {
+                    phases = [
+                        { id: 1, name: 'ÇED Başvuru Dosyasının Sunulması', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/2 görev', percent: 0, alert: null },
+                        { id: 2, name: 'Halkın Katılımı Toplantısı', status: 'Tamamlanmadı', date: addDays(baseDate, 35), progress: '0/1 görev', percent: 0, alert: null },
+                        { id: 3, name: 'Kapsam Belirleme ve Özel Format Oluşturma', status: 'Tamamlanmadı', date: addDays(baseDate, 65), progress: '0/2 görev', percent: 0, alert: null },
+                        { id: 4, name: 'ÇED Raporunun İDK Değerlendirmesi', status: 'Tamamlanmadı', date: addDays(baseDate, 125), progress: '0/3 görev', percent: 0, alert: null },
+                        { id: 5, name: 'ÇED Olumlu / Olumsuz Kararının Verilmesi', status: 'Tamamlanmadı', date: addDays(baseDate, 155), progress: '0/1 görev', percent: 0, alert: null }
+                    ];
+                } else if (template === 'rough') {
+                    phases = [
+                        { id: 1, name: 'Aks Ölçümü & Kazı Çalışmaları', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/2 görev', percent: 0, alert: null },
+                        { id: 2, name: 'Grobeton & Temel Yalıtımı', status: 'Tamamlanmadı', date: addDays(baseDate, 15), progress: '0/2 görev', percent: 0, alert: null },
+                        { id: 3, name: 'Radye Temel Demiri & Beton Dökümü', status: 'Tamamlanmadı', date: addDays(baseDate, 35), progress: '0/3 görev', percent: 0, alert: null },
+                        { id: 4, name: 'Bodrum Kat Betonarme Perde & Kolonlar', status: 'Tamamlanmadı', date: addDays(baseDate, 55), progress: '0/3 görev', percent: 0, alert: null },
+                        { id: 5, name: 'Tip Kat Tabliye Demiri & Betonarme İmalatları', status: 'Tamamlanmadı', date: addDays(baseDate, 115), progress: '0/4 görev', percent: 0, alert: null }
+                    ];
+                } else if (template === 'luxury') {
+                    phases = [
+                        { id: 1, name: 'Şantiye Mobilizasyonu & İstinat Yapıları', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/3 görev', percent: 0, alert: null },
+                        { id: 2, name: 'Blok Temelleri & Altyapı İşleri', status: 'Tamamlanmadı', date: addDays(baseDate, 90), progress: '0/4 görev', percent: 0, alert: null },
+                        { id: 3, name: 'Çok Bloklu Kaba Yapı İmalatı', status: 'Tamamlanmadı', date: addDays(baseDate, 300), progress: '0/5 görev', percent: 0, alert: null },
+                        { id: 4, name: 'Sosyal Tesis, Havuz & Spor Alanları', status: 'Tamamlanmadı', date: addDays(baseDate, 390), progress: '0/3 görev', percent: 0, alert: null },
+                        { id: 5, name: 'İç Mimari Uygulamalar & İnce İşçilikler', status: 'Tamamlanmadı', date: addDays(baseDate, 480), progress: '0/6 görev', percent: 0, alert: null },
+                        { id: 6, name: 'Peyzaj, Rekreasyon & Anahtar Teslim', status: 'Tamamlanmadı', date: addDays(baseDate, 570), progress: '0/2 görev', percent: 0, alert: null }
+                    ];
+                } else if (template === 'half_us') {
+                    phases = [
+                        { id: 1, name: 'Riskli Yapı Tespiti & Karot Alımı', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/2 görev', percent: 0, alert: null },
+                        { id: 2, name: 'Hak Sahipleri Anlaşma & Karar Protokolü', status: 'Tamamlanmadı', date: addDays(baseDate, 50), progress: '0/3 görev', percent: 0, alert: null },
+                        { id: 3, name: 'ÇŞB Yarısı Bizden Başvurusu', status: 'Tamamlanmadı', date: addDays(baseDate, 80), progress: '0/2 görev', percent: 0, alert: null },
+                        { id: 4, name: 'Eski Binanın Tahliyesi & Yıkımı', status: 'Tamamlanmadı', date: addDays(baseDate, 125), progress: '0/3 görev', percent: 0, alert: null },
+                        { id: 5, name: 'Yeni Bina Projelendirme & İnşaat Süreci', status: 'Tamamlanmadı', date: addDays(baseDate, 515), progress: '0/5 görev', percent: 0, alert: null }
+                    ];
+                } else if (template === 'occupancy') {
+                    phases = [
+                        { id: 1, name: 'SGK ve Vergi Dairesi İlişiksiz Belgeleri', status: 'Şu Anki Aşama', date: addDays(baseDate, 0), progress: '0/2 görev', percent: 0, alert: null },
+                        { id: 2, name: 'TSE, Asansör, İtfaiye Uygunluk Raporları', status: 'Tamamlanmadı', date: addDays(baseDate, 20), progress: '0/4 görev', percent: 0, alert: null },
+                        { id: 3, name: 'Yapı Denetim Kuruluşu Sertifikası', status: 'Tamamlanmadı', date: addDays(baseDate, 30), progress: '0/2 görev', percent: 0, alert: null },
+                        { id: 4, name: 'Belediye İskan Teknik Heyet Muayenesi', status: 'Tamamlanmadı', date: addDays(baseDate, 50), progress: '0/3 görev', percent: 0, alert: null },
+                        { id: 5, name: 'İskan Harçlarının Yatırılması & İskan Alımı', status: 'Tamamlanmadı', date: addDays(baseDate, 65), progress: '0/2 görev', percent: 0, alert: null }
+                    ];
+                }
+
+                if (phases.length > 0) {
+                    localStorage.setItem(`brener_phases_${newProj.id}`, JSON.stringify(phases));
+                }
+
+                this.state.projects.push(newProj);
+                this.state.currentProjectId = newProj.id;
+                this.logActivity('proje', `Yeni şantiye projesi oluşturuldu: ${name}`, 'success', `Bütçe: ${budget} TL, Konum: ${city}`);
+                this.saveStateToStorage();
+                this.setupProjectSelector();
+                this.showToast('success', `${name} projesi başarıyla portföye eklendi ve aktif yapıldı!`);
+                document.getElementById('modalCloseBtn').click();
+                this.router();
             };
         };
     },

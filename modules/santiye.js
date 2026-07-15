@@ -78,7 +78,7 @@ window.BrenerApp.Santiye = {
                 <!-- Teknik Bilgiler -->
                 <div style="border-right: 1px solid var(--border-color); padding-right: 15px;">
                     <div style="font-weight: bold; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;">Teknik & Yapı</div>
-                    <div><strong>Toplam Alan:</strong> ${project.totalArea ? project.totalArea.toLocaleString('tr-TR') + ' m²' : 'Belirtilmemiş'}</div>
+                    <div><strong>Toplam Alan:</strong> ${(project.area || project.totalArea) ? (project.area || project.totalArea).toLocaleString('tr-TR') + ' m²' : 'Belirtilmemiş'}</div>
                     <div style="margin-top: 4px;"><strong>Blok / Kat Detayları:</strong></div>
                     <div style="margin-top: 3px; max-height: 80px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;">
                         ${project.blocks && project.blocks.length > 0 
@@ -1026,7 +1026,7 @@ window.BrenerApp.Santiye = {
                                 
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
                                     <div><strong>Fiyat Aralığı:</strong> 6.000.000 ₺ - 22.000.000 ₺</div>
-                                    <div><strong>Proje Alanı:</strong> ${project.totalArea ? project.totalArea.toLocaleString('tr-TR') + ' m²' : '—'}</div>
+                                    <div><strong>Proje Alanı:</strong> ${(project.area || project.totalArea) ? (project.area || project.totalArea).toLocaleString('tr-TR') + ' m²' : '—'}</div>
                                     <div><strong>Birim Seçenekleri:</strong> ${project.unitTypes ? project.unitTypes.join(', ') : '—'}</div>
                                     <div><strong>İletişim:</strong> Brener Satış Ofisi (0216 444 0 555)</div>
                                 </div>
@@ -1110,7 +1110,9 @@ window.BrenerApp.Santiye = {
                         const resBox = document.getElementById('sketchResultBox');
                         if (resBox) {
                             resBox.style.display = 'block';
-                            project.totalArea = (project.totalArea || 25000) + 2500;
+                             const newArea = ((project.area || project.totalArea) || 25000) + 2500;
+                             project.area = newArea;
+                             project.totalArea = newArea;
                             if (project.blocks) {
                                 if (!project.blocks.some(b => b.name === 'C Blok')) {
                                     project.blocks.push({ name: 'C Blok', floors: 8 });
