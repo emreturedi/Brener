@@ -923,6 +923,31 @@ window.BrenerApp.Belgeler = {
     renderSettings(container) {
         window.BrenerApp.updateTopbarTitle('Sistem Ayarları', 'Brener Group Platform Yapılandırmaları');
 
+        const aiSettings = window.BrenerApp.state.aiChannelSettings || {
+            whatsapp: {
+                provider: 'twilio',
+                accountSid: 'AC9bd2de67f8cea340d6259c9e6e3831a9',
+                authToken: '',
+                fromNumber: 'whatsapp:+14155238886',
+                testNumber: '+905327398489'
+            },
+            telegram: {
+                botToken: '',
+                botUsername: 'BrenerGroupBot'
+            },
+            email: {
+                imapHost: 'imap.yandex.com',
+                imapPort: '993',
+                emailAddress: 'saha@brenergroup.com',
+                password: ''
+            },
+            thresholds: {
+                minOcrConfidence: 90,
+                unknownSupplierAction: 'alert',
+                autoApproveProgress: false
+            }
+        };
+
         let html = `
             <div style="display: flex; flex-direction: column; gap: 20px; max-width: 600px; margin: 0 auto;">
                 <!-- Platform Preferences Card -->
@@ -949,6 +974,144 @@ window.BrenerApp.Belgeler = {
                         </select>
                     </div>
                     <button class="btn btn-primary" style="width:100%; margin-top: 10px;" onclick="window.BrenerApp.showToast('success', 'Ayarlarınız kaydedildi.')">Ayarları Kaydet</button>
+                </div>
+
+                <!-- AI Kanal Entegrasyon Ayarları -->
+                <div class="card" style="border-left: 4px solid var(--primary);">
+                    <div class="card-header" style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        <h2 style="color: var(--primary); display: flex; align-items: center; gap: 8px;">📲 AI Kanal Entegrasyon Ayarları</h2>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+                        Saha personelinden gelen fotoğraf ve belgelerin AI Vision OCR ile taranması için API anahtarlarını ve kanal bağlantılarını buradan yönetebilirsiniz.
+                    </p>
+
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- WhatsApp -->
+                        <details style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: rgba(255,255,255,0.01);">
+                            <summary style="font-weight: 600; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                💬 WhatsApp Business (Twilio) Ayarları
+                            </summary>
+                            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px; padding: 5px;">
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">Twilio Account SID</label>
+                                    <input type="text" id="ai_wa_sid" style="width: 100%; padding: 8px; font-family: monospace;" value="${aiSettings.whatsapp.accountSid || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">Twilio Auth Token</label>
+                                    <input type="password" id="ai_wa_token" style="width: 100%; padding: 8px;" value="${aiSettings.whatsapp.authToken || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">Gönderici WhatsApp Numarası (From)</label>
+                                    <input type="text" id="ai_wa_from" style="width: 100%; padding: 8px; font-family: monospace;" value="${aiSettings.whatsapp.fromNumber || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">Test Alıcı Numarası (To)</label>
+                                    <input type="text" id="ai_wa_test" style="width: 100%; padding: 8px; font-family: monospace;" value="${aiSettings.whatsapp.testNumber || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">Canlı Webhook URL (Sunucu)</label>
+                                    <input type="text" readonly style="width: 100%; padding: 8px; background: rgba(0,0,0,0.1); color: var(--text-muted); font-family: monospace; font-size: 0.75rem;" value="${window.location.origin}/api/webhook/whatsapp">
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- Telegram -->
+                        <details style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: rgba(255,255,255,0.01);">
+                            <summary style="font-weight: 600; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                ✈️ Telegram Bot Ayarları
+                            </summary>
+                            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px; padding: 5px;">
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">Telegram Bot Token</label>
+                                    <input type="password" id="ai_tg_token" style="width: 100%; padding: 8px;" value="${aiSettings.telegram.botToken || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">Bot Kullanıcı Adı (Username)</label>
+                                    <input type="text" id="ai_tg_username" style="width: 100%; padding: 8px; font-family: monospace;" value="${aiSettings.telegram.botUsername || ''}">
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- E-Posta -->
+                        <details style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: rgba(255,255,255,0.01);">
+                            <summary style="font-weight: 600; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                📧 E-Posta (IMAP) Sunucu Ayarları
+                            </summary>
+                            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px; padding: 5px;">
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">IMAP Sunucu Adresi</label>
+                                    <input type="text" id="ai_mail_host" style="width: 100%; padding: 8px; font-family: monospace;" value="${aiSettings.email.imapHost || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">IMAP Port</label>
+                                    <input type="text" id="ai_mail_port" style="width: 100%; padding: 8px; font-family: monospace;" value="${aiSettings.email.imapPort || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">E-Posta Adresi</label>
+                                    <input type="text" id="ai_mail_user" style="width: 100%; padding: 8px; font-family: monospace;" value="${aiSettings.email.emailAddress || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">Şifre / Uygulama Şifresi</label>
+                                    <input type="password" id="ai_mail_pass" style="width: 100%; padding: 8px;" value="${aiSettings.email.password || ''}">
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- Müdahale Kuralları -->
+                        <details style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: rgba(255,255,255,0.01);">
+                            <summary style="font-weight: 600; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                🛡️ Müdahale Eşikleri & Karar Kuralları
+                            </summary>
+                            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px; padding: 5px;">
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">Minimum OCR Güven Skoru (%)</label>
+                                    <input type="number" id="ai_min_ocr" min="50" max="100" style="width: 100%; padding: 8px;" value="${aiSettings.thresholds.minOcrConfidence || 90}">
+                                    <span style="font-size:0.7rem; color:var(--text-muted);">* Bu skorun altındaki evraklar doğrudan işlenmez, yönetici onayına düşer.</span>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.78rem;">Bilinmeyen Tedarikçi Tespit Edildiğinde</label>
+                                    <select id="ai_unknown_supplier" style="width: 100%; padding: 8px; background:var(--bg-dark); border:1px solid var(--border-color); color:var(--text-main);">
+                                        <option value="alert" ${aiSettings.thresholds.unknownSupplierAction === 'alert' ? 'selected' : ''}>Kayıt Açma, Yöneticiye Bildir</option>
+                                        <option value="save" ${aiSettings.thresholds.unknownSupplierAction === 'save' ? 'selected' : ''}>"Bilinmeyen Tedarikçi" Olarak Kaydet</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.78rem; margin-top: 6px;">
+                                        <input type="checkbox" id="ai_auto_approve" ${aiSettings.thresholds.autoApproveProgress ? 'checked' : ''} style="width:16px; height:16px;">
+                                        Şantiye İlerlemesini Doğrudan Onayla (Şef onayı istemeden)
+                                    </label>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+
+                    <button class="btn btn-primary" style="width:100%; margin-top: 16px; font-weight: bold;" id="btnSaveAiSettings">AI Kanal Ayarlarını Kaydet</button>
+                </div>
+
+                <!-- AI Müdahale Rehberi -->
+                <div class="card" style="border-left: 4px solid var(--warning); background: rgba(var(--warning-rgb,234,179,8),0.02);">
+                    <div class="card-header" style="margin-bottom: 10px;">
+                        <h2 style="color: var(--warning); display: flex; align-items: center; gap: 8px;">🛡️ AI Müdahale & Yönetim Kılavuzu</h2>
+                    </div>
+                    <div style="font-size: 0.8rem; line-height: 1.5; color: var(--text-muted); display:flex; flex-direction:column; gap:10px;">
+                        <p>
+                            Saha ekibinin AI kanalları (WhatsApp, Telegram, Mail) üzerinden gönderdiği evrakların doğruluğunu korumak için <strong>ne zaman</strong> ve <strong>hangi modülden</strong> müdahale etmeniz gerektiğini belirten kontrol kılavuzu:
+                        </p>
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 5px;">
+                            <div style="padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--danger);">
+                                <strong style="color: var(--text-main); font-size: 0.82rem;">⚠️ Düşük OCR Güven Skoru (%<span id="guide_min_ocr">${aiSettings.thresholds.minOcrConfidence || 90}</span> Altı)</strong>
+                                <p style="margin: 4px 0 0;">AI okuma güveni eşiğin altına düştüğünde, veriler doğrudan onaylanmaz. <strong>Belgeler → Gelen Evraklar</strong> sayfasından ilgili resmi açıp el ile düzeltme yapabilir veya reddedebilirsiniz.</p>
+                            </div>
+                            <div style="padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--warning);">
+                                <strong style="color: var(--text-main); font-size: 0.82rem;">🧾 Hatalı Fatura / Miktar Eşleşmesi</strong>
+                                <p style="margin: 4px 0 0;">Yavuz Beton faturası gibi sisteme otomatik işlenen hakediş veya gider belgelerinde yanlış miktar/tutar tespit edilirse, <strong>Finans → Hakedişler / Giderler</strong> sekmesinden kaydı düzenle butonunu kullanarak anında müdahale edebilirsiniz.</p>
+                            </div>
+                            <div style="padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--info);">
+                                <strong style="color: var(--text-main); font-size: 0.82rem;">📝 Malzeme Taleplerinin Düzenlenmesi</strong>
+                                <p style="margin: 4px 0 0;">Otomatik oluşturulan saha talepleri <strong>Talepler</strong> sayfasında <code>Beklemede</code> olarak bekler. Satın alım öncesi miktar, öncelik veya kategori bilgilerini değiştirip <code>Onayla</code> butonuna basarak süreci yürütebilirsiniz.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Database Migration and Backup Card -->
@@ -978,6 +1141,62 @@ window.BrenerApp.Belgeler = {
             </div>
         `;
         container.innerHTML = html;
+
+        // Save AI settings action
+        const btnSaveAi = document.getElementById('btnSaveAiSettings');
+        if (btnSaveAi) {
+            btnSaveAi.onclick = () => {
+                const sid = document.getElementById('ai_wa_sid').value;
+                const tokenVal = document.getElementById('ai_wa_token').value;
+                const fromNum = document.getElementById('ai_wa_from').value;
+                const testNum = document.getElementById('ai_wa_test').value;
+
+                const tgToken = document.getElementById('ai_tg_token').value;
+                const tgUser = document.getElementById('ai_tg_username').value;
+
+                const mailHost = document.getElementById('ai_mail_host').value;
+                const mailPort = document.getElementById('ai_mail_port').value;
+                const mailUser = document.getElementById('ai_mail_user').value;
+                const mailPass = document.getElementById('ai_mail_pass').value;
+
+                const minOcr = parseInt(document.getElementById('ai_min_ocr').value) || 90;
+                const unknownSupplier = document.getElementById('ai_unknown_supplier').value;
+                const autoApprove = document.getElementById('ai_auto_approve').checked;
+
+                window.BrenerApp.state.aiChannelSettings = {
+                    whatsapp: {
+                        provider: 'twilio',
+                        accountSid: sid,
+                        authToken: tokenVal,
+                        fromNumber: fromNum,
+                        testNumber: testNum
+                    },
+                    telegram: {
+                        botToken: tgToken,
+                        botUsername: tgUser
+                    },
+                    email: {
+                        imapHost: mailHost,
+                        imapPort: mailPort,
+                        emailAddress: mailUser,
+                        password: mailPass
+                    },
+                    thresholds: {
+                        minOcrConfidence: minOcr,
+                        unknownSupplierAction: unknownSupplier,
+                        autoApproveProgress: autoApprove
+                    }
+                };
+
+                // Update guide view dynamically
+                const guideMinOcr = document.getElementById('guide_min_ocr');
+                if (guideMinOcr) guideMinOcr.textContent = minOcr;
+
+                window.BrenerApp.saveStateToStorage();
+                window.BrenerApp.showToast('success', 'AI Kanal entegrasyon ayarları başarıyla kaydedildi.');
+                window.BrenerApp.logActivity('sistem', 'AI Kanal entegrasyon ayarları güncellendi.', 'success');
+            };
+        }
 
         // Hook up database actions
         document.getElementById('btnExportDb').onclick = () => {

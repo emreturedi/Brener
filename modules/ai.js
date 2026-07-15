@@ -317,7 +317,7 @@ window.BrenerApp.AI = {
                 caption: 'fatura geldi, 45bin TL hazır beton',
                 imageEmoji: '🧾',
                 imageDesc: 'Yavuz_Hazır_Beton_Fatura.jpg',
-                botReply: '✅ *Fatura Kaydedildi!*\n\n🏢 Tedarikçi: Yavuz Hazır Beton A.Ş.\n💰 Tutar: 45.000 ₺\n📦 Malzeme: C30 Hazır Beton (50 m³)\n📅 Tarih: TARIH\n\nFinans modülüne işlendi. ✔️',
+                botReply: '✅ *Fatura Kaydedildi!*\n\n🏢 Tedarikçi: Yavuz Hazır Beton A.Ş.\n💰 Tutar: 45.000 ₺\n📦 Malzeme: C30 Hazır Beton (50 m³)\n📅 Tarih: TARIH\n\nFinans modülüne işlendi. ✔️\n\n👉 [Finans Giderlerinde Gör](#finans)',
             },
             ilerleme: {
                 label: '🏗️ Şantiye İlerleme Fotoğrafı',
@@ -325,7 +325,7 @@ window.BrenerApp.AI = {
                 caption: 'A blok 4. kat tabliye demirleri döşendi',
                 imageEmoji: '🏗️',
                 imageDesc: 'Saha_A_Blok_4Kat_Foto.jpg',
-                botReply: '✅ *Şantiye İlerlemesi Güncellendi!*\n\n🏗️ Proje: PROJE_ADI\n📈 Fiziksel İlerleme: +%5 artırıldı\n🔍 Tespit: Demir Donatı & Kalıp İşleri\n📅 Tarih: TARIH\n\nŞantiye günlüğüne işlendi. ✔️',
+                botReply: '✅ *Şantiye İlerlemesi Güncellendi!*\n\n🏗️ Proje: PROJE_ADI\n📈 Fiziksel İlerleme: +%5 artırıldı\n🔍 Tespit: Demir Donatı & Kalıp İşleri\n📅 Tarih: TARIH\n\nŞantiye günlüğüne işlendi. ✔️\n\n👉 [Şantiye Günlüğünde Gör](#santiye)',
             },
             talep: {
                 label: '📝 Malzeme Talep Fişi (El Yazısı)',
@@ -333,7 +333,7 @@ window.BrenerApp.AI = {
                 caption: 'acil lazım 20 baret 10 cift cizme',
                 imageEmoji: '📝',
                 imageDesc: 'El_Yazisi_Malzeme_Fisi.jpg',
-                botReply: '✅ *Malzeme Talebi Oluşturuldu!*\n\n📋 Talep No: WA-TAL-001\n📝 İçerik:\n  • 20 Adet İSG Bareti (Sarı)\n  • 10 Adet Koruyucu İş Çizmesi\n📅 Tarih: TARIH\n\nTalepler modülüne iletildi. Onay bekliyor. ✔️',
+                botReply: '✅ *Malzeme Talebi Oluşturuldu!*\n\n📋 Talep No: WA-TAL-001\n📝 İçerik:\n  • 20 Adet İSG Bareti (Sarı)\n  • 10 Adet Koruyucu İş Çizmesi\n📅 Tarih: TARIH\n\nTalepler modülüne iletildi. Onay bekliyor. ✔️\n\n👉 [Talepler Sayfasında Gör](#talepler)',
             },
         };
 
@@ -499,8 +499,21 @@ window.BrenerApp.AI = {
             const el = document.createElement('div');
             el.style.cssText = `display:flex; justify-content:${side==='right'?'flex-end':'flex-start'}; animation:fadeInUp 0.3s ease;`;
             const bubble = document.createElement('div');
-            bubble.style.cssText = `max-width:80%; padding:10px 14px; border-radius:${side==='right'?'18px 18px 4px 18px':'18px 18px 18px 4px'}; background:${side==='right'?color:'rgba(255,255,255,0.08)'}; color:${side==='right'?'#fff':'var(--text-main)'}; font-size:0.82rem; line-height:1.5; white-space:pre-wrap; word-break:break-word; box-shadow:0 2px 8px rgba(0,0,0,0.2);`;
-            bubble.textContent = content;
+            bubble.style.cssText = `max-width:80%; padding:10px 14px; border-radius:${side==='right'?'18px 18px 4px 18px':'18px 18px 18px 4px'}; background:${side==='right'?color:'rgba(255,255,255,0.08)'}; color:${side==='right'?'#fff':'var(--text-main)'}; font-size:0.82rem; line-height:1.5; word-break:break-word; box-shadow:0 2px 8px rgba(0,0,0,0.2);`;
+            
+            // Format markdown bold *text* and links [text](href) safely
+            let formatted = content
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
+                .replace(/\[(.*?)\]\((.*?)\)/g, (match, text, href) => {
+                    const linkColor = side === 'right' ? '#fff' : 'var(--primary)';
+                    return `<a href="${href}" style="color:${linkColor}; text-decoration:underline; font-weight:700;">${text}</a>`;
+                })
+                .replace(/\n/g, '<br>');
+
+            bubble.innerHTML = formatted;
             el.appendChild(bubble);
             msgs.appendChild(el);
             msgs.scrollTop = msgs.scrollHeight;
