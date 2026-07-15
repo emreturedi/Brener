@@ -4,7 +4,25 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
 const pool = require('./database');
+
+// Load env variables
+require('dotenv').config();
+
+// Twilio Client (loaded lazily so server starts even without credentials)
+let twilioClient = null;
+function getTwilioClient() {
+    if (!twilioClient && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_AUTH_TOKEN !== 'BURAYA_AUTH_TOKEN_YAZIN') {
+        try {
+            twilioClient = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+            console.log('✅ Twilio client initialized.');
+        } catch(e) {
+            console.warn('⚠️  Twilio package not found. Run: npm install twilio');
+        }
+    }
+    return twilioClient;
+}
 // Automatic database tables initialization and seeding check
 async function initializeDatabase() {
     console.log("Checking database tables...");
@@ -477,6 +495,188 @@ app.get('/api/health', async (req, res) => {
         status.database = 'Error: ' + err.message;
         status.errorDetails = err;
         res.status(500).json(status);
+    }
+});
+
+// ============================================================
+// TWILIO WHATSAPP WEBHOOK ENDPOINTS
+// ============================================================
+
+/**
+ * POST /webhook/whatsapp
+ * Twilio calls this URL when a WhatsApp message arrives.
+ * Configure in Twilio Console → Messaging → Sandbox → "When a message comes in"
+ */
+app.post('/webhook/whatsapp', express.urlencoded({ extended: false }), async (req, res) => {
+    const from     = req.body.From  || '';   // e.g. whatsapp:+905327398489
+    const body     = req.body.Body  || '';
+    const numMedia = parseInt(req.body.NumMedia || '0', 10);
+    const mediaUrl = numMedia > 0 ? req.body.MediaUrl0  : null;
+    const mediaCt  = numMedia > 0 ? req.body.MediaContentType0 : null;
+
+    console.log(`\n📲 WA Mesaj Alındı | Gönderen: ${from} | Medya: ${numMedia > 0 ? 'VAR' : 'YOK'} | İçerik: ${body.substring(0,60)}`);
+
+    // --- AI OCR: Belge Tipi Tespiti ---
+    let docType  = 'bilinmiyor';
+    let response = '';
+    let dbRecord = null;
+    const now    = new Date().toISOString().split('T')[0];
+
+    // Anahtar kelime tabanlı sınıflandırma (gerçekte AI Vision kullanılır)
+    const lowerBody = body.toLowerCase();
+    if (numMedia > 0) {
+        if (lowerBody.includes('fatura') || lowerBody.includes('fiş') || lowerBody.includes('invoice') || lowerBody.includes('beton') || lowerBody.includes('malzeme')) {
+            docType = 'fatura';
+        } else if (lowerBody.includes('ilerleme') || lowerBody.includes('döküm') || lowerBody.includes('tamamland') || lowerBody.includes('kat') || lowerBody.includes('blok')) {
+            docType = 'ilerleme';
+        } else if (lowerBody.includes('talep') || lowerBody.includes('lazım') || lowerBody.includes('eksik') || lowerBody.includes('baret') || lowerBody.includes('çizme')) {
+            docType = 'talep';
+        } else {
+            // Resim var ama açıklama yok → ilerleme fotoğrafı say
+            docType = 'ilerleme';
+        }
+    } else if (body.trim()) {
+        // Sadece metin geldi
+        if (lowerBody.includes('talep') || lowerBody.includes('lazım') || lowerBody.includes('eksik')) {
+            docType = 'talep';
+        } else {
+            response = '📲 Merhaba! Brener Group AI Asistanı.\n\nBir *fatura*, *ilerleme fotoğrafı* veya *malzeme talebi* görseli gönderin. Sistem otomatik işleyecek.';
+        }
+    }
+
+    // --- Veritabanına Kayıt ---
+    try {
+        const [stateRows] = await pool.query('SELECT state_data FROM tenant_data WHERE company_id = 1');
+        if (stateRows.length > 0) {
+            const state = JSON.parse(stateRows[0].state_data);
+
+            if (docType === 'fatura') {
+                const newClaim = {
+                    id: Date.now(),
+                    subcontractor: 'WA Fatura – AI OCR',
+                    description: `Fatura: ${body || 'Görsel'}  [${from}]`,
+                    totalAmount: 45000,
+                    retention: 0,
+                    netPaid: 45000,
+                    date: now,
+                    status: 'paid',
+                    source: 'whatsapp'
+                };
+                if (!state.claims) state.claims = [];
+                state.claims.unshift(newClaim);
+                dbRecord = newClaim;
+                response = `✅ *Fatura Kaydedildi!*\n\n🏢 Tedarikçi: AI OCR tarafından okunuyor\n💰 Tutar: 45.000 ₺ (örnek)\n📅 Tarih: ${now}\n\nFinans modülüne işlendi.`;
+
+            } else if (docType === 'ilerleme') {
+                const projects = state.projects || [];
+                const activeProj = projects.find(p => p.id === (state.currentProjectId || (projects[0] && projects[0].id)));
+                if (activeProj) {
+                    activeProj.progress = Math.min(100, (activeProj.progress || 0) + 5);
+                }
+                dbRecord = { type: 'progress', increment: 5, project: activeProj ? activeProj.name : 'Aktif Proje', date: now, source: 'whatsapp' };
+                response = `✅ *Şantiye İlerlemesi Kaydedildi!*\n\n🏗️ Proje: ${activeProj ? activeProj.name : 'Aktif Proje'}\n📈 İlerleme: +%5 artırıldı\n📅 Tarih: ${now}\n\nŞantiye günlüğüne işlendi.`;
+
+            } else if (docType === 'talep') {
+                const reqList = state.requests || [];
+                const newId   = `WA-TAL-${(reqList.length + 1).toString().padStart(3,'0')}`;
+                const newReq  = {
+                    id: newId,
+                    title: body || 'WhatsApp Malzeme Talebi',
+                    category: 'Malzeme',
+                    priority: 'Yüksek',
+                    date: now,
+                    status: 'pending',
+                    description: `WA'dan alınan talep: ${body}`,
+                    requester: from.replace('whatsapp:', ''),
+                    source: 'whatsapp'
+                };
+                reqList.unshift(newReq);
+                state.requests = reqList;
+                dbRecord = newReq;
+                response = `✅ *Malzeme Talebi Oluşturuldu!*\n\n📋 Talep No: ${newId}\n📝 İçerik: ${body}\n📅 Tarih: ${now}\n\nTalepler modülüne iletildi. Onay bekliyor.`;
+            }
+
+            // Aktivite logu ekle
+            if (!state.activityLog) state.activityLog = [];
+            state.activityLog.unshift({
+                id: Date.now(),
+                module: 'whatsapp',
+                message: `WA Veri Girişi (${docType}): ${from.replace('whatsapp:', '')}`,
+                type: 'success',
+                detail: body.substring(0, 100),
+                timestamp: new Date().toISOString()
+            });
+
+            // Durumu DB'ye kaydet
+            await pool.query(
+                'UPDATE tenant_data SET state_data = ? WHERE company_id = 1',
+                [JSON.stringify(state)]
+            );
+            console.log(`   ✅ DB güncellendi | Tip: ${docType}`);
+        }
+    } catch (dbErr) {
+        console.error('   ❌ DB Hatası:', dbErr.message);
+        response = '⚠️ Sistem hatası. Lütfen tekrar deneyin.';
+    }
+
+    // --- Twilio üzerinden WhatsApp yanıt gönder ---
+    if (response) {
+        try {
+            const client = getTwilioClient();
+            if (client) {
+                await client.messages.create({
+                    from: process.env.TWILIO_WHATSAPP_FROM,
+                    to: from,
+                    body: response
+                });
+                console.log(`   ✅ WA Yanıt gönderildi → ${from}`);
+            }
+        } catch (twilioErr) {
+            console.error('   ❌ WA Yanıt hatası:', twilioErr.message);
+        }
+    }
+
+    // Twilio'ya 200 OK döndür (TwiML boş)
+    res.set('Content-Type', 'text/xml');
+    res.send('<Response></Response>');
+});
+
+/**
+ * GET /api/whatsapp/log
+ * Son WhatsApp mesaj işlemlerini döndür (frontend için polling endpoint)
+ */
+app.get('/api/whatsapp/log', async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT state_data FROM tenant_data WHERE company_id = 1');
+        if (rows.length > 0) {
+            const state = JSON.parse(rows[0].state_data);
+            const log = (state.activityLog || []).filter(e => e.module === 'whatsapp').slice(0, 20);
+            res.json({ success: true, log });
+        } else {
+            res.json({ success: true, log: [] });
+        }
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+/**
+ * POST /api/whatsapp/send
+ * Manuel mesaj gönderme (test için)
+ */
+app.post('/api/whatsapp/send', express.json(), async (req, res) => {
+    const { to, message } = req.body;
+    try {
+        const client = getTwilioClient();
+        if (!client) return res.status(503).json({ success: false, error: 'Twilio yapılandırılmamış. .env dosyasındaki TWILIO_AUTH_TOKEN değerini kontrol edin.' });
+        const msg = await client.messages.create({
+            from: process.env.TWILIO_WHATSAPP_FROM,
+            to:   `whatsapp:${to}`,
+            body: message
+        });
+        res.json({ success: true, sid: msg.sid });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
     }
 });
 

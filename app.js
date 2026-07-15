@@ -70,6 +70,7 @@ window.BrenerApp = {
         'ai-3d': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>`,
         'ai-2d': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/></svg>`,
         'ai-rules': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+        'ai-channels': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.29 6.29l1.14-1.14a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/><path d="M14.05 2a9 9 0 0 1 8 7.94M14.05 6A5 5 0 0 1 18 10"/></svg>`,
         clients: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>`,
         orders: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17h6M9 12h6M9 7h6"/></svg>`,
         'repair-form': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
@@ -677,6 +678,7 @@ window.BrenerApp = {
             'ai-3d-cephe': 'ai',
             'ai-2d-vaziyet': 'ai',
             'yonetmelik-imar-asistani': 'ai',
+            'ai-kanal-entegrasyon': 'ai',
             'musteri-cari': 'saha',
             'is-emirleri': 'saha',
             'tadilat-formu': 'saha',
@@ -758,7 +760,7 @@ window.BrenerApp = {
                 } else if (window.BrenerApp.Degerleme && ['emlak-deger-tahmini', 'arsa-degerleme', 'emlak-takip', 'emsal-karsilastirma', 'bolge-analizi', 'komisyon-vergi', 'kira-dilekce-asistani'].includes(viewName)) {
                     window.BrenerApp.Degerleme.render(viewName, contentWindow);
                     rendered = true;
-                                } else if (window.BrenerApp.AI && ['ai-asistan', 'emlak-ai-danisman', 'ai-fotograf-analizi', 'ai-plan-okuma', 'sesli-ai-sefi', 'ai-taslak-plan', 'ai-tadilat-tasarim', 'ai-mekan-yerlesim', 'ai-3d-cephe', 'ai-2d-vaziyet', 'yonetmelik-imar-asistani'].includes(viewName)) {
+                                } else if (window.BrenerApp.AI && ['ai-asistan', 'emlak-ai-danisman', 'ai-fotograf-analizi', 'ai-plan-okuma', 'sesli-ai-sefi', 'ai-taslak-plan', 'ai-tadilat-tasarim', 'ai-mekan-yerlesim', 'ai-3d-cephe', 'ai-2d-vaziyet', 'yonetmelik-imar-asistani', 'ai-kanal-entegrasyon'].includes(viewName)) {
                                     window.BrenerApp.AI.render(viewName, contentWindow);
                                     rendered = true;
                                                                 } else if (window.BrenerApp.ProjeYonetimi && ['proje-sozlesme-ozeti', 'teknik-sartname', 'musteri-sunumlari', 'proje-asamalari', 'musteri-takip'].includes(viewName)) {

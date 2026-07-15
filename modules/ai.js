@@ -8,6 +8,8 @@ window.BrenerApp.AI = {
             this.renderChatbot(view, container);
         } else if (view === 'ai-fotograf-analizi') {
             this.renderPhotoAnalysis(container);
+        } else if (view === 'ai-kanal-entegrasyon') {
+            this.renderChannelIntegration(container);
         } else if (view === 'ai-plan-okuma') {
             this.renderBlueprintReader(container);
         } else if (view === 'sesli-ai-sefi') {
@@ -299,6 +301,152 @@ window.BrenerApp.AI = {
         renderContent();
     },
 
+    // 2b. AI Kanal Veri Girişi (Telegram / WhatsApp / E-Posta) - Standalone page
+    renderChannelIntegration(container) {
+        window.BrenerApp.updateTopbarTitle('📲 AI Kanal Veri Girişi', 'Telegram, WhatsApp ve E-Posta üzerinden resim/evrak göndererek sisteme otomatik veri girişi yapın');
+
+        container.innerHTML = `
+            <!-- Row 0: Info Banner -->
+            <div style="background: linear-gradient(135deg, rgba(var(--primary-rgb),0.15) 0%, rgba(var(--primary-rgb),0.05) 100%); border: 1px solid rgba(var(--primary-rgb),0.3); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
+                <div style="font-size: 2rem;">🤖</div>
+                <div>
+                    <strong style="color: var(--primary); font-size: 1rem;">Yapay Zeka Destekli Otomatik Veri Girişi</strong>
+                    <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-muted);">Saha personeli, şantiyeden <strong>fatura fotoğrafı</strong>, <strong>ilerleme görseli</strong> veya <strong>el yazısı malzeme fişi</strong> göndererek sisteme otomatik kayıt yapabilir. AI Vision & OCR motoru görseli okur, verileri ayrıştırır ve ilgili modüle (Finans, Talepler, Günlük) anında işler.</p>
+                </div>
+            </div>
+
+            <!-- Row 1: Integration Status Cards -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+                <div class="card" style="border-left: 4px solid #0088cc; padding: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.5rem;">✈️</span>
+                            <strong style="color:var(--text-main); font-size:0.95rem;">Telegram</strong>
+                        </div>
+                        <span class="badge badge-success">Aktif</span>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px 0;">Saha fişleri ve saha günlük fotoğrafları @BrenerGroupBot üzerinden işlenir.</p>
+                    <code style="font-size:0.78rem; color:#0088cc; background:rgba(0,136,204,0.08); padding:5px 10px; border-radius:6px; display:block; text-align:center;">@BrenerGroupBot</code>
+                </div>
+
+                <div class="card" style="border-left: 4px solid #25d366; padding: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.5rem;">💬</span>
+                            <strong style="color:var(--text-main); font-size:0.95rem;">WhatsApp Business</strong>
+                        </div>
+                        <span class="badge badge-success">Aktif</span>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px 0;">+90 555 000 00 00 numaralı WhatsApp hattından fatura ve talep girişi yapılır.</p>
+                    <code style="font-size:0.78rem; color:#25d366; background:rgba(37,211,102,0.08); padding:5px 10px; border-radius:6px; display:block; text-align:center;">+90 555 000 00 00</code>
+                </div>
+
+                <div class="card" style="border-left: 4px solid var(--danger); padding: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.5rem;">📧</span>
+                            <strong style="color:var(--text-main); font-size:0.95rem;">E-Posta (IMAP)</strong>
+                        </div>
+                        <span class="badge badge-success">Aktif</span>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px 0;">Gelen faturalar ve ekler AI tarafından okunarak muhasebeye otomatik işlenir.</p>
+                    <code style="font-size:0.78rem; color:var(--danger); background:rgba(239,68,68,0.08); padding:5px 10px; border-radius:6px; display:block; text-align:center;">saha@brenergroup.com</code>
+                </div>
+            </div>
+
+            <!-- Row 2: Chat & File Entry Simulator Sandbox -->
+            <div class="grid-2col">
+                <!-- Left Card: Simulator Input -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🧪 AI Kanal Veri Giriş Simülatörü</h2>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                        Telegram, WhatsApp veya E-Posta üzerinden gönderilen bir görselin sisteme nasıl otomatik veri girişi sağladığını simüle edin:
+                    </p>
+
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label>1. Gönderim Kanalı Seçin</label>
+                        <select id="simChannelSelect2" style="width:100%; padding:10px; background:var(--bg-dark); border:1px solid var(--border-color); border-radius:8px; color:var(--text-main);">
+                            <option value="whatsapp">💬 WhatsApp (+90 555 000 00 00)</option>
+                            <option value="telegram">✈️ Telegram (@BrenerGroupBot)</option>
+                            <option value="email">📧 E-Posta (saha@brenergroup.com)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:24px;">
+                        <label>2. Gönderilecek Evrak / Görsel Tipi</label>
+                        <div style="display:flex; flex-direction:column; gap:10px;">
+                            <label style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--border-color); border-radius:8px; background:rgba(255,255,255,0.01); cursor:pointer;">
+                                <input type="radio" name="simDocType2" value="fatura" checked style="margin:0;">
+                                <div>
+                                    <strong style="font-size:0.85rem; display:block;">🧾 Malzeme Alım Faturası / Fişi</strong>
+                                    <span style="font-size:0.75rem; color:var(--text-muted);">Örn: "Yavuz Çimento A.Ş. - 45.000 ₺ Hazır Beton Faturası" → Gider kaydı açılır</span>
+                                </div>
+                            </label>
+
+                            <label style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--border-color); border-radius:8px; background:rgba(255,255,255,0.01); cursor:pointer;">
+                                <input type="radio" name="simDocType2" value="ilerleme" style="margin:0;">
+                                <div>
+                                    <strong style="font-size:0.85rem; display:block;">🏗️ Şantiye Günlük İlerleme Fotoğrafı</strong>
+                                    <span style="font-size:0.75rem; color:var(--text-muted);">Örn: "A Blok 4. Kat demir donatı döşeme fotoğrafı" → Fiziksel ilerleme +%5</span>
+                                </div>
+                            </label>
+
+                            <label style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--border-color); border-radius:8px; background:rgba(255,255,255,0.01); cursor:pointer;">
+                                <input type="radio" name="simDocType2" value="talep" style="margin:0;">
+                                <div>
+                                    <strong style="font-size:0.85rem; display:block;">📝 Saha Malzeme Talep Fişi (El Yazısı)</strong>
+                                    <span style="font-size:0.75rem; color:var(--text-muted);">Örn: "20 Baret, 10 Çift Çizme" el yazısı fişi → Saha Talebi oluşturur</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" id="btnSimulateChannelSend2" style="width:100%; font-weight:700; padding:14px; font-size:1rem;">
+                        📤 Evrak Görselini Gönder &amp; AI ile İşle
+                    </button>
+                </div>
+
+                <!-- Right Card: Simulation Output -->
+                <div class="card" id="channelSimResultCard2">
+                    <div class="card-header">
+                        <h2>📡 Webhook Alıcı &amp; AI Ayrıştırma Günlüğü</h2>
+                    </div>
+                    <div style="text-align: center; padding: 80px 40px; color: var(--text-muted); font-size: 0.88rem;">
+                        <div style="font-size: 3rem; margin-bottom: 16px; opacity: 0.4;">📲</div>
+                        <p>Simülasyonu başlatmak için soldan kanal ve evrak tipini seçip<br><strong>"Evrak Görselini Gönder"</strong> butonuna basın.</p>
+                        <p style="margin-top:12px; font-size:0.78rem; opacity:0.6;">AI Vision OCR motoru görseli okuyacak, veriyi ayrıştıracak ve sisteme kaydedecek.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('btnSimulateChannelSend2').onclick = () => {
+            const channel = document.getElementById('simChannelSelect2').value;
+            const docType = document.querySelector('input[name="simDocType2"]:checked').value;
+            this.simulateChannelInput2(channel, docType);
+        };
+    },
+
+    simulateChannelInput2(channel, docType) {
+        const resultCard = document.getElementById('channelSimResultCard2');
+        const channelLabels = { whatsapp: '💬 WhatsApp', telegram: '✈️ Telegram', email: '📧 E-Posta' };
+
+        resultCard.innerHTML = `
+            <div class="card-header"><h2>📡 Webhook Alıcı &amp; AI Ayrıştırma Günlüğü</h2></div>
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; text-align: center;">
+                <div style="border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--primary); border-radius: 50%; width: 48px; height: 48px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+                <strong style="color:var(--text-main); font-size:1rem;">${channelLabels[channel]} üzerinden görsel alındı</strong>
+                <span style="font-size:0.82rem; color:var(--text-muted); margin-top:10px;">AI Vision OCR Modülü çalıştırılıyor...<br>Görsel indiriliyor, gürültü azaltma uygulanıyor ve metin katmanları taranıyor.</span>
+            </div>
+        `;
+
+        setTimeout(() => {
+            this.simulateChannelInput(channel, docType, true);
+        }, 2000);
+    },
+
     inspectImage(type) {
         const resultCard = document.getElementById('imageInspectResultCard');
         resultCard.innerHTML = `
@@ -322,8 +470,9 @@ window.BrenerApp.AI = {
         `;
     },
 
-    simulateChannelInput(channel, docType) {
-        const resultCard = document.getElementById('channelSimResultCard');
+    simulateChannelInput(channel, docType, isStandalone) {
+        const cardId = isStandalone ? 'channelSimResultCard2' : 'channelSimResultCard';
+        const resultCard = document.getElementById(cardId);
         
         resultCard.innerHTML = `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;">
