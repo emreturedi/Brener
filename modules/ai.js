@@ -305,10 +305,15 @@ window.BrenerApp.AI = {
     renderChannelIntegration(container) {
         window.BrenerApp.updateTopbarTitle('📲 AI Kanal Veri Girişi', 'Telegram, WhatsApp ve E-Posta üzerinden resim/evrak göndererek sisteme otomatik veri girişi yapın');
 
+        const aiSettings = window.BrenerApp.state.aiChannelSettings || {};
+        const waNum = (aiSettings.whatsapp && aiSettings.whatsapp.fromNumber) || '+90 555 000 00 00';
+        const tgUser = (aiSettings.telegram && aiSettings.telegram.botUsername) || '@BrenerGroupBot';
+        const mailAddr = (aiSettings.email && aiSettings.email.emailAddress) || 'saha@brenergroup.com';
+
         const channelColors = { whatsapp: '#25d366', telegram: '#0088cc', email: '#ef4444' };
         const channelIcons  = { whatsapp: '💬', telegram: '✈️', email: '📧' };
         const channelNames  = { whatsapp: 'WhatsApp', telegram: 'Telegram', email: 'E-Posta' };
-        const channelAddrs  = { whatsapp: '+90 555 000 00 00', telegram: '@BrenerGroupBot', email: 'saha@brenergroup.com' };
+        const channelAddrs  = { whatsapp: waNum, telegram: tgUser, email: mailAddr };
 
         const scenarios = {
             fatura: {
