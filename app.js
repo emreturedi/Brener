@@ -538,6 +538,13 @@ window.BrenerApp = {
             setTimeout(() => toast.remove(), 300);
         }, 3000);
     },
+    // Global closeModal function
+    closeModal() {
+        const overlay = document.getElementById('modalOverlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
+    },
 
     // Modal Helper
     openModal(title, contentHtml) {
@@ -548,13 +555,9 @@ window.BrenerApp = {
 
         const closeBtn = document.getElementById('modalCloseBtn');
         const clickAway = (e) => {
-            if (e.target === overlay) closeModal();
+            if (e.target === overlay) this.closeModal();
         };
-        const closeModal = () => {
-            overlay.classList.remove('active');
-            overlay.removeEventListener('click', clickAway);
-        };
-        closeBtn.onclick = closeModal;
+        closeBtn.onclick = () => this.closeModal();
         overlay.addEventListener('click', clickAway);
     },
 
