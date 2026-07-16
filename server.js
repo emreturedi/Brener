@@ -552,48 +552,47 @@ async function callAIModel(prompt, base64ImageObj) {
             contents.push({ parts });
             
             const response = await axios.post(url, { contents }, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            return response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        } catch (err) {
-            console.error('❌ Gemini API hatası:', err.response?.data || err.message);
-            return '';
-        }
-    } else if (openaiKey) {
-        try {
-            const url = 'https://api.openai.com/v1/chat/completions';
-            const messages = [];
-            const contentParts = [{ type: 'text', text: prompt }];
-            
-            if (base64ImageObj) {
-                contentParts.push({
-                    type: 'image_url',
-                    image_url: {
-                        url: `data:${base64ImageObj.mimeType};base64,${base64ImageObj.base64}`
-                    }
-                });
-            }
-            messages.push({ role: 'user', content: contentParts });
-            
-            const response = await axios.post(url, {
-                model: 'gpt-4o-mini',
-                messages,
-                temperature: 0.1
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${openaiKey}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            return response.data?.choices?.[0]?.message?.content || '';
-        } catch (err) {
-            console.error('❌ OpenAI API hatası:', err.response?.data || err.message);
-            return '';
-        }
-    } else {
-        console.warn('⚠️ Herhangi bir GEMINI_API_KEY veya OPENAI_API_KEY tanımlanmamış. AI devre dışı.');
-        return '';
-    }
+                 headers: { 'Content-Type': 'application/json' }
+             });
+             return response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+         } catch (err) {
+             const errMsg = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+             throw new Error(`Gemini Error: ${errMsg}`);
+         }
+     } else if (openaiKey) {
+         try {
+             const url = 'https://api.openai.com/v1/chat/completions';
+             const messages = [];
+             const contentParts = [{ type: 'text', text: prompt }];
+             
+             if (base64ImageObj) {
+                 contentParts.push({
+                     type: 'image_url',
+                     image_url: {
+                         url: `data:${base64ImageObj.mimeType};base64,${base64ImageObj.base64}`
+                     }
+                 });
+             }
+             messages.push({ role: 'user', content: contentParts });
+             
+             const response = await axios.post(url, {
+                 model: 'gpt-4o-mini',
+                 messages,
+                 temperature: 0.1
+             }, {
+                 headers: {
+                     'Authorization': `Bearer ${openaiKey}`,
+                     'Content-Type': 'application/json'
+                 }
+             });
+             return response.data?.choices?.[0]?.message?.content || '';
+         } catch (err) {
+             const errMsg = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+             throw new Error(`OpenAI Error: ${errMsg}`);
+         }
+     } else {
+         throw new Error('No API key provided for AI models (Gemini or OpenAI)');
+     }
 }
 
 /**
