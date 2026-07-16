@@ -14,9 +14,11 @@ require('dotenv').config();
 // Twilio Client (loaded lazily so server starts even without credentials)
 let twilioClient = null;
 function getTwilioClient() {
-    if (!twilioClient && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_AUTH_TOKEN !== 'BURAYA_AUTH_TOKEN_YAZIN') {
+    const sid = (process.env.TWILIO_ACCOUNT_SID || '').trim();
+    const token = (process.env.TWILIO_AUTH_TOKEN || '').trim();
+    if (!twilioClient && sid && token && token !== 'BURAYA_AUTH_TOKEN_YAZIN') {
         try {
-            twilioClient = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+            twilioClient = require('twilio')(sid, token);
             console.log('✅ Twilio client initialized.');
         } catch(e) {
             console.warn('⚠️  Twilio package not found. Run: npm install twilio');
@@ -532,8 +534,8 @@ async function downloadMediaAsBase64(url) {
 
 // Helper function to call the AI model (Gemini or OpenAI) depending on what API key is configured
 async function callAIModel(prompt, base64ImageObj) {
-    const geminiKey = process.env.GEMINI_API_KEY || '';
-    const openaiKey = process.env.OPENAI_API_KEY || '';
+    const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
+    const openaiKey = (process.env.OPENAI_API_KEY || '').trim();
 
     if (geminiKey) {
         try {
@@ -869,7 +871,7 @@ app.post('/webhook/whatsapp', express.urlencoded({ extended: false }), async (re
             const client = getTwilioClient();
             if (client) {
                 await client.messages.create({
-                    from: process.env.TWILIO_WHATSAPP_FROM,
+                    from: (process.env.TWILIO_WHATSAPP_FROM || '').trim(),
                     to: from,
                     body: response
                 });
@@ -929,7 +931,7 @@ app.post('/api/whatsapp/send', express.json(), async (req, res) => {
         const client = getTwilioClient();
         if (!client) return res.status(503).json({ success: false, error: 'Twilio yapılandırılmamış. .env dosyasındaki TWILIO_AUTH_TOKEN değerini kontrol edin.' });
         const msg = await client.messages.create({
-            from: process.env.TWILIO_WHATSAPP_FROM,
+            from: (process.env.TWILIO_WHATSAPP_FROM || '').trim(),
             to:   `whatsapp:${to}`,
             body: message
         });
