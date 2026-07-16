@@ -610,6 +610,10 @@ app.post('/webhook/whatsapp', express.urlencoded({ extended: false }), async (re
     console.log(`\n📲 WA Mesaj Alındı | Gönderen: ${from} | Medya: ${numMedia > 0 ? 'VAR' : 'YOK'} | İçerik: ${body.substring(0,60)}`);
 
     let response = '';
+    let debugError = null;
+    let aiOutput = null;
+    let aiResult = null;
+    let twilioResult = 'Not attempted';
     
     try {
         const [stateRows] = await pool.query('SELECT state_data FROM tenant_data WHERE company_id = 1');
@@ -679,7 +683,7 @@ app.post('/webhook/whatsapp', express.urlencoded({ extended: false }), async (re
 
                 const systemPrompt = `
                 Sen Brener Group İnşaat Yönetim Platformu'nun saha yapay zeka asistanısın.
-                Sana sahada çalışan bir personelin gönderdiği bir mesaj ve/veya fotoğraf iletilecek. 
+                Sana sahada çalışan bir personelin gönderdiği bir mesaj ve/ve/veya fotoğraf iletilecek. 
                 Bu girdi bir fatura/fiş görseli, şantiye ilerleme fotoğrafı, malzeme talep yazısı veya sadece sohbet olabilir.
 
                 Analiz et ve sadece aşağıdaki şablona uygun bir JSON döndür. Başka hiçbir şey yazma (markdown \`\`\`json blokları olmasın, ham metin olarak JSON döndür):
@@ -703,8 +707,7 @@ app.post('/webhook/whatsapp', express.urlencoded({ extended: false }), async (re
                 }
                 `;
 
-                const aiOutput = await callAIModel(systemPrompt + `\nKullanıcı mesajı: "${body}"`, base64Image);
-                let aiResult = null;
+                aiOutput = await callAIModel(systemPrompt + `\nKullanıcı mesajı: "${body}"`, base64Image);
 
                 try {
                     // Temiz JSON bulmak için Regex uygulayalım (markdown bloklarını temizle)
@@ -780,7 +783,7 @@ app.post('/webhook/whatsapp', express.urlencoded({ extended: false }), async (re
                             description: `${data.malzeme || 'Malzeme Alımı'} (${data.miktar || 'Görsel'}) - AI OCR`,
                             totalAmount: data.toplamTutar || 45000,
                             retention: 0,
-                            netPaid: data.toplamTutar || 45000,
+                            netPaid: data.topyarTutar || data.toplamTutar || 45000,
                             date: data.tarih || now,
                             status: 'paid',
                             source: 'whatsapp'
@@ -858,6 +861,7 @@ app.post('/webhook/whatsapp', express.urlencoded({ extended: false }), async (re
     } catch (dbErr) {
         console.error('❌ DB Hatası:', dbErr.message);
         response = '⚠️ Sistem hatası oluştu. Lütfen tekrar deneyin.';
+        debugError = dbErr.message;
     }
 
     // --- Twilio üzerinden WhatsApp yanıtı gönder ---
@@ -870,11 +874,26 @@ app.post('/webhook/whatsapp', express.urlencoded({ extended: false }), async (re
                     to: from,
                     body: response
                 });
-                console.log(`   ✅ WA Yanıt gönderildi → ${from}`);
+                twilioResult = 'Success';
+            } else {
+                twilioResult = 'Twilio client is null (check env variables)';
             }
         } catch (twilioErr) {
             console.error('   ❌ WA Yanıt hatası:', twilioErr.message);
+            twilioResult = `Twilio Error: ${twilioErr.message}`;
         }
+    }
+
+    if (req.query.debug === 'true') {
+        return res.json({
+            success: true,
+            debugError,
+            aiOutput,
+            aiResult,
+            response,
+            twilioResult,
+            chatSessionsCount: chatSessions.size
+        });
     }
 
     // Twilio'ya 200 OK döndür
