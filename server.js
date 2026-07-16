@@ -525,7 +525,19 @@ const chatSessions = new Map();
 // Helper function to download an image from a URL and convert it to base64 for multimodal LLM processing
 async function downloadMediaAsBase64(url) {
     try {
-        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        const sid = (process.env.TWILIO_ACCOUNT_SID || '').trim();
+        const token = (process.env.TWILIO_AUTH_TOKEN || '').trim();
+        const config = { responseType: 'arraybuffer' };
+
+        // If downloading from Twilio, use Basic Auth for private media access
+        if (url.includes('twilio.com') && sid && token) {
+            const credentials = Buffer.from(`${sid}:${token}`).toString('base64');
+            config.headers = {
+                'Authorization': `Basic ${credentials}`
+            };
+        }
+
+        const response = await axios.get(url, config);
         const base64 = Buffer.from(response.data, 'binary').toString('base64');
         return {
             base64,
