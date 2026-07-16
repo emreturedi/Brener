@@ -460,6 +460,19 @@ app.put('/api/users/:id/password', authenticateToken, async (req, res) => {
 });
 
 
+// Environment Diagnostics Endpoint
+app.get('/api/test-env', (req, res) => {
+    res.json({
+        hasGemini: !!process.env.GEMINI_API_KEY,
+        hasOpenAI: !!process.env.OPENAI_API_KEY,
+        hasTwilioSid: !!process.env.TWILIO_ACCOUNT_SID,
+        hasTwilioToken: !!process.env.TWILIO_AUTH_TOKEN,
+        hasTwilioFrom: !!process.env.TWILIO_WHATSAPP_FROM,
+        twilioFromValue: process.env.TWILIO_WHATSAPP_FROM || null,
+        openaiKeyFirstChars: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 10) : null
+    });
+});
+
 // Diagnostic Endpoint
 app.get('/api/health', async (req, res) => {
     const status = {
